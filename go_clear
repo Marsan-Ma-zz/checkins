@@ -1,0 +1,8 @@
+#!/bin/bash
+
+rm -f ./logs/*.log
+rm -f ./models/grid_model_x_*.pkl
+
+
+
+# rm -f ./data/cache/cache_get_data_*.pkl

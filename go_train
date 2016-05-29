@@ -1,0 +1,19 @@
+#!/bin/bash
+
+NOW=$(date +"%Y%m%d_%H%M")
+PY3='stdbuf -o0 nohup python3 -u'
+
+### [train single model with sample rate]
+# $PY3 ref/valeriu_mod.py _checkins_ > "./logs/nohup_valeriu_mod_$NOW.log" &
+# watch tail -n 30 "./logs/nohup_rec_$NOW.log"
+
+# python3 main.py [alg, srate, size, step]
+# python3 main.py skrf 1.0 1.0 0.5    # Fastest for debug use
+python3 main.py skrf 1.0 1.0 0.025
+# python3 main.py xgb 1.0 1.0 0.05
+# $PY3 main.py skrf_grid_step 1.0 1.0 0.05 _checkins_ > "./logs/nohup_skrf_grid_step_$NOW.log" &
+# $PY3 main.py xgb_grid_step 1.0 1.0 0.05 _checkins_ > "./logs/nohup_skrf_grid_step_$NOW.log" &
+
+
+# [Current Best Submits]
+# $PY3 main.py skrf 1.0 10.0 0.05 _checkins_ > "./logs/nohup_skrf_submit_$NOW.log" &
