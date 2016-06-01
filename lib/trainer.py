@@ -1,4 +1,4 @@
-import os, sys, datetime, time, pickle
+import os, sys, datetime, time, pickle, gzip
 import pandas as pd
 import numpy as np
 import multiprocessing as mp
@@ -15,48 +15,65 @@ from lib import conventions as conv
 #===========================================  
 class trainer(object):
 
-  def __init__(self, stamp, size, root, x_ranges, y_ranges):
-    self.stamp = stamp
-    self.size = size
-    self.root = root
-    self.x_ranges = x_ranges
-    self.y_ranges = y_ranges
-
+  def __init__(self, params):
+    self.root     = params['root']
+    self.stamp    = params['stamp']
+    self.size     = params['size']
+    self.x_cols   = params['x_cols']
+    self.x_ranges = conv.get_range(params['size'], params['step'])
+    self.y_ranges = conv.get_range(params['size'], params['step'])
+    
+    
   #----------------------------------------
   #   Main
   #----------------------------------------
-  def train(self, df_train, alg="skrf"):
+  def train(self, df_train, alg="skrf", params={}):
     os.mkdir("%s/models/%s" % (self.root, self.stamp))
+    print("[Train] start with params=%s @ %s" % (params, conv.now('full')))
+    
+    
     for x_idx, (x_min, x_max) in enumerate(self.x_ranges):
-      start_time_row = time.time()
+      x_min, x_max = conv.trim_range(x_min, x_max, self.size)
+      df_row = df_train[(df_train.x >= x_min) & (df_train.x < x_max)]
+      processes = []
+      mp_pool = mp.Pool(pool_size)
       for y_idx, (y_min, y_max) in enumerate(self.y_ranges): 
-        start_time_cell = time.time()
-        x_min, x_max = conv.trim_range(x_min, x_max, self.size)
         y_min, y_max = conv.trim_range(y_min, y_max, self.size)
-        X_train, y_train, _ = conv.df2sample(df_train, x_min, x_max, y_min, y_max)
+        X_train, y_train, _ = conv.df2sample(df_row, None, None, y_min, y_max, self.x_cols)
         
-        clf = self.get_alg(alg)
-        clf.fit(X_train, y_train)
-
         # save model (can't stay in memory, too large)
-        mdl_name = "%s/models/%s/grid_model_x_%s_y_%s.pkl" % (self.root, self.stamp, x_idx, y_idx)
-        pickle.dump(clf, open(mdl_name, 'wb'))
+        clf = self.get_alg(alg, params)
+        mdl_name = "%s/models/%s/grid_model_x_%s_y_%s.pkl.gz" % (self.root, self.stamp, x_idx, y_idx)
+        p = mp_pool.apply_async(save_model, (mdl_name, clf, X_train, y_train))
+        processes.append(p)
         clf = None  # clear memory
-        print(("[Train] grid(%i,%i): %i samples for %i classes, %.2f secs" % (x_idx, y_idx, len(y_train), len(set(y_train)), time.time() - start_time_cell)))
-      print(("[Train] row %i elapsed time: %.2f secs" % (x_idx, time.time() - start_time_row)))
-
+        # prevent memory explode!
+        if len(processes) > 100:
+          processes.pop(0).get()
+    print("[Train] grid(%i,%i): %i samples / %i classes @ %s" % (x_idx, y_idx, len(y_train), len(set(y_train)), conv.now('full')))
+    for p in processes: p.get()
+    processes = []
+    mp_pool.close()
+      
 
   #----------------------------------------
   #   Tasks
   #----------------------------------------
-  def get_alg(self, alg):
+  def get_alg(self, alg, params):
     if alg == 'skrf':
-      clf = ensemble.RandomForestClassifier(n_estimators=30, max_depth=5, n_jobs=-1)
+      clf = ensemble.RandomForestClassifier(n_estimators=params.get('n_estimators', 50), max_depth=params.get('max_depth', 15), n_jobs=-1)
+      # clf = ensemble.RandomForestClassifier(n_estimators=params.get('n_estimators', 200), max_depth=params.get('max_depth', 15), n_jobs=-1)
     elif alg == 'skgbc':
-      clf = ensemble.GradientBoostingClassifier(n_estimators=30, max_depth=5)
+      clf = ensemble.GradientBoostingClassifier(n_estimators=params.get('n_estimators', 30), max_depth=params.get('max_depth', 5))
     elif alg == 'sklr':
       clf = linear_model.LogisticRegression(multi_class='multinomial', solver = 'lbfgs')
     elif alg == 'xgb':
-      clf = xgb.XGBClassifier(max_depth=5, learning_rate=0.1, n_estimators=30, silent=True)
+      # https://github.com/dmlc/xgboost/blob/master/python-package/xgboost/sklearn.py
+      clf = xgb.XGBClassifier(n_estimators=params.get('n_estimators', 30), max_depth=params.get('max_depth', 5), learning_rate=params.get('learning_rate', 0.1), objective="multi:softprob", silent=True)
     return clf
+  
+
+def save_model(mdl_name, clf, X_train, y_train):
+  clf.fit(X_train, y_train)
+  pickle.dump(clf, gzip.open(mdl_name, 'wb'))
   
