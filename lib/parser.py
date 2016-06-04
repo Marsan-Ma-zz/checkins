@@ -28,6 +28,7 @@ class parser(object):
     self.place_min_last_checkin = params.get('place_min_last_checkin')
     self.place_max_first_checkin = params.get('place_max_first_checkin')
 
+
   #----------------------------------------
   #   Main
   #----------------------------------------
@@ -102,11 +103,14 @@ class parser(object):
 
 
   def feature_engineering(self, df):
-    df['hour'] = (df['time']//60)%24+1 # 1 to 24
-    df['qday'] = (df['time']//60)%24//6+1 # quarter of day
+    df['hour']    = (df['time']//60)%24+1 # 1 to 24
+    df['hour2']   = (df['time']//60)%24//2+1 # 1 to 12
+    df['hour3']   = (df['time']//60)%24//3+1 # 1 to 8
+    df['hour4']   = (df['time']//60)%24//4+1 # 1 to 6
+    df['qday']    = (df['time']//60)%24//6+1 # 1 to 4
     df['weekday'] = (df['time']//1440)%7+1
-    df['month'] = (df['time']//43200)%12+1 # rough estimate, month = 30 days
-    df['year'] = (df['time']//525600)+1
+    df['month']   = (df['time']//43200)%12+1 # rough estimate, month = 30 days
+    df['year']    = (df['time']//525600)+1
     return df
 
 

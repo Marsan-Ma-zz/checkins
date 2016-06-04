@@ -4,8 +4,12 @@ import numpy as np
 import multiprocessing as mp
 pool_size = mp.cpu_count()
 
+from collections import OrderedDict
 
 from lib import conventions as conv
+
+LOCATION, AVAIL_WDAYS, AVAIL_HOURS = pickle.load(open("./data/cache/location_est.pkl", 'rb'))
+
 
 #===========================================
 #   Evaluator
@@ -17,9 +21,24 @@ class evaluator(object):
     self.stamp    = params['stamp']
     self.size     = params['size']
     self.x_cols   = params['x_cols']
-    self.x_ranges = conv.get_range(params['size'], params['step'])
-    self.y_ranges = conv.get_range(params['size'], params['step'])
+    self.x_ranges = conv.get_range(params['size'], params['x_step'])
+    self.y_ranges = conv.get_range(params['size'], params['y_step'])
+    self.mdl_weights = params['mdl_weights']
+    # extra_info
+    self.location_cache = params['location_cache']
+    self.time_th  = params['time_th']
+    self.loc_th_x = params['loc_th_x']
+    self.loc_th_y = params['loc_th_y']
+    self.init_extra_info()
+
+
+  def init_extra_info(self):
+    LOCATION['x_min'] = LOCATION.x_mean - self.loc_th_x*LOCATION.x_std
+    LOCATION['x_max'] = LOCATION.x_mean + self.loc_th_x*LOCATION.x_std
+    LOCATION['y_min'] = LOCATION.y_mean - self.loc_th_y*LOCATION.y_std
+    LOCATION['y_max'] = LOCATION.y_mean + self.loc_th_y*LOCATION.y_std
     
+
   #----------------------------------------
   #   Main
   #----------------------------------------
@@ -29,19 +48,20 @@ class evaluator(object):
 
     # launch mp jobs
     processes = []
-    mp_pool = mp.Pool(pool_size)
     for x_idx, (x_min, x_max) in enumerate(self.x_ranges):
       x_min, x_max = conv.trim_range(x_min, x_max, self.size)
       df_row = df[(df.x >= x_min) & (df.x < x_max)]
-
+      mp_pool = mp.Pool(pool_size)
       for y_idx, (y_min, y_max) in enumerate(self.y_ranges):
         y_min, y_max = conv.trim_range(y_min, y_max, self.size)
-        mdl_name = "%s/models/%s/grid_model_x_%s_y_%s.pkl.gz" % (self.root, self.stamp, x_idx, y_idx)
+        w_ary = [(x_idx-1, y_idx), (x_idx, y_idx), (x_idx+1, y_idx)]
+        mdl_names = ["%s/models/%s/grid_model_x_%s_y_%s.pkl.gz" % (self.root, self.stamp, xi, yi) for xi, yi in w_ary]
         X, y, row_id = conv.df2sample(df_row, None, None, y_min, y_max, self.x_cols)
-        p = mp_pool.apply_async(predict_clf, (mdl_name, X, y, row_id))
+        p = mp_pool.apply_async(predict_clf, (mdl_names, self.mdl_weights, X, y, row_id, self.time_th))
         processes.append([x_idx, y_idx, p])
+      mp_pool.close()
       print("[%s] launching row %i processes @ %s ..." % (title, x_idx, conv.now('full')))
-    mp_pool.close()
+    
 
     # collect mp results
     row_scores, row_samples = [], 0
@@ -90,7 +110,7 @@ class evaluator(object):
 #----------------------------------------
 #   Multi-Thread tasks
 #----------------------------------------
-def predict_clf(mdl_name, X, y, row_id, batch=10000):
+def predict_clf(mdl_names, mdl_weights, X, y, row_id, time_th=0.001, batch=10000):
   def apk(actual, predicted, k=3):
     if len(predicted) > k: 
       predicted = predicted[:k]
@@ -105,18 +125,35 @@ def predict_clf(mdl_name, X, y, row_id, batch=10000):
     if y is None: return None
     match = [apk([ans], vals) for ans, vals in zip(y, preds[[0,1,2]].values)]
     return sum(match)/len(match)
+  def merge_bests(clfs, weights, samples, time_th):
+    sols = [clf.predict_proba(samples) for clf in clfs]
+    sols = [[[(clf.classes_[i], v*w) for i, v in enumerate(line)] for line in sol] for clf, w, sol in zip(clfs, weights, sols)]
+    final_bests = []
+    for i in range(len(samples)):
+      psol = [j for k in [s[i] for s in sols] for j in k]
+      psol = OrderedDict(sorted(psol, key=lambda v: v[1]))
+      psol = sorted(list(psol.items()), key=lambda v: v[1], reverse=True)
+      psol = [p for p,v in psol]
+      # -----[filter avail places]-----
+      s = samples.iloc[i]
+      avail_place = LOCATION[(LOCATION.x_min <= s.x) & (LOCATION.x_max >= s.x) & (LOCATION.y_min <= s.y) & (LOCATION.y_max >= s.y)].place_id.values
+      psol = [p for p in psol if (p in avail_place) and (AVAIL_WDAYS.get((p, s.weekday), 0) > time_th) and (AVAIL_HOURS.get((p, s.hour), 0) > time_th)]
+      # -------------------------------
+      final_bests.append(psol[:3])
+    return final_bests
   #
-  clf = pickle.load(gzip.open(mdl_name, 'rb'))
+  clfs, weights = zip(*[(pickle.load(gzip.open(mname, 'rb')), w) for mname, w in zip(mdl_names, mdl_weights) if os.path.exists(mname)])
+  # print(weights)
   # all_class = [el for el in clf.classes_]
   preds = []
   for ii in range(0, len(X), batch):
     samples = X[ii:ii+batch]
     if len(samples) > 0:
-      sols = clf.predict_proba(samples).argsort().T[::-1][:3].T
-      preds += [[clf.classes_[i] for i in idxs] for idxs in sols]
-  clf = None
+      preds += merge_bests(clfs, weights, samples, time_th)
+  clfs = None
   preds = pd.DataFrame(preds)
   preds['row_id'] = row_id
   score = map_score(y, preds)
   return preds, score
+
 

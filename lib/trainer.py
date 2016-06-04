@@ -20,8 +20,8 @@ class trainer(object):
     self.stamp    = params['stamp']
     self.size     = params['size']
     self.x_cols   = params['x_cols']
-    self.x_ranges = conv.get_range(params['size'], params['step'])
-    self.y_ranges = conv.get_range(params['size'], params['step'])
+    self.x_ranges = conv.get_range(params['size'], params['x_step'])
+    self.y_ranges = conv.get_range(params['size'], params['y_step'])
     
     
   #----------------------------------------
@@ -48,12 +48,13 @@ class trainer(object):
         processes.append(p)
         clf = None  # clear memory
         # prevent memory explode!
-        if len(processes) > 100:
-          processes.pop(0).get()
-    print("[Train] grid(%i,%i): %i samples / %i classes @ %s" % (x_idx, y_idx, len(y_train), len(set(y_train)), conv.now('full')))
+        while (len(processes) > 15): processes.pop(0).get()
+      print("[Train] grid(%i,%i): %i samples / %i classes @ %s" % (x_idx, y_idx, len(y_train), len(set(y_train)), conv.now('full')))
+      mp_pool.close()
     for p in processes: p.get()
     processes = []
-    mp_pool.close()
+    print("[Train] done @ %s" % conv.now('full'))
+    
       
 
   #----------------------------------------
@@ -61,15 +62,16 @@ class trainer(object):
   #----------------------------------------
   def get_alg(self, alg, params):
     if alg == 'skrf':
-      clf = ensemble.RandomForestClassifier(n_estimators=params.get('n_estimators', 50), max_depth=params.get('max_depth', 15), n_jobs=-1)
-      # clf = ensemble.RandomForestClassifier(n_estimators=params.get('n_estimators', 200), max_depth=params.get('max_depth', 15), n_jobs=-1)
+      clf = ensemble.RandomForestClassifier(n_estimators=params.get('n_estimators', 100), max_depth=params.get('max_depth', 11), n_jobs=-1)
+      # clf = ensemble.RandomForestClassifier(n_estimators=params.get('n_estimators', 300), max_depth=params.get('max_depth', 11), n_jobs=-1)
+      # clf = ensemble.RandomForestClassifier(n_estimators=params.get('n_estimators', 500), max_depth=params.get('max_depth', 11), n_jobs=-1)
     elif alg == 'skgbc':
       clf = ensemble.GradientBoostingClassifier(n_estimators=params.get('n_estimators', 30), max_depth=params.get('max_depth', 5))
     elif alg == 'sklr':
       clf = linear_model.LogisticRegression(multi_class='multinomial', solver = 'lbfgs')
     elif alg == 'xgb':
       # https://github.com/dmlc/xgboost/blob/master/python-package/xgboost/sklearn.py
-      clf = xgb.XGBClassifier(n_estimators=params.get('n_estimators', 30), max_depth=params.get('max_depth', 5), learning_rate=params.get('learning_rate', 0.1), objective="multi:softprob", silent=True)
+      clf = xgb.XGBClassifier(n_estimators=params.get('n_estimators', 200), max_depth=params.get('max_depth', 15), learning_rate=params.get('learning_rate', 0.15), objective="multi:softprob", silent=True)
     return clf
   
 

@@ -7,32 +7,31 @@ PY3='stdbuf -o0 nohup python3 -u'
 # $PY3 ref/valeriu_mod.py _checkins_ > "./logs/nohup_valeriu_mod_$NOW.log" &
 # watch tail -n 30 "./logs/nohup_rec_$NOW.log"
 
-# python3 main.py [alg, size, step]
-# python3 main.py skrf 1.0 0.5 skrf_$NOW   # Fastest for debug use
-# python3 main.py skrf 1.0 0.025 skrf_$NOW
-# python3 main.py xgb 1.0 0.05 xgb_$NOW
-# $PY3 main.py skrf_grid_step 1.0 0.05 skrf_grid_step_$NOW > "./logs/nohup_skrf_grid_step_$NOW.log" &
-# $PY3 main.py xgb_grid_step 1.0 0.05 xgb_grid_step_$NOW > "./logs/nohup_skrf_grid_step_$NOW.log" &
-# $PY3 main.py skrf_gs_params 1.0 0.05 skrf_gs_params_$NOW > "./logs/nohup_skrf_gs_params_$NOW.log" &
-# $PY3 main.py xgb_gs_params 1.0 0.05 xgb_gs_params_$NOW > "./logs/nohup_xgb_gs_params_$NOW.log" &
-# python3 main.py xgb_gs_params 1.0 0.05 xgb_gs_params_$NOW
-# python3 main.py skrf_gs_params 1.0 0.05 skrf_gs_params_$NOW
+# $PY3 main.py skrf_grid_step 1.0 skrf_grid_step_$NOW > "./logs/nohup_skrf_grid_step_$NOW.log" &
+# $PY3 main.py xgb_grid_step 1.0 xgb_grid_step_$NOW > "./logs/nohup_skrf_grid_step_$NOW.log" &
+# $PY3 main.py skrf_gs_params 1.0 skrf_gs_params_$NOW > "./logs/nohup_skrf_gs_params_$NOW.log" &
+# $PY3 main.py xgb_gs_params 0.5 xgb_gs_params_$NOW > "./logs/nohup_xgb_gs_params_$NOW.log" &
+
+# python3 main.py skrf_submit 1.0 skrf_$NOW   # Fastest for debug use
 
 # [Specials]
-# $PY3 main.py skrf_feats_sel 1.0 0.05 skrf_feats_sel_$NOW > "./logs/nohup_skrf_feats_sel_$NOW.log" &
-$PY3 main.py skrf_gs_time 1.0 0.05 skrf_gs_time_$NOW > "./logs/skrf_gs_time_$NOW.log" &
+# python3 main.py parse_extra_info 1.0 parse_location_$NOW
+# $PY3 main.py skrf_gs_loc_th 1.0 skrf_20160604_125940 > "./logs/skrf_gs_loc_th_$NOW.log" &
+# $PY3 main.py skrf_gs_place_th 1.0 skrf_20160604_125940 > "./logs/skrf_gs_place_th_$NOW.log" &
+# $PY3 main.py skrf_feats_sel 1.0 skrf_feats_sel_$NOW > "./logs/nohup_skrf_feats_sel_$NOW.log" &
+# $PY3 main.py skrf_gs_time 1.0 skrf_gs_time_$NOW > "./logs/skrf_gs_time_$NOW.log" &
 
 
 # [Submits]
-# python3 main.py skrf 1.0 0.05 skrf_$NOW   # Fastest for debug use
-# $PY3 main.py skrf_submit 10.0 0.05 skrf_submit_$NOW > "./logs/nohup_skrf_submit_$NOW.log" &
-# $PY3 main.py xgb_submit 10.0 0.05 xgb_submit_$NOW > "./logs/nohup_xgb_submit_$NOW.log" &
+$PY3 main.py skrf_submit 10.0 skrf_submit_$NOW > "./logs/nohup_skrf_submit_$NOW.log" &
+# $PY3 main.py xgb_submit 10.0 xgb_submit_$NOW > "./logs/nohup_xgb_submit_$NOW.log" &
 
 
 # [Submits Existing Model]
-# python3 main.py skrf_eva_exist 10.0 0.05 skrf_submit_20160529_162520 > "./logs/nohup_skrf_eva_exist.log" &
-# python3 main.py xgb_eva_exist 1.0 0.05 xgb_gs_params_20160530_041055 > "./logs/nohup_xgb_eva_exist.log" &
+# python3 main.py skrf_eva_exist 1.0 skrf_20160604_155223
+# python3 main.py skrf_eva_exist 1.0 skrf_submit_20160529_162520 > "./logs/nohup_skrf_eva_exist.log" &
+# python3 main.py xgb_eva_exist 1.0 xgb_gs_params_20160530_041055 > "./logs/nohup_xgb_eva_exist.log" &
 # 
 
 # [Kill such processes]
-# sudo kill -9 `ps aux | grep "skrf_20160601_163026" | awk '{print $2}'`
+# sudo kill -9 `ps aux | grep "skrf_submit" | awk '{print $2}'`
