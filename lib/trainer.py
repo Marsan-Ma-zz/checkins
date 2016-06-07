@@ -20,8 +20,8 @@ class trainer(object):
     self.stamp    = params['stamp']
     self.size     = params['size']
     self.x_cols   = params['x_cols']
-    self.x_ranges = conv.get_range(params['size'], params['x_step'])
-    self.y_ranges = conv.get_range(params['size'], params['y_step'])
+    self.x_ranges = conv.get_range(params['size'], params['x_step'], params['x_inter'])
+    self.y_ranges = conv.get_range(params['size'], params['y_step'], params['y_inter'])
     
     
   #----------------------------------------
@@ -30,7 +30,6 @@ class trainer(object):
   def train(self, df_train, alg="skrf", params={}):
     os.mkdir("%s/models/%s" % (self.root, self.stamp))
     print("[Train] start with params=%s @ %s" % (params, conv.now('full')))
-    
     
     for x_idx, (x_min, x_max) in enumerate(self.x_ranges):
       x_min, x_max = conv.trim_range(x_min, x_max, self.size)
@@ -48,7 +47,7 @@ class trainer(object):
         processes.append(p)
         clf = None  # clear memory
         # prevent memory explode!
-        while (len(processes) > 15): processes.pop(0).get()
+        while (len(processes) > 20): processes.pop(0).get()
       print("[Train] grid(%i,%i): %i samples / %i classes @ %s" % (x_idx, y_idx, len(y_train), len(set(y_train)), conv.now('full')))
       mp_pool.close()
     for p in processes: p.get()
@@ -62,8 +61,8 @@ class trainer(object):
   #----------------------------------------
   def get_alg(self, alg, params):
     if alg == 'skrf':
-      clf = ensemble.RandomForestClassifier(n_estimators=params.get('n_estimators', 100), max_depth=params.get('max_depth', 11), n_jobs=-1)
-      # clf = ensemble.RandomForestClassifier(n_estimators=params.get('n_estimators', 300), max_depth=params.get('max_depth', 11), n_jobs=-1)
+      # clf = ensemble.RandomForestClassifier(n_estimators=params.get('n_estimators', 100), max_depth=params.get('max_depth', 11), n_jobs=-1)
+      clf = ensemble.RandomForestClassifier(n_estimators=params.get('n_estimators', 150), max_depth=params.get('max_depth', 11), n_jobs=-1)
       # clf = ensemble.RandomForestClassifier(n_estimators=params.get('n_estimators', 500), max_depth=params.get('max_depth', 11), n_jobs=-1)
     elif alg == 'skgbc':
       clf = ensemble.GradientBoostingClassifier(n_estimators=params.get('n_estimators', 30), max_depth=params.get('max_depth', 5))

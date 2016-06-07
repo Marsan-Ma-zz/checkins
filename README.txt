@@ -7,7 +7,7 @@
         8: 0.6462
         9: 0.6462
         10: 0.6465
-        11: 0.6466
+        11: 0.6466    <--- BEST!
         12: 0.6462
     1. feature selection
        all x_cols   => 0.6364
@@ -35,7 +35,7 @@
     4. filter place_ids by opening time? (weekday, hour)
         => place_th = 0 :   0.6461
         => place_th = 1 :   0.6470
-        => place_th = 2 :   0.6471  <---BEST!
+        => place_th = 2 :   0.6471  
         => place_th = 3 :   0.6456
         => place_th = 4 :   0.6441
         => place_th = 5 :   0.6413
@@ -43,12 +43,21 @@
         [change to ratio, time_th]
         => time_th = 0.001, MAP=0.6453
         => time_th = 0.002, MAP=0.6454
-        => time_th = 0.003, MAP=0.6455
+        => time_th = 0.003, MAP=0.6455    <--- BEST!
         => time_th = 0.004, MAP=0.6453
+        ------[after fix train/test split]-----
+        time_th = 0.0   , 0.5328
+        time_th = 0.001 , 0.5329
+        time_th = 0.002 , 0.5335
+        time_th = 0.003 , 0.5342
+        time_th = 0.004 , 0.5344   <--- BEST!
+        time_th = 0.005 , 0.5339
+        time_th = 0.006 , 0.5330
+        time_th = 0.008 , 0.5324
     5. smaller grid? x_step/y_step different step? (grid_step running!)
         => (0.04, 0.04) 0.6430 
         => (0.04, 0.05) 0.6436 
-        => (0.04, 0.10) 0.6453    <---BEST!
+        => (0.04, 0.10) 0.6453    <--- BEST!
         => (0.04, 0.20) 0.6419 
         => (0.05, 0.04) 0.6415 
         => (0.05, 0.05) 0.6441 
@@ -60,11 +69,94 @@
         => (0.10, 0.20) 0.6385 
         => (0.20, 0.04) 0.6345 
         => (0.20, 0.05) 0.6365 
-    6. [TRY] train_min_time => submit only place_ids from 1.0x1.0 region, find the best threshold!
-    7. [TRY] place_max_first_checkin => good with proper threshold! could improve ~0.005
-    8. hour2, hour3, hour4
+    6. place_min_last_checkin => good with proper threshold! could improve ~0.005
+        => 500000 : 0.02236
+        => 550000 : 0.02235
+        => 600000 : 0.02237   <--- BEST!
+        => 650000 : 0.02235
+        => 700000 : 0.02225
+    7. take place_id "popularity" into training feature
+        popu_th = 0.0,   MAP=0.7109
+        popu_th = 0.001, MAP=0.7115
+        popu_th = 0.002, MAP=0.7117
+        popu_th = 0.003, MAP=0.7122   
+        popu_th = 0.004, MAP=0.7118
+        popu_th = 0.005, MAP=0.7113
+        popu_th = 0.01,  MAP=0.7086
+        ------[after fix train/test split]-----
+        popu_th = 0.0   , 0.5321
+        popu_th = 0.001 , 0.5328
+        popu_th = 0.002 , 0.5338
+        popu_th = 0.003 , 0.5342
+        popu_th = 0.004 , 0.5343
+        popu_th = 0.005 , 0.5349  <--- BEST!
+        popu_th = 0.01  , 0.5313
+        popu_th = 0.015 , 0.5229
+        popu_th = 0.02  , 0.5041
+        popu_th = 0.025 , 0.4915
+    8. train_min_time => submit only place_ids from 1.0x1.0 region, find the best threshold!
+        train_min_time = 0      , 0.6636  <--- BEST!
+        train_min_time = 150000 , 0.6457
+        train_min_time = 200000 , 0.6306
+        train_min_time = 250000 , 0.6237
+        train_min_time = 300000 , 0.6198
+        #---LB test--------------------
+        train_min_time = 0      , 0.02238  <--- BEST!
+        train_min_time = 150000 , 0.02236
+        train_min_time = 250000 , 0.02233
+    9. loc_th_x/loc_th_y
+        th_x0.5, th_y1   MAP0.4926
+        th_x1.0, th_y1   MAP0.5044
+        th_x1.5, th_y1   MAP0.5082
+        th_x2.0, th_y1   MAP0.5092
+        th_x2.5, th_y1   MAP0.5093
+        th_x0.5, th_y1.5 MAP0.5287
+        th_x1.0, th_y1.5 MAP0.5397
+        th_x1.5, th_y1.5 MAP0.5430
+        th_x2.0, th_y1.5 MAP0.5443
+        th_x2.5, th_y1.5 MAP0.5444
+        th_x0.5, th_y2.5 MAP0.5349
+        #-----------------------
+        th_x2.0, th_y2 MAP0.5494
+        th_x2.5, th_y2 MAP0.5496
+        th_x3.0, th_y2 MAP0.5497  <--- BEST!
+        th_x3.5, th_y2 MAP0.5497
+        th_x4.0, th_y2 MAP0.5497
+        th_x4.5, th_y2 MAP0.5496
+        th_x2.0, th_y2.5 MAP0.5471
+        th_x2.5, th_y2.5 MAP0.5473
+        th_x3.0, th_y2.5 MAP0.5474
+        th_x3.5, th_y2.5 MAP0.5474
+        th_x4.0, th_y2.5 MAP0.5474
+        th_x4.5, th_y2.5 MAP0.5473
+        th_x2.0, th_y3 MAP0.5454
+        th_x2.5, th_y3 MAP0.5456
+        th_x3.0, th_y3 MAP0.5456
+        th_x3.5, th_y3 MAP0.5456
+        th_x4.0, th_y3 MAP0.5456
+        th_x4.5, th_y3 MAP0.5456
+        #------------------------
+        th_x2.3, th_y1.7 MAP0.5480
+        th_x2.5, th_y1.7 MAP0.5481
+        th_x2.7, th_y1.7 MAP0.5482
+        th_x2.9, th_y1.7 MAP0.5482
+        th_x3.1, th_y1.7 MAP0.5482
+        th_x3.3, th_y1.7 MAP0.5482
+        th_x3.5, th_y1.7 MAP0.5482
+        th_x2.3, th_y1.9 MAP0.5493
+        th_x2.5, th_y1.9 MAP0.5493
+        th_x2.7, th_y1.9 MAP0.5494
+        th_x2.9, th_y1.9 MAP0.5494
+        th_x3.1, th_y1.9 MAP0.5494
+        th_x3.3, th_y1.9 MAP0.5494
+        th_x3.5, th_y1.9 MAP0.5494
+        th_x2.3, th_y2.1 MAP0.5490
+        th_x2.5, th_y2.1 MAP0.5491
+    9. split time_th into wdays/hours.
     9. time/loc by rate, not hard limits. and maybe add into training-features.
-
+    10. xgboost early stop with validation samples
+    11. grid-wise parameter search
+    
 
 [COMBINE]
   {'mdl_weights': (0, 1, 0),       'time_th' : -1,    'loc_th_x' : 1000,  'loc_th_y' : 1000 } => tr=0.9925 / te=0.6325
@@ -72,6 +164,57 @@
   {'mdl_weights': (0.4, 1.0, 0.4), 'time_th' : 0.003, 'loc_th_x' : 1000,  'loc_th_y' : 1000 } => tr=       / te=0.6414
   {'mdl_weights': (0.4, 1.0, 0.4), 'time_th' : 0.003, 'loc_th_x' : 1.1,   'loc_th_y' : 1000 } => tr=       / te=0.6434
   {'mdl_weights': (0.4, 1.0, 0.4), 'time_th' : 0.003, 'loc_th_x' : 1.1,   'loc_th_y' : 2.2  } => tr=0.9026 / te=0.6453
+
+[feature selection]
+
+---[months]---
+x_cols = ['month2', 'month3', 'month6', 'accuracy', 'qday', 'month', 'year', 'x', 'y', 'hour', 'weekday']
+=====[Eva.Test score] MAP=0.6515 =====
+x_cols = ['month3', 'month6', 'accuracy', 'qday', 'month', 'year', 'x', 'y', 'hour', 'weekday']
+=====[Eva.Test score] MAP=0.6561 =====
+x_cols = ['month2', 'month6', 'accuracy', 'qday', 'month', 'year', 'x', 'y', 'hour', 'weekday']
+=====[Eva.Test score] MAP=0.6534 =====
+x_cols = ['month2', 'month3', 'accuracy', 'qday', 'month', 'year', 'x', 'y', 'hour', 'weekday']
+=====[Eva.Test score] MAP=0.6523 =====
+x_cols = ['month2', 'month3', 'month6', 'qday', 'month', 'year', 'x', 'y', 'hour', 'weekday']
+=====[Eva.Test score] MAP=0.6356 =====
+x_cols = ['month2', 'month3', 'month6', 'accuracy', 'month', 'year', 'x', 'y', 'hour', 'weekday']
+=====[Eva.Test score] MAP=0.6528 =====
+x_cols = ['month2', 'month3', 'month6', 'accuracy', 'qday', 'year', 'x', 'y', 'hour', 'weekday']
+=====[Eva.Test score] MAP=0.6552 =====
+x_cols = ['month2', 'month3', 'month6', 'accuracy', 'qday', 'month', 'x', 'y', 'hour', 'weekday']
+=====[Eva.Test score] MAP=0.6282 =====
+
+
+x_cols = ['accuracy', 'qday', 'month', 'year', 'x', 'y', 'hour', 'weekday']
+=====[Eva.Test score] MAP=0.6374 =====
+x_cols = ['accuracy', 'qday', 'year', 'x', 'y', 'hour', 'weekday']
+=====[Eva.Test score] MAP=0.6292 =====
+
+
+---[general]---
+x_cols = ['accuracy', 'qday', 'month', 'year', 'x', 'y', 'hour', 'weekday']
+=====[Eva.Test score] MAP=0.6570 =====
+x_cols = ['qday', 'month', 'year', 'x', 'y', 'hour', 'weekday']
+=====[Eva.Test score] MAP=0.6436 =====
+x_cols = ['accuracy', 'month', 'year', 'x', 'y', 'hour', 'weekday']
+=====[Eva.Test score] MAP=0.6591 =====
+x_cols = ['accuracy', 'qday', 'year', 'x', 'y', 'hour', 'weekday']
+=====[Eva.Test score] MAP=0.6442 =====
+x_cols = ['accuracy', 'qday', 'month', 'x', 'y', 'hour', 'weekday']
+=====[Eva.Test score] MAP=0.6386 =====
+
+
+---[hours]---
+x_cols = ['hour2', 'hour3', 'hour4', 'x', 'y', 'accuracy', 'hour', 'qday', 'weekday', 'month', 'year']
+=====[Eva.Test score] MAP=0.6486 =====
+x_cols = ['hour3', 'hour4', 'x', 'y', 'accuracy', 'hour', 'qday', 'weekday', 'month', 'year']
+=====[Eva.Test score] MAP=0.6512 =====
+x_cols = ['hour2', 'hour4', 'x', 'y', 'accuracy', 'hour', 'qday', 'weekday', 'month', 'year']
+=====[Eva.Test score] MAP=0.6511 =====
+x_cols = ['hour2', 'hour3', 'x', 'y', 'accuracy', 'hour', 'qday', 'weekday', 'month', 'year']
+=====[Eva.Test score] MAP=0.6506 =====
+x_cols = ['hour2', 'hour3', 'hour4', 'y', 'accuracy', 'hour', 'qday', 'weekday', 'month', 'year']
 
 
 #------------------------------
@@ -100,12 +243,6 @@
   3. [Score (num)] like yelp score, how hot this item in this region.
   4. add negative samples (at same region but not choosed) to make binary classification problem.
   5. divide into spatial/time grid models, blending models of nearby grids with weights
-
-
-[Post Processing] after model prediction
-  0. filter out items too far from current location
-  1. filter out non-popular items
-  2. filter out closed items
 
 
 #------------------------------

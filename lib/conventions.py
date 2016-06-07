@@ -37,6 +37,6 @@ def df2sample(df, x_min, x_max, y_min, y_max, x_cols):
   return x, y, row_id
 
 
-def get_range(size, step):
-  return list(zip(np.arange(0, size, step), np.arange(step, step + size, step)))
+def get_range(size, step, interleave):
+  return list(zip(np.arange(0, size, step/interleave), np.arange(step, step + size, step/interleave)))
 

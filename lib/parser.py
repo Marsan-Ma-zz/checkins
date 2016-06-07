@@ -34,7 +34,7 @@ class parser(object):
   #----------------------------------------
   def get_data(self, overwrite=False):
     start_time = time.time()
-    cache_name = "%s/data/cache/cache_get_data_size_%s.pkl" % (self.root, self.size)
+    cache_name = "%s/data/cache/cache_get_data_split_%i.pkl" % (self.root, self.train_test_split_time)
     if (os.path.exists(cache_name) and not overwrite):
       df_train, df_valid, df_test = pickle.load(open(cache_name, 'rb'))
       print("[get_samples] from cache: df_train = %s, df_valid = %s, df_test = %s, %.2f secs" % (df_train.shape, df_valid.shape, df_test.shape, time.time() - start_time))
@@ -42,8 +42,8 @@ class parser(object):
       df_train = self.parse_data('%s/data/train.csv.zip' % self.root)
       df_test = self.parse_data('%s/data/test.csv.zip' % self.root)
       # divide train/valid by time
-      df_valid = df_train[df_train.time < self.train_test_split_time]
-      df_train = df_train[df_train.time >= self.train_test_split_time]
+      df_valid = df_train[df_train.time >= self.train_test_split_time]
+      df_train = df_train[df_train.time < self.train_test_split_time]
       pickle.dump([df_train, df_valid, df_test], open(cache_name, 'wb'))
       print("[get_samples] final: train = %s, valid = %s, test = %s, %.2f secs" % (df_train.shape, df_valid.shape, df_test.shape, time.time() - start_time))
 
@@ -62,8 +62,8 @@ class parser(object):
 
 
   def show_info(self, df_train, df_valid, df_test):
-    print("df_valid time: %i - %i, %i samples" % (df_valid.time.min(), df_valid.time.max(), len(df_valid)))
-    print(df_train.time.min(), df_train.time.max(), len(df_train))
+    if len(df_valid) > 0: 
+      print("df_valid time: %i - %i, %i samples" % (df_valid.time.min(), df_valid.time.max(), len(df_valid)))
     print("df_train time: %i - %i, %i samples" % (df_train.time.min(), df_train.time.max(), len(df_train)))
     print("df_test time: %i - %i, %i samples" % (df_test.time.min(), df_test.time.max(), len(df_test)))
 
@@ -110,6 +110,9 @@ class parser(object):
     df['qday']    = (df['time']//60)%24//6+1 # 1 to 4
     df['weekday'] = (df['time']//1440)%7+1
     df['month']   = (df['time']//43200)%12+1 # rough estimate, month = 30 days
+    df['month2']   = (df['time']//43200)%12//2+1
+    df['month3']   = (df['time']//43200)%12//3+1
+    df['month6']   = (df['time']//43200)%12//6+1
     df['year']    = (df['time']//525600)+1
     return df
 

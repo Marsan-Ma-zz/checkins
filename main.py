@@ -18,30 +18,34 @@ class main(object):
 
   def __init__(self, root='.', params={}):
     self.timestamp = str(datetime.now().strftime("%Y%m%d_%H%M%S"))
-    self.all_feats = ['x','y','accuracy', 'hour', 'qday', 'weekday', 'month', 'year']
+    self.all_feats = ['accuracy', 'qday', 'month', 'year', 'x', 'y', 'hour', 'weekday']
     self.params = {
       'root'            : root,
       'x_cols'          : self.all_feats,
-      'location_shift'  : 2.0,
+      # 'location_shift'  : 2.0,
       'location_cache'  : "./data/cache/location_est.pkl",
       #-----[best parameters]-----
       'x_step'          : 0.04,
       'y_step'          : 0.10,
+      'x_inter'         : 4,
+      'y_inter'         : 4,
       #-----[data engineering in parser]-----
-      'train_test_split_time'   : 100000,   # confirmed!
-      'place_min_last_checkin'  : 600000,   # for submit 
+      'train_test_split_time'   : 700000,   # confirmed!
+      # 'train_test_split_time'   : 100000,   # confirmed!
+      'place_min_last_checkin'  : 600000,   # for submit  20160605_071204_0.6454
       # 'train_min_time'          : 300000,   # for submit (not good, no use!)
       # 'place_max_first_checkin' : 300000,   # for valid only, not for submit!
       # 'train_max_time'          : 500000,   # for valid only, not for submit!
       #-----[post-processing]-----
       'mdl_weights'             : (0.4, 1.0, 0.4),  # good, could probe further!
-      'time_th'                 : 0.003,
-      'loc_th_x'                : 1.2,
-      'loc_th_y'                : 2.2,
+      'time_th_wd'              : 0.004,
+      'time_th_hr'              : 0.004,
+      'popu_th'                 : 0.005,
+      'loc_th_x'                : 3,
+      'loc_th_y'                : 2,
     }
     for k,v in params.items(): self.params[k] = v   # overwrite if setup
-    # extra info
-
+    
     
 
   def cmd_parse(self, argv):
@@ -83,7 +87,7 @@ class main(object):
     #------------------------------------------
     elif 'skrf_grid_step' in run_cmd:
       for x_step in [0.04, 0.05, 0.1, 0.2]:
-        for y_step in [0.04, 0.05, 0.1, 0.2]:
+        for y_step in [0.05, 0.1, 0.2]:
           print("=====[%s for step=(%.2f, %.2f)]=====" % (run_cmd, x_step, y_step))
           self.params['size']   = 1
           self.params['x_step'] = x_step
@@ -98,10 +102,15 @@ class main(object):
       self.init_team()
       self.train_alg(alg)
       # drop 1 feature
-      for af in all_feats:
+      for af in ['month']:
         self.params['x_cols'] = [a for a in all_feats if a != af]
         self.init_team()
         self.train_alg(alg)
+      #
+      self.params['size']   = 10.0
+      self.params['stamp']  = "%s_%s" % (self.params['alg'], self.timestamp)
+      self.init_team()
+      self.train_alg(alg, keep_model=True, submit=True)
     #------------------------------------------
     elif run_cmd == 'skrf_gs_time':
       for mfc in [None, 200000, 250000, 300000]:
@@ -112,17 +121,31 @@ class main(object):
           self.train_alg(alg)
     #------------------------------------------
     elif run_cmd == 'skrf_gs_loc_th':
-      for th_y in np.arange(2, 2.4, 0.1):
-        for th_x in np.arange(0.6, 2, 0.2):
+      # for th_y in np.arange(1.5, 2.5, 0.1):
+      #   for th_x in np.arange(0.6, 2, 0.2):
+      for th_y in np.arange(1.7, 2.5, 0.2):
+        for th_x in np.arange(2.3, 3.5, 0.2):
           print("[SKRF_GS_LOC_TH]: th_x=%s, th_y=%s" % (th_x, th_y))
           self.params['loc_th_x'] = th_x
           self.params['loc_th_y'] = th_y
           self.init_team()
           self.evaluate_model(evaluate=True, submit=False)
     #------------------------------------------
-    elif run_cmd == 'skrf_gs_time_th':
+    elif run_cmd == 'skrf_gs_time_th_wd':
       for pth in np.arange(0, 0.005, 0.001):
-        self.params['time_th'] = pth
+        self.params['time_th_wd'] = pth
+        self.init_team()
+        self.evaluate_model(evaluate=True, submit=False)
+    #------------------------------------------
+    elif run_cmd == 'skrf_gs_time_th_hr':
+      for pth in np.arange(0, 0.005, 0.001):
+        self.params['time_th_hr'] = pth
+        self.init_team()
+        self.evaluate_model(evaluate=True, submit=False)
+    #------------------------------------------
+    elif run_cmd == 'skrf_gs_popu_th':
+      for pth in np.arange(0, 0.005, 0.001):
+        self.params['popu_th'] = pth
         self.init_team()
         self.evaluate_model(evaluate=True, submit=False)
     #------------------------------------------
@@ -149,7 +172,22 @@ class main(object):
       self.init_team()
       self.train_alg(alg, keep_model=True, submit=True)
     #------------------------------------------
+    elif run_cmd == 'skrf_place_min_last_checkin':
+      for mlc in [550000, 650000]:
+        self.params['place_min_last_checkin'] = mlc
+        self.params['stamp'] = "%s_%s_%i" % (self.params['alg'], self.timestamp, mlc/1e4)
+        self.init_team()
+        self.train_alg(alg, keep_model=True, submit=True)
+    #------------------------------------------
+    elif run_cmd == 'skrf_train_min_time':
+      for mlc in [0, 50000, 100000, 150000, 200000]:
+        self.params['train_min_time'] = mlc
+        self.params['stamp'] = "%s_%s_%i" % (self.params['alg'], self.timestamp, mlc/1e4)
+        self.init_team()
+        self.train_alg(alg, keep_model=True, submit=True)
+    #------------------------------------------
     elif 'submit' in run_cmd:
+      self.params['train_test_split_time'] = 1e10   # use all samples for training
       self.init_team()
       self.train_alg(alg, keep_model=True, submit=True)
     elif 'eva_exist' in run_cmd:
@@ -164,9 +202,13 @@ class main(object):
       df_train, df_valid, df_test = self.pas.get_data()
       self.init_location_table(pd.concat([df_train, df_valid]))
     #------------------------------------------
+    elif 'fast' in run_cmd: # fast flow debug
+      self.init_team()
+      self.train_alg(alg, params={'n_estimators': 5})
+    #------------------------------------------
     else: # single model
       self.init_team()
-      self.train_alg(run_cmd)
+      self.train_alg(alg)
     #------------------------------------------
     
 
@@ -182,9 +224,11 @@ class main(object):
     # train & test
     print("[train_alg]: %s" % params)
     self.tra.train(df_train, alg=alg, params=params)
+    train_score, valid_score = 0, 0
     if self.params['size'] <= 1:  # eva.train only when dev.
       _, train_score = self.eva.evaluate(df_train, title='Eva.Train')
-    _, valid_score = self.eva.evaluate(df_valid, title='Eva.Test')
+    if len(df_valid) > 0:
+      _, valid_score = self.eva.evaluate(df_valid, title='Eva.Test')
     
     # save & clear
     if not keep_model:
@@ -196,7 +240,7 @@ class main(object):
 
 
   def init_location_table(self, df):
-    # location estimation
+    # ----- location estimation -----
     stat_mean = df[['place_id', 'x', 'y']].groupby('place_id').mean()
     stat_mean = stat_mean.rename(columns = {'x':'x_mean', 'y': 'y_mean'})
     stat_mean.reset_index(inplace=True)
@@ -208,18 +252,33 @@ class main(object):
     stat_loc['x_max'] = stat_loc.x_mean + 2*stat_loc.x_std
     stat_loc['y_min'] = stat_loc.y_mean - 2*stat_loc.y_std
     stat_loc['y_max'] = stat_loc.y_mean + 2*stat_loc.y_std
-    # available time estimation
+
+    # ----- available time: hours -----
     avail_hours = df.groupby('place_id').hour.apply(lambda x: Counter(x))
     avail_hours = avail_hours.to_dict()
     sum_hours   = df.place_id.value_counts()
     stat_hours  = {(pid, i): v/sum_hours[pid] for (pid, i), v in avail_hours.items()}
-
+    
+    # ----- available time: wdays -----
     avail_wdays = df.groupby('place_id').weekday.apply(lambda x: Counter(x))
     avail_wdays = avail_wdays.to_dict()
     sum_wdays   = df.place_id.value_counts()
     stat_wdays  = {(pid, i): v/sum_wdays[pid] for (pid, i), v in avail_wdays.items()}
 
-    pickle.dump([stat_loc, stat_wdays, stat_hours], open(self.params['location_cache'], 'wb'))
+    # ----- place popularity -----
+    x_ranges = conv.get_range(self.params['size'], self.params['x_step'])
+    y_ranges = conv.get_range(self.params['size'], self.params['y_step'])
+    stat_popular = {}
+    for x_idx, (x_min, x_max) in enumerate(x_ranges):
+      x_min, x_max = conv.trim_range(x_min, x_max, self.params['size'])
+      df_row = df[(df.x >= x_min) & (df.x < x_max)]
+      for y_idx, (y_min, y_max) in enumerate(y_ranges): 
+        y_min, y_max = conv.trim_range(y_min, y_max, self.params['size'])
+        df_grid = df_row[(df_row.y >= y_min) & (df_row.y < y_max)]
+        total = len(df_grid)
+        stat_popular[(x_idx, y_idx)] = {k: v/total for k,v in Counter(list(df_grid.place_id.values)).items()}
+    # ----- save -----
+    pickle.dump([stat_loc, stat_wdays, stat_hours, stat_popular], open(self.params['location_cache'], 'wb'))
     print("location cache written in %s" % self.params['location_cache'])
 
   # skip training, evaluate from existing model
