@@ -55,6 +55,11 @@ class evaluator(object):
     preds_total = []
     score_total = []
 
+    # check model exists
+    if not os.path.exists("%s/models/%s" % (self.root, self.stamp)):
+      print("[ERROR] evaluate: model %s does not exists!!" % mdl_path)
+      return
+
     # launch mp jobs
     processes = []
     for x_idx, (x_min, x_max) in enumerate(self.x_ranges):
@@ -66,7 +71,7 @@ class evaluator(object):
       for y_idx, (y_min, y_max) in enumerate(self.y_ranges):
         if (x_idx % self.x_inter == 0) and (y_idx % self.y_inter == 0): # skip interleave blocks
           y_min, y_max = conv.trim_range(y_min, y_max, self.size)
-          w_ary = [(x_idx-1, y_idx), (x_idx, y_idx), (x_idx+1, y_idx)]
+          w_ary = [(x_idx-2, y_idx), (x_idx-1, y_idx), (x_idx, y_idx), (x_idx+1, y_idx), (x_idx+2, y_idx)]
           mdl_names = ["%s/models/%s/grid_model_x_%s_y_%s.pkl.gz" % (self.root, self.stamp, xi, yi) for xi, yi in w_ary]
           X, y, row_id = conv.df2sample(df_row, None, None, y_min, y_max, self.x_cols)
           if len(y) == 0:
@@ -133,7 +138,7 @@ class evaluator(object):
 #----------------------------------------
 #   Multi-Thread tasks
 #----------------------------------------
-def predict_clf(mdl_names, mdl_weights, X, y, row_id, x_idx, y_idx, popu_th, time_th_wd, time_th_hr, batch=10000):
+def predict_clf(mdl_names, mdl_weights, X, y, row_id, xi, yi, popu_th, time_th_wd, time_th_hr, batch=10000):
   def apk(actual, predicted, k=3):
     if len(predicted) > k: 
       predicted = predicted[:k]
@@ -152,7 +157,7 @@ def predict_clf(mdl_names, mdl_weights, X, y, row_id, x_idx, y_idx, popu_th, tim
     except Exception as e:
       print("[Exception]:", e, preds)
     return sum(match)/len(match)
-  def merge_bests(clfs, weights, samples, time_th_wd, time_th_hr):
+  def merge_bests(clfs, weights, samples):
     sols = [clf.predict_proba(samples) for clf in clfs]
     sols = [[[(clf.classes_[i], v*w) for i, v in enumerate(line)] for line in sol] for clf, w, sol in zip(clfs, weights, sols)]
     final_bests = []
@@ -166,21 +171,21 @@ def predict_clf(mdl_names, mdl_weights, X, y, row_id, x_idx, y_idx, popu_th, tim
       avail_place = LOCATION[(LOCATION.x_min <= s.x) & (LOCATION.x_max >= s.x) & (LOCATION.y_min <= s.y) & (LOCATION.y_max >= s.y)].place_id.values
       psol = [p for p in psol if (p in avail_place) and 
         (AVAIL_WDAYS.get((p, s.weekday), 0) > time_th_wd) and 
-        (AVAIL_HOURS.get((p, s.hour), 0) > time_th_hr) and
-        (POPULAR[(x_idx, y_idx)].get(p, 0) > popu_th)
+        (AVAIL_HOURS.get((p, s.hour), 0) > time_th_hr) #and
+        # (POPULAR[(xi, yi)].get(p, 0) > popu_th)
       ]
       # -------------------------------
       final_bests.append(psol[:3])
     return final_bests
   #
   clfs, weights = zip(*[(pickle.load(gzip.open(mname, 'rb')), w) for mname, w in zip(mdl_names, mdl_weights) if os.path.exists(mname)])
-  # print(weights)
+  print(weights)
   # all_class = [el for el in clf.classes_]
   preds = []
   for ii in range(0, len(X), batch):
     samples = X[ii:ii+batch]
     if len(samples) > 0:
-      preds += merge_bests(clfs, weights, samples, time_th_wd, time_th_hr)
+      preds += merge_bests(clfs, weights, samples)
   clfs = None
   preds = pd.DataFrame(preds)
   preds['row_id'] = row_id

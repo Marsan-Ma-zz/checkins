@@ -32,6 +32,19 @@
         => y(0, 0.5, 1, 0.5, 0)      : 0.6331
         => y(0, 0.3, 1, 0.3, 0)      : 0.6385
         => y(0, 0.2, 1, 0.2, 0)      : 0.6392
+        ------[after fix train/test split]-----
+        (0.0, 1.0, 0.0) 0.5431
+        (0.2, 1.0, 0.2) 0.5431
+        (0.4, 1.0, 0.4) 0.5426
+        (0.6, 1.0, 0.6) 0.5408
+        (0.8, 1.0, 0.8) 0.5372
+        (1.0, 1.0, 1.0) 0.5336 
+        (0.0, 0, 1.0, 0, 0.0) 0.5418 
+        (0.2, 0, 1.0, 0, 0.2) 0.5408 
+        (0.4, 0, 1.0, 0, 0.4) 0.5351 
+        (0.6, 0, 1.0, 0, 0.6) 0.5241 
+        (0.8, 0, 1.0, 0, 0.8) 0.5131 
+        (1.0, 0, 1.0, 0, 1.0) 0.4977 
     4. filter place_ids by opening time? (weekday, hour)
         => place_th = 0 :   0.6461
         => place_th = 1 :   0.6470
@@ -69,6 +82,21 @@
         => (0.10, 0.20) 0.6385 
         => (0.20, 0.04) 0.6345 
         => (0.20, 0.05) 0.6365 
+        ------[after fix train/test split]-----
+        (0.04, 0.08) 0.5371 
+        (0.04, 0.10) 0.5359 
+        (0.04, 0.16) 0.5262 
+        (0.04, 0.20) 0.5338 
+        (0.05, 0.08) 0.5383
+        (0.05, 0.10) 0.5378 
+        (0.05, 0.16) 0.5304 
+
+        (0.04, 0.08) 0.5396
+        (0.05, 0.08) 0.5399
+        (0.08, 0.08) 0.5428   <--- BEST!
+        (0.10, 0.08) 0.5420
+        (0.20, 0.08) 0.5393
+
     6. place_min_last_checkin => good with proper threshold! could improve ~0.005
         => 500000 : 0.02236
         => 550000 : 0.02235
@@ -153,6 +181,26 @@
         th_x2.3, th_y2.1 MAP0.5490
         th_x2.5, th_y2.1 MAP0.5491
     9. split time_th into wdays/hours.
+        time_th_wd = 0.0  , 0.5411
+        time_th_wd = 0.001, 0.5411
+        time_th_wd = 0.002, 0.5413
+        time_th_wd = 0.003, 0.5413  <--- BEST!
+        time_th_wd = 0.004, 0.5413  
+        #------------------------
+        time_th_hr = 0.0  , 0.5396
+        time_th_hr = 0.001, 0.5397
+        time_th_hr = 0.002, 0.5400
+        time_th_hr = 0.003, 0.5411
+        time_th_hr = 0.004, 0.5418  <--- BEST!
+        time_th_hr = 0.005, 0.5402
+        time_th_hr = 0.007, 0.5387
+    10. drop place fewer than min_checkins
+        place_min_checkin = 0, 0.5411
+        place_min_checkin = 3, 0.5404
+        place_min_checkin = 6, 0.5404
+        place_min_checkin = 9, 0.5404
+        place_min_checkin = 12, 0.5403
+        place_min_checkin = 15, 0.5402
     9. time/loc by rate, not hard limits. and maybe add into training-features.
     10. xgboost early stop with validation samples
     11. grid-wise parameter search

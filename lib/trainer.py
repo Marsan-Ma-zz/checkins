@@ -28,8 +28,9 @@ class trainer(object):
   #   Main
   #----------------------------------------
   def train(self, df_train, alg="skrf", params={}):
-    os.mkdir("%s/models/%s" % (self.root, self.stamp))
-    print("[Train] start with params=%s @ %s" % (params, conv.now('full')))
+    mdl_path = "%s/models/%s" % (self.root, self.stamp)
+    os.mkdir(mdl_path)
+    print("[Train] start with params=%s, write models to %s @ %s" % (params, mdl_path, conv.now('full')))
     
     for x_idx, (x_min, x_max) in enumerate(self.x_ranges):
       x_min, x_max = conv.trim_range(x_min, x_max, self.size)

@@ -22,30 +22,33 @@ class main(object):
     self.params = {
       'root'            : root,
       'x_cols'          : self.all_feats,
-      # 'location_shift'  : 2.0,
-      'location_cache'  : "./data/cache/location_est.pkl",
       #-----[best parameters]-----
-      'x_step'          : 0.04,
-      'y_step'          : 0.10,
-      'x_inter'         : 4,
-      'y_inter'         : 4,
+      'x_step'          : 0.08,
+      'y_step'          : 0.08,
+      'x_inter'         : 2,
+      'y_inter'         : 2,
       #-----[data engineering in parser]-----
       'train_test_split_time'   : 700000,   # confirmed!
       # 'train_test_split_time'   : 100000,   # confirmed!
+      'place_min_checkin'       : 0,
       'place_min_last_checkin'  : 600000,   # for submit  20160605_071204_0.6454
       # 'train_min_time'          : 300000,   # for submit (not good, no use!)
       # 'place_max_first_checkin' : 300000,   # for valid only, not for submit!
       # 'train_max_time'          : 500000,   # for valid only, not for submit!
       #-----[post-processing]-----
-      'mdl_weights'             : (0.4, 1.0, 0.4),  # good, could probe further!
-      'time_th_wd'              : 0.004,
+      'mdl_weights'             : (0.1, 0.4, 1.0, 0.4, 0.1),  # good, could probe further!
+      'time_th_wd'              : 0.003,
       'time_th_hr'              : 0.004,
       'popu_th'                 : 0.005,
       'loc_th_x'                : 3,
       'loc_th_y'                : 2,
     }
+    self.params['location_cache'] = "%s/data/cache/location_est.pkl" % self.params['root'],
+      
     for k,v in params.items(): self.params[k] = v   # overwrite if setup
-    
+    for f in ['logs', 'models', 'cache', 'submit']:
+      op_path = '%s/%s' % (self.params['root'], f)
+      if not os.path.exists(op_path): os.mkdir(op_path)
     
 
   def cmd_parse(self, argv):
@@ -86,14 +89,19 @@ class main(object):
         self.train_alg(a)
     #------------------------------------------
     elif 'skrf_grid_step' in run_cmd:
-      for x_step in [0.04, 0.05, 0.1, 0.2]:
-        for y_step in [0.05, 0.1, 0.2]:
+      for x_step in [0.04, 0.05, 0.08, 0.1, 0.2]:
+        for y_step in [0.08]:
           print("=====[%s for step=(%.2f, %.2f)]=====" % (run_cmd, x_step, y_step))
-          self.params['size']   = 1
           self.params['x_step'] = x_step
           self.params['y_step'] = y_step
           self.init_team()
           self.train_alg(alg)
+    #------------------------------------------
+    elif 'skrf_mdl_weights' in run_cmd:
+      for sw in np.arange(0, 1.2, 0.2):
+        self.params['mdl_weights'] = (0, sw, 1.0, sw, 0)
+        self.init_team()
+        self.train_alg(alg)
     #------------------------------------------
     elif run_cmd == 'skrf_feats_sel':
       all_feats = self.all_feats
@@ -131,6 +139,12 @@ class main(object):
           self.init_team()
           self.evaluate_model(evaluate=True, submit=False)
     #------------------------------------------
+    elif run_cmd == 'skrf_place_min_checkin':
+      for mc in np.arange(0, 21, 3):
+        self.params['place_min_checkin'] = mc
+        self.init_team()
+        self.train_alg(alg)
+    #------------------------------------------
     elif run_cmd == 'skrf_gs_time_th_wd':
       for pth in np.arange(0, 0.005, 0.001):
         self.params['time_th_wd'] = pth
@@ -138,10 +152,10 @@ class main(object):
         self.evaluate_model(evaluate=True, submit=False)
     #------------------------------------------
     elif run_cmd == 'skrf_gs_time_th_hr':
-      for pth in np.arange(0, 0.005, 0.001):
+      for pth in np.arange(0.005, 0.02, 0.002):
         self.params['time_th_hr'] = pth
         self.init_team()
-        self.evaluate_model(evaluate=True, submit=False)
+        self.train_alg(alg)
     #------------------------------------------
     elif run_cmd == 'skrf_gs_popu_th':
       for pth in np.arange(0, 0.005, 0.001):

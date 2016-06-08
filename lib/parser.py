@@ -25,6 +25,7 @@ class parser(object):
     self.train_max_time = params.get('train_max_time')
     self.train_min_time = params.get('train_min_time')
     # place_id
+    self.place_min_checkin = params.get('place_min_checkin', 0)
     self.place_min_last_checkin = params.get('place_min_last_checkin')
     self.place_max_first_checkin = params.get('place_max_first_checkin')
 
@@ -48,6 +49,10 @@ class parser(object):
       print("[get_samples] final: train = %s, valid = %s, test = %s, %.2f secs" % (df_train.shape, df_valid.shape, df_test.shape, time.time() - start_time))
 
     # filter dead place_ids
+    if self.place_min_checkin:
+      place_cnt = df_train.place_id.value_counts()
+      cold_places = place_cnt[place_cnt < self.place_min_checkin].index
+      df_train = df_train[~df_train.place_id.isin(cold_places)]
     if self.place_min_last_checkin: 
       df_train = self.filter_min_last_checkin(df_train, th=self.place_min_last_checkin)
     if self.place_max_first_checkin:
