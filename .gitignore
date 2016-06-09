@@ -11,7 +11,10 @@
 #----------------------------------------------------------------------------
 
 # bundler state
-/data/
+/data/*.csv
+/data/*.gz 
+/data/*.zip
+/data/cache
 /logs/
 /models/
 /submit/

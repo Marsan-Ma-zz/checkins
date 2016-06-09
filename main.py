@@ -36,14 +36,14 @@ class main(object):
       # 'place_max_first_checkin' : 300000,   # for valid only, not for submit!
       # 'train_max_time'          : 500000,   # for valid only, not for submit!
       #-----[post-processing]-----
-      'mdl_weights'             : (0.1, 0.4, 1.0, 0.4, 0.1),  # good, could probe further!
+      'mdl_weights'             : (0, 0, 1.0, 0, 0),  # good, could probe further!
       'time_th_wd'              : 0.003,
       'time_th_hr'              : 0.004,
       'popu_th'                 : 0.005,
       'loc_th_x'                : 3,
       'loc_th_y'                : 2,
     }
-    self.params['location_cache'] = "%s/data/cache/location_est.pkl" % self.params['root'],
+    self.params['location_cache'] = "%s/data/cache/location_est.pkl" % self.params['root']
       
     for k,v in params.items(): self.params[k] = v   # overwrite if setup
     for f in ['logs', 'models', 'cache', 'submit']:
@@ -98,8 +98,8 @@ class main(object):
           self.train_alg(alg)
     #------------------------------------------
     elif 'skrf_mdl_weights' in run_cmd:
-      for sw in np.arange(0, 1.2, 0.2):
-        self.params['mdl_weights'] = (0, sw, 1.0, sw, 0)
+      for sw in np.arange(0, 1.2, 0.1):
+        self.params['mdl_weights'] = (sw, 0, 1.0, 0, sw)
         self.init_team()
         self.train_alg(alg)
     #------------------------------------------
@@ -280,8 +280,8 @@ class main(object):
     stat_wdays  = {(pid, i): v/sum_wdays[pid] for (pid, i), v in avail_wdays.items()}
 
     # ----- place popularity -----
-    x_ranges = conv.get_range(self.params['size'], self.params['x_step'])
-    y_ranges = conv.get_range(self.params['size'], self.params['y_step'])
+    x_ranges = conv.get_range(self.params['size'], self.params['x_step'], 1)
+    y_ranges = conv.get_range(self.params['size'], self.params['y_step'], 1)
     stat_popular = {}
     for x_idx, (x_min, x_max) in enumerate(x_ranges):
       x_min, x_max = conv.trim_range(x_min, x_max, self.params['size'])

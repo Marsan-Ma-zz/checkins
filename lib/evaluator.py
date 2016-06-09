@@ -151,7 +151,6 @@ def predict_clf(mdl_names, mdl_weights, X, y, row_id, xi, yi, popu_th, time_th_w
     return score / min(len(actual), k)
   def map_score(y, preds):
     if y is None: return None
-    # idxs = [i for i in [0,1,2] if i in preds.columns]
     try:
       match = [apk([ans], vals) for ans, vals in zip(y, preds[[0,1,2]].values)]
     except Exception as e:
@@ -179,8 +178,6 @@ def predict_clf(mdl_names, mdl_weights, X, y, row_id, xi, yi, popu_th, time_th_w
     return final_bests
   #
   clfs, weights = zip(*[(pickle.load(gzip.open(mname, 'rb')), w) for mname, w in zip(mdl_names, mdl_weights) if os.path.exists(mname)])
-  print(weights)
-  # all_class = [el for el in clf.classes_]
   preds = []
   for ii in range(0, len(X), batch):
     samples = X[ii:ii+batch]

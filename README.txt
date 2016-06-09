@@ -201,9 +201,12 @@
         place_min_checkin = 9, 0.5404
         place_min_checkin = 12, 0.5403
         place_min_checkin = 15, 0.5402
-    9. time/loc by rate, not hard limits. and maybe add into training-features.
-    10. xgboost early stop with validation samples
-    11. grid-wise parameter search
+    
+
+[TODO]
+    1. time/loc by rate, not hard limits. and maybe add into training-features.
+    2. xgboost early stop with validation samples
+    3. grid-wise parameter search
     
 
 [COMBINE]
