@@ -33,18 +33,22 @@
         => y(0, 0.3, 1, 0.3, 0)      : 0.6385
         => y(0, 0.2, 1, 0.2, 0)      : 0.6392
         ------[after fix train/test split]-----
-        (0.0, 1.0, 0.0) 0.5431
-        (0.2, 1.0, 0.2) 0.5431
-        (0.4, 1.0, 0.4) 0.5426
-        (0.6, 1.0, 0.6) 0.5408
-        (0.8, 1.0, 0.8) 0.5372
-        (1.0, 1.0, 1.0) 0.5336 
-        (0.0, 0, 1.0, 0, 0.0) 0.5418 
-        (0.2, 0, 1.0, 0, 0.2) 0.5408 
-        (0.4, 0, 1.0, 0, 0.4) 0.5351 
-        (0.6, 0, 1.0, 0, 0.6) 0.5241 
-        (0.8, 0, 1.0, 0, 0.8) 0.5131 
-        (1.0, 0, 1.0, 0, 1.0) 0.4977 
+        x(0.0, 1.0, 0.0) 0.5431
+        x(0.2, 1.0, 0.2) 0.5431
+        x(0.4, 1.0, 0.4) 0.5426
+        x(0.6, 1.0, 0.6) 0.5408
+        x(0.8, 1.0, 0.8) 0.5372
+        x(1.0, 1.0, 1.0) 0.5336 
+
+        x(0.0, 0, 1.0, 0, 0.0) 0.5416 
+        x(0.1, 0, 1.0, 0, 0.1) 0.5416 
+        x(0.2, 0, 1.0, 0, 0.2) 0.5410 
+        x(0.3, 0, 1.0, 0, 0.3) 0.5394 
+        x(0.4, 0, 1.0, 0, 0.4) 0.5363 
+        x(0.5, 0, 1.0, 0, 0.5) 0.5318 
+        x(0.6, 0, 1.0, 0, 0.6) 0.5262 
+        x(0.7, 0, 1.0, 0, 0.7) 0.5195 
+
     4. filter place_ids by opening time? (weekday, hour)
         => place_th = 0 :   0.6461
         => place_th = 1 :   0.6470
@@ -205,6 +209,14 @@
 
 [TODO]
     1. time/loc by rate, not hard limits. and maybe add into training-features.
+        => try df_preprocess:
+          None        : 0.5898
+          LOCATION    : 0.5546
+          AVAIL_WDAYS : 
+          AVAIL_HOURS : 0.7x (!!??)
+          POPULAR     : 0.5357
+        => by introduce too many features => need more samples, so try reduce candidate place_ids counts
+
     2. xgboost early stop with validation samples
     3. grid-wise parameter search
     
@@ -288,6 +300,10 @@ x_cols = ['hour2', 'hour3', 'hour4', 'y', 'accuracy', 'hour', 'qday', 'weekday',
   User vector: [location, time] 
   Item vector: [distance, onsale, score]
 
+  1. place distance to the mean X,Y as features
+  2. place checkins at this time (wday/hour)
+
+
   0. [Time (cat)] timestamp(min) => hour(important, by community), weekday, month
   1. [Distance (num)] build item locations first, add distance as feature.
   2. [OnSale (cat)] build item onsale time period first, this could be flag open/closed.
@@ -337,6 +353,3 @@ x_cols = ['hour2', 'hour3', 'hour4', 'y', 'accuracy', 'hour', 'qday', 'weekday',
   6. naive kNN
     https://www.kaggle.com/ntuloser/facebook-v-predicting-check-ins/naive-knn/code
 
-[Tool Usage]
-  1. XGBoost Ranking Question
-    https://www.kaggle.com/c/facebook-v-predicting-check-ins/forums/t/21142/xgboost-ranking-question

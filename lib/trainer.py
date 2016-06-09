@@ -22,8 +22,22 @@ class trainer(object):
     self.x_cols   = params['x_cols']
     self.x_ranges = conv.get_range(params['size'], params['x_step'], params['x_inter'])
     self.y_ranges = conv.get_range(params['size'], params['y_step'], params['y_inter'])
+    # extra_info
+    self.data_cache = params['data_cache']
+    self.loc_th_x = params['loc_th_x']
+    self.loc_th_y = params['loc_th_y']
+    self.en_preprocessing = params['en_preprocessing']
+
+    # global variable for multi-thread
+    global LOCATION, AVAIL_WDAYS, AVAIL_HOURS, POPULAR, GRID_CANDS
+    if os.path.exists(self.data_cache):
+      LOCATION, AVAIL_WDAYS, AVAIL_HOURS, POPULAR, GRID_CANDS = pickle.load(open(self.data_cache, 'rb'))
+      LOCATION['x_min'] = LOCATION.x_mean - self.loc_th_x*LOCATION.x_std
+      LOCATION['x_max'] = LOCATION.x_mean + self.loc_th_x*LOCATION.x_std
+      LOCATION['y_min'] = LOCATION.y_mean - self.loc_th_y*LOCATION.y_std
+      LOCATION['y_max'] = LOCATION.y_mean + self.loc_th_y*LOCATION.y_std
     
-    
+
   #----------------------------------------
   #   Main
   #----------------------------------------
@@ -39,8 +53,15 @@ class trainer(object):
       mp_pool = mp.Pool(pool_size)
       for y_idx, (y_min, y_max) in enumerate(self.y_ranges): 
         y_min, y_max = conv.trim_range(y_min, y_max, self.size)
-        X_train, y_train, _ = conv.df2sample(df_row, None, None, y_min, y_max, self.x_cols)
-        
+        df_grid = df_row[(df_row.y >= y_min) & (df_row.y < y_max)]
+
+        # preprocessing
+        if self.en_preprocessing:
+          df_grid, cols_extra = conv.df_preprocess(self.en_preprocessing, df_grid, x_idx, y_idx, LOCATION, AVAIL_WDAYS, AVAIL_HOURS, POPULAR, GRID_CANDS)
+          X_train, y_train, _ = conv.df2sample(df_grid, self.x_cols+cols_extra)
+        else:
+          X_train, y_train, _ = conv.df2sample(df_grid, self.x_cols)
+
         # save model (can't stay in memory, too large)
         clf = self.get_alg(alg, params)
         mdl_name = "%s/models/%s/grid_model_x_%s_y_%s.pkl.gz" % (self.root, self.stamp, x_idx, y_idx)

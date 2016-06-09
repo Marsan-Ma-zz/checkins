@@ -24,13 +24,7 @@ def trim_range(mi, ma, size):
   if ma == size: ma = ma + 0.001
   return mi, ma
 
-def df2sample(df, x_min, x_max, y_min, y_max, x_cols):
-  if x_max is None:
-    df = df[(df.y >= y_min) & (df.y < y_max)]
-  elif y_max is None:
-    df = df[(df.x >= x_min) & (df.x < x_max)]
-  else:
-    df = df[(df.x >= x_min) & (df.x < x_max) & (df.y >= y_min) & (df.y < y_max)]
+def df2sample(df, x_cols):
   row_id = df['row_id'].reset_index(drop=True)
   x = df[x_cols]
   y = None if ('place_id' not in df.columns) else df[['place_id']].values.ravel()
@@ -39,4 +33,29 @@ def df2sample(df, x_min, x_max, y_min, y_max, x_cols):
 
 def get_range(size, step, interleave):
   return list(zip(np.arange(0, size, step/interleave), np.arange(step, step + size, step/interleave)))
+
+
+def df_preprocess(mode, df_grid, x_idx, y_idx, LOCATION, AVAIL_WDAYS, AVAIL_HOURS, POPULAR, GRID_CANDS):
+  cand_ids = GRID_CANDS[(x_idx, y_idx)]
+  cols_origin = set(df_grid.columns)
+  # ----- LOCATION -----
+  cands_loc = LOCATION[LOCATION.place_id.isin(cand_ids)]
+  for i, xm, ym in (cands_loc[['place_id', 'x_mean', 'y_mean']].values):
+    if 'X' in mode:
+      df_grid.loc[:, "dist_x_%i" % i] = abs(df_grid.x - xm)
+    if 'Y' in mode:
+      df_grid.loc[:, "dist_y_%i" % i] = abs(df_grid.y - ym)
+  # ----- AVAIL_WDAYS -----
+  popu = POPULAR.get((x_idx, y_idx))
+  for c in cand_ids:
+    if 'W' in mode:
+      df_grid.loc[:, "avail_wdays_%s" % c] = [AVAIL_WDAYS.get((p, w), 0) for p, w in zip(df_grid.place_id.values, df_grid.weekday.values)]
+    if 'H' in mode:
+      df_grid.loc[:, "avail_hours_%s" % c] = [AVAIL_HOURS.get((p, w), 0) for p, w in zip(df_grid.place_id.values, df_grid.hour.values)]
+    if 'P' in mode:  
+      df_grid.loc[:, "popular_%s" % c] = [popu.get((p, w), 0) for p, w in zip(df_grid.place_id.values, df_grid.hour.values)]
+  # print("preprocessed (%i, %i) df_grid.shape=%s" % (x_idx, y_idx, len(df_grid.columns)))
+  cols_extra = list(set(df_grid.columns) - cols_origin)
+  if (x_idx + y_idx == 0): print("cols_extra = %s" % cols_extra)
+  return df_grid, cols_extra
 

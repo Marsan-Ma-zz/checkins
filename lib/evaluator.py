@@ -9,13 +9,6 @@ from collections import OrderedDict
 from lib import conventions as conv
 
 
-location_est = "./data/cache/location_est.pkl"
-if os.path.exists(location_est):
-  LOCATION, AVAIL_WDAYS, AVAIL_HOURS, POPULAR = pickle.load(open(location_est, 'rb'))
-else:
-  LOCATION, AVAIL_WDAYS, AVAIL_HOURS, POPULAR = [None]*4
-
-
 #===========================================
 #   Evaluator
 #===========================================  
@@ -32,20 +25,22 @@ class evaluator(object):
     self.y_ranges = conv.get_range(params['size'], params['y_step'], self.y_inter)
     self.mdl_weights = params['mdl_weights']
     # extra_info
-    self.location_cache = params['location_cache']
+    self.data_cache = params['data_cache']
     self.time_th_wd  = params['time_th_wd']
     self.time_th_hr  = params['time_th_hr']
     self.popu_th  = params['popu_th']
     self.loc_th_x = params['loc_th_x']
     self.loc_th_y = params['loc_th_y']
-    self.init_extra_info()
-
-
-  def init_extra_info(self):
-    LOCATION['x_min'] = LOCATION.x_mean - self.loc_th_x*LOCATION.x_std
-    LOCATION['x_max'] = LOCATION.x_mean + self.loc_th_x*LOCATION.x_std
-    LOCATION['y_min'] = LOCATION.y_mean - self.loc_th_y*LOCATION.y_std
-    LOCATION['y_max'] = LOCATION.y_mean + self.loc_th_y*LOCATION.y_std
+    self.en_preprocessing = params['en_preprocessing']
+    
+    # global variable for multi-thread
+    global LOCATION, AVAIL_WDAYS, AVAIL_HOURS, POPULAR, GRID_CANDS
+    if os.path.exists(self.data_cache):
+      LOCATION, AVAIL_WDAYS, AVAIL_HOURS, POPULAR, GRID_CANDS = pickle.load(open(self.data_cache, 'rb'))
+      LOCATION['x_min'] = LOCATION.x_mean - self.loc_th_x*LOCATION.x_std
+      LOCATION['x_max'] = LOCATION.x_mean + self.loc_th_x*LOCATION.x_std
+      LOCATION['y_min'] = LOCATION.y_mean - self.loc_th_y*LOCATION.y_std
+      LOCATION['y_max'] = LOCATION.y_mean + self.loc_th_y*LOCATION.y_std
     
 
   #----------------------------------------
@@ -71,12 +66,23 @@ class evaluator(object):
       for y_idx, (y_min, y_max) in enumerate(self.y_ranges):
         if (x_idx % self.x_inter == 0) and (y_idx % self.y_inter == 0): # skip interleave blocks
           y_min, y_max = conv.trim_range(y_min, y_max, self.size)
-          w_ary = [(x_idx-2, y_idx), (x_idx-1, y_idx), (x_idx, y_idx), (x_idx+1, y_idx), (x_idx+2, y_idx)]
+          w_ary = [(x_idx-1, y_idx), (x_idx, y_idx), (x_idx+1, y_idx)]
           mdl_names = ["%s/models/%s/grid_model_x_%s_y_%s.pkl.gz" % (self.root, self.stamp, xi, yi) for xi, yi in w_ary]
-          X, y, row_id = conv.df2sample(df_row, None, None, y_min, y_max, self.x_cols)
-          if len(y) == 0:
+          df_grid = df_row[(df_row.y >= y_min) & (df_row.y < y_max)]
+          
+          # preprocessing
+          if self.en_preprocessing:
+            df_grid, cols_extra = conv.df_preprocess(self.en_preprocessing, df_grid, x_idx, y_idx, LOCATION, AVAIL_WDAYS, AVAIL_HOURS, POPULAR, GRID_CANDS)
+            X, y, row_id = conv.df2sample(df_grid, self.x_cols+cols_extra)
+          else:
+            X, y, row_id = conv.df2sample(df_grid, self.x_cols)
+          
+          # fail-safe
+          if len(X) == 0:
             print("0 samples in x_idx=%i, y_idx=%i, skip evaluation." % (x_idx, y_idx))
             continue
+
+          # parallel evaluation
           p = mp_pool.apply_async(predict_clf, (mdl_names, self.mdl_weights, X, y, row_id, x_idx//self.x_inter, y_idx//self.y_inter, self.popu_th, self.time_th_wd, self.time_th_hr))
           processes.append([x_idx, y_idx, p])
         # collect mp results
@@ -126,8 +132,7 @@ class evaluator(object):
       preds_total = pd.concat([preds_total, df_dummies])
     #---------------------------------------------------------
     preds_total[['row_id', 'place_id']].sort_values(by='row_id').to_csv("%s/submit/submit_%s_%.4f.csv" % (self.root, self.stamp, score), index=False)
-    return  
-
+    
 
   # clear meta files
   def clear_meta_files(self):
@@ -177,7 +182,7 @@ def predict_clf(mdl_names, mdl_weights, X, y, row_id, xi, yi, popu_th, time_th_w
       final_bests.append(psol[:3])
     return final_bests
   #
-  clfs, weights = zip(*[(pickle.load(gzip.open(mname, 'rb')), w) for mname, w in zip(mdl_names, mdl_weights) if os.path.exists(mname)])
+  clfs, weights = zip(*[(pickle.load(gzip.open(mname, 'rb')), w) for mname, w in zip(mdl_names, mdl_weights) if os.path.exists(mname) and (w != 0)])
   preds = []
   for ii in range(0, len(X), batch):
     samples = X[ii:ii+batch]

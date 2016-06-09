@@ -14,10 +14,12 @@ PY3='stdbuf -o0 nohup python3 -u'
 # $PY3 main.py skrf_gs_params 1.0 skrf_gs_params_$NOW > "./logs/nohup_skrf_gs_params_$NOW.log" &
 # $PY3 main.py xgb_gs_params 0.5 xgb_gs_params_$NOW > "./logs/nohup_xgb_gs_params_$NOW.log" &
 
-# python3 main.py skrf_fast 1.0 skrf_$NOW   # Fastest for debug use
+# python3 main.py skrf 1 skrf_$NOW   # Fastest for debug use
+
 
 # [Specials]
-$PY3 main.py skrf_mdl_weights 3.2 skrf_mdl_weights_$NOW > "./logs/skrf_mdl_weights_$NOW.log" &
+$PY3 main.py skrf_max_cands 0.8 skrf_$NOW > "./logs/skrf_max_cands_$NOW.log" &
+# $PY3 main.py skrf_mdl_weights 3.2 skrf_mdl_weights_$NOW > "./logs/skrf_mdl_weights_$NOW.log" &
 # $PY3 main.py skrf_gs_loc_th 1.0 skrf_20160607_155730 > "./logs/skrf_gs_loc_th_$NOW.log" &
 # $PY3 main.py skrf_gs_place_th 1.0 skrf_20160604_125940 > "./logs/skrf_gs_place_th_$NOW.log" &
 # $PY3 main.py skrf_feats_sel 1.0 skrf_feats_sel_$NOW > "./logs/nohup_skrf_feats_sel_$NOW.log" &

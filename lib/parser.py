@@ -4,6 +4,7 @@ import numpy as np
 import multiprocessing as mp
 pool_size = mp.cpu_count()
 
+from collections import Counter
 from sklearn.cross_validation import train_test_split
 
 from lib import conventions as conv
@@ -14,7 +15,6 @@ from lib import conventions as conv
 class parser(object):
 
   def __init__(self, params):
-    print("params", params)
     self.size = params['size']
     self.root = params['root']
     self.sample_rate = 1.0 # this datasets not good for sampling, always use 100% samples.
@@ -121,4 +121,81 @@ class parser(object):
     df['year']    = (df['time']//525600)+1
     return df
 
+
+  #----------------------------------------
+  #   PreProcessing
+  #----------------------------------------
+  def init_data_cache(self, df, params):
+
+    # ----- location estimation -----
+    def location_estimation(df):
+      stat_mean = df[['place_id', 'x', 'y']].groupby('place_id').mean()
+      stat_mean = stat_mean.rename(columns = {'x':'x_mean', 'y': 'y_mean'})
+      stat_mean.reset_index(inplace=True)
+      stat_std = df[['place_id', 'x', 'y']].groupby('place_id').std()
+      stat_std = stat_std.rename(columns = {'x':'x_std', 'y': 'y_std'})
+      stat_std.reset_index(inplace=True)
+      stat_loc = stat_mean.merge(stat_std, on='place_id')
+      stat_loc['x_min'] = stat_loc.x_mean - 2*stat_loc.x_std
+      stat_loc['x_max'] = stat_loc.x_mean + 2*stat_loc.x_std
+      stat_loc['y_min'] = stat_loc.y_mean - 2*stat_loc.y_std
+      stat_loc['y_max'] = stat_loc.y_mean + 2*stat_loc.y_std
+      return stat_loc
+
+    # ----- available time: hours -----
+    def avail_hours(df):
+      avail_hours = df.groupby('place_id').hour.apply(lambda x: Counter(x))
+      avail_hours = avail_hours.to_dict()
+      sum_hours   = df.place_id.value_counts()
+      stat_hours  = {(pid, i): v/sum_hours[pid] for (pid, i), v in avail_hours.items()}
+      return stat_hours
+    
+    # ----- available time: wdays -----
+    def avail_wdays(df):
+      avail_wdays = df.groupby('place_id').weekday.apply(lambda x: Counter(x))
+      avail_wdays = avail_wdays.to_dict()
+      sum_wdays   = df.place_id.value_counts()
+      stat_wdays  = {(pid, i): v/sum_wdays[pid] for (pid, i), v in avail_wdays.items()}
+      return stat_wdays
+
+    # ----- place popularity -----
+    def popularity(df):
+      x_ranges = conv.get_range(params['size'], params['x_step'], 1)
+      y_ranges = conv.get_range(params['size'], params['y_step'], 1)
+      stat_popular = {}
+      for x_idx, (x_min, x_max) in enumerate(x_ranges):
+        x_min, x_max = conv.trim_range(x_min, x_max, params['size'])
+        df_row = df[(df.x >= x_min) & (df.x < x_max)]
+        for y_idx, (y_min, y_max) in enumerate(y_ranges): 
+          y_min, y_max = conv.trim_range(y_min, y_max, params['size'])
+          df_grid = df_row[(df_row.y >= y_min) & (df_row.y < y_max)]
+          total = len(df_grid)
+          stat_popular[(x_idx, y_idx)] = {k: v/total for k,v in Counter(list(df_grid.place_id.values)).items()}
+      return stat_popular
+
+    # ----- grid cadidates -----
+    def get_grid_candidates(df, stat_loc, max_cands):
+      x_ranges = conv.get_range(params['size'], params['x_step'], params['x_inter'])
+      y_ranges = conv.get_range(params['size'], params['y_step'], params['y_inter'])
+      grid_candidates = {}
+      for x_idx, (x_min, x_max) in enumerate(x_ranges):
+        x_min, x_max = conv.trim_range(x_min, x_max, params['size'])
+        df_row = df[(df.x >= x_min) & (df.x < x_max)]
+        for y_idx, (y_min, y_max) in enumerate(y_ranges): 
+          y_min, y_max = conv.trim_range(y_min, y_max, params['size'])
+          df_grid = df_row[(df_row.y >= y_min) & (df_row.y < y_max)]
+          # grid_candidates[(x_idx, y_idx)] = df_grid.place_id[df_grid.place_id.value_counts().values > 1].values
+          grid_candidates[(x_idx, y_idx)] = df_grid.place_id.value_counts()[:max_cands].index.tolist()
+      return grid_candidates
+
+    # ----- collect & save -----
+    print("[init_data_cache] start @ %s" % conv.now('full'))
+    stat_loc        = location_estimation(df)
+    stat_wdays      = avail_wdays(df)
+    stat_hours      = avail_hours(df)
+    stat_popular    = popularity(df)
+    grid_candidates = get_grid_candidates(df, stat_loc, params['max_cands'])
+    # info for post-processing
+    pickle.dump([stat_loc, stat_wdays, stat_hours, stat_popular, grid_candidates], open(params['data_cache'], 'wb'))
+    print("[init_data_cache] written in %s @ %s" % (params['data_cache'], conv.now('full')))
 
