@@ -36,6 +36,7 @@ def get_range(size, step, interleave):
 
 
 def df_preprocess(mode, df_grid, x_idx, y_idx, LOCATION, AVAIL_WDAYS, AVAIL_HOURS, POPULAR, GRID_CANDS):
+  start_time = time.time()
   cand_ids = GRID_CANDS[(x_idx, y_idx)]
   cols_origin = set(df_grid.columns)
   # ----- LOCATION -----
@@ -49,13 +50,13 @@ def df_preprocess(mode, df_grid, x_idx, y_idx, LOCATION, AVAIL_WDAYS, AVAIL_HOUR
   popu = POPULAR.get((x_idx, y_idx))
   for c in cand_ids:
     if 'W' in mode:
-      df_grid.loc[:, "avail_wdays_%s" % c] = [AVAIL_WDAYS.get((p, w), 0) for p, w in zip(df_grid.place_id.values, df_grid.weekday.values)]
+      df_grid.loc[:, "avail_wdays_%s" % c] = [AVAIL_WDAYS.get((c, v), 0) for v in df_grid.weekday.values]
     if 'H' in mode:
-      df_grid.loc[:, "avail_hours_%s" % c] = [AVAIL_HOURS.get((p, w), 0) for p, w in zip(df_grid.place_id.values, df_grid.hour.values)]
-    if 'P' in mode:  
-      df_grid.loc[:, "popular_%s" % c] = [popu.get((p, w), 0) for p, w in zip(df_grid.place_id.values, df_grid.hour.values)]
+      df_grid.loc[:, "avail_hours_%s" % c] = [AVAIL_HOURS.get((c, v), 0) for v in df_grid.hour.values]
   # print("preprocessed (%i, %i) df_grid.shape=%s" % (x_idx, y_idx, len(df_grid.columns)))
   cols_extra = list(set(df_grid.columns) - cols_origin)
-  if (x_idx + y_idx == 0): print("cols_extra = %s" % cols_extra)
+  if (x_idx + y_idx == 0): 
+    print("[df_preprocess] cols_extra = %s, cost %i secs" % (cols_extra, (time.time() - start_time)))
+    pickle.dump(df_grid, open("./data/test_grid.pkl", 'wb'))
   return df_grid, cols_extra
 

@@ -67,9 +67,9 @@ class parser(object):
 
 
   def show_info(self, df_train, df_valid, df_test):
+    print("df_train time: %i - %i, %i samples" % (df_train.time.min(), df_train.time.max(), len(df_train)))
     if len(df_valid) > 0: 
       print("df_valid time: %i - %i, %i samples" % (df_valid.time.min(), df_valid.time.max(), len(df_valid)))
-    print("df_train time: %i - %i, %i samples" % (df_train.time.min(), df_train.time.max(), len(df_train)))
     print("df_test time: %i - %i, %i samples" % (df_test.time.min(), df_test.time.max(), len(df_test)))
 
 
@@ -170,7 +170,7 @@ class parser(object):
           y_min, y_max = conv.trim_range(y_min, y_max, params['size'])
           df_grid = df_row[(df_row.y >= y_min) & (df_row.y < y_max)]
           total = len(df_grid)
-          stat_popular[(x_idx, y_idx)] = {k: v/total for k,v in Counter(list(df_grid.place_id.values)).items()}
+          stat_popular[(x_idx, y_idx)] = {k: v/total for k,v in Counter(df_grid.place_id.values.tolist()).items()}
       return stat_popular
 
     # ----- grid cadidates -----

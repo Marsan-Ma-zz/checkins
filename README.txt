@@ -205,18 +205,55 @@
         place_min_checkin = 9, 0.5404
         place_min_checkin = 12, 0.5403
         place_min_checkin = 15, 0.5402
-    
-
-[TODO]
-    1. time/loc by rate, not hard limits. and maybe add into training-features.
+    11. time/loc by rate, not hard limits. and maybe add into training-features.
         => try df_preprocess:
           None        : 0.5898
-          LOCATION    : 0.5546
-          AVAIL_WDAYS : 
-          AVAIL_HOURS : 0.7x (!!??)
-          POPULAR     : 0.5357
+          10L 0.9006 ,0.4633 
+          20L 0.8958 ,0.4524 
+          30L 0.8941 ,0.4519 
+          40L 0.8933 ,0.4503 
+          50L 0.8908 ,0.4471 
+          60L 0.8904 ,0.4481 
+          70L 0.8892 ,0.4438 
+          80L 0.8886 ,0.4454 
+          90L 0.8880 ,0.4479 
+
+          10P 0.9093 ,0.4578 
+          20P 0.9074 ,0.4624 
+          30P 0.9066 ,0.4640 
+          40P 0.9075 ,0.4464 
+          50P 0.9065 ,0.4528 
+          60P 0.9068 ,0.4481
+          70P 0.9061 ,0.4503
+          
+          10P 0.9415  0.5343
+          20P 0.9420  0.5308
+          30P 0.9416  0.5307
+          40P 0.9425  0.5273
+          50P 0.9425  0.5273
+          60P 0.9422  0.5262
+          70P 0.9421  0.5285
+          80P 0.9423  0.5264
+          90P 0.9424  0.5253
+
+          10X 0.9395  0.5116
+          20X 0.9383  0.5032
+          30X 0.9367  0.4971
+          40X 0.9349  0.4857
+          50X 0.9343  0.4874
+          60X 0.9344  0.4845
+          70X 0.9326  0.4788
+          80X 0.9325  0.4780
+          90X 0.9315  0.4693
+
+          10Y 0.9379  0.5137
+          20Y 0.9362  0.5073
+          30Y 0.9349  0.4997
+          40Y 0.9324  0.4926
+          50Y 0.9317  0.4904
         => by introduce too many features => need more samples, so try reduce candidate place_ids counts
 
+[TODO]
     2. xgboost early stop with validation samples
     3. grid-wise parameter search
     

@@ -36,8 +36,8 @@ class main(object):
       # 'place_max_first_checkin' : 300000,   # for valid only, not for submit!
       # 'train_max_time'          : 500000,   # for valid only, not for submit!
       #-----[pre-processing]-----
-      'en_preprocessing'        : 'H',  # 'XYWHP'
-      'max_cands'               : 30,
+      'en_preprocessing'        : 0, #'HW',  # 'XYWHP'
+      'max_cands'               : 10,
       #-----[post-processing]-----
       'mdl_weights'             : (0, 1.0, 0),  # good, could probe further!
       'time_th_wd'              : 0.003,
@@ -72,7 +72,7 @@ class main(object):
   def init_team(self):
     # parser & preprocessing
     self.params['stamp'] = self.params.get('stamp') or "%s_%s" % (self.params['alg'], self.timestamp)
-    self.params['data_cache'] = "%s/data/cache/data_cache_itv_x%iy%i_mcnt_%i.pkl" % (self.params['root'], self.params['x_inter'], self.params['y_inter'], self.params['max_cands'])
+    self.params['data_cache'] = "%s/data/cache/data_cache_size_%.2f_itv_x%iy%i_mcnt_%i.pkl" % (self.params['root'], self.params['size'], self.params['x_inter'], self.params['y_inter'], self.params['max_cands'])
     self.pas = parser.parser(self.params)
     if not os.path.exists(self.params['data_cache']):
       df_train, _, _ = self.pas.get_data()
@@ -117,12 +117,12 @@ class main(object):
         self.train_alg(alg)
     #------------------------------------------
     elif 'skrf_max_cands' in run_cmd:
-      for proc in ['L', 'W', 'H', 'P']:
-        for cants in np.arange(10, 100, 10):
+      for proc in ['W', 'H']:
+        for cants in np.arange(10, 50, 10):
           self.params['en_preprocessing'] = proc
           self.params['max_cands'] = cants
           self.init_team()
-          self.train_alg(alg, params={'n_estimators': 5})
+          self.train_alg(alg)
     #------------------------------------------
     elif run_cmd == 'skrf_feats_sel':
       all_feats = self.all_feats

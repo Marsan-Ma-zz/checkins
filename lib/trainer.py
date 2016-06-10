@@ -83,9 +83,10 @@ class trainer(object):
   #----------------------------------------
   def get_alg(self, alg, params):
     if alg == 'skrf':
-      # clf = ensemble.RandomForestClassifier(n_estimators=params.get('n_estimators', 100), max_depth=params.get('max_depth', 11), n_jobs=-1)
-      clf = ensemble.RandomForestClassifier(n_estimators=params.get('n_estimators', 150), max_depth=params.get('max_depth', 11), n_jobs=-1)
-      # clf = ensemble.RandomForestClassifier(n_estimators=params.get('n_estimators', 500), max_depth=params.get('max_depth', 11), n_jobs=-1)
+      # clf = ensemble.RandomForestClassifier(n_estimators=params.get('n_estimators', 10), max_depth=params.get('max_depth', 11), n_jobs=-1)
+      # clf = ensemble.RandomForestClassifier(n_estimators=params.get('n_estimators', 150), max_depth=params.get('max_depth', 11), n_jobs=-1)
+      clf = ensemble.RandomForestClassifier(n_estimators=params.get('n_estimators', 500), max_depth=params.get('max_depth', 11), n_jobs=-1)
+      # clf = ensemble.RandomForestClassifier(n_estimators=params.get('n_estimators', 300), max_depth=params.get('max_depth', 11), n_jobs=-1)
     elif alg == 'skgbc':
       clf = ensemble.GradientBoostingClassifier(n_estimators=params.get('n_estimators', 30), max_depth=params.get('max_depth', 5))
     elif alg == 'sklr':

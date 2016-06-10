@@ -18,7 +18,7 @@ PY3='stdbuf -o0 nohup python3 -u'
 
 
 # [Specials]
-$PY3 main.py skrf_max_cands 0.8 skrf_$NOW > "./logs/skrf_max_cands_$NOW.log" &
+python3 main.py skrf 0.4 skrf_$NOW #> "./logs/skrf_max_cands_$NOW.log" &
 # $PY3 main.py skrf_mdl_weights 3.2 skrf_mdl_weights_$NOW > "./logs/skrf_mdl_weights_$NOW.log" &
 # $PY3 main.py skrf_gs_loc_th 1.0 skrf_20160607_155730 > "./logs/skrf_gs_loc_th_$NOW.log" &
 # $PY3 main.py skrf_gs_place_th 1.0 skrf_20160604_125940 > "./logs/skrf_gs_place_th_$NOW.log" &
@@ -33,7 +33,7 @@ $PY3 main.py skrf_max_cands 0.8 skrf_$NOW > "./logs/skrf_max_cands_$NOW.log" &
 
 
 # [Submits]
-# $PY3 main.py skrf_submit 1.0 skrf_submit_$NOW > "./logs/nohup_skrf_submit_$NOW.log" &
+# python3 main.py skrf_submit 0.4 skrf_submit_$NOW #> "./logs/nohup_skrf_submit_$NOW.log" &
 # $PY3 main.py skrf 10.0 skrf_submit_$NOW > "./logs/nohup_skrf_submit_$NOW.log" &
 # $PY3 main.py xgb_submit 10.0 xgb_submit_$NOW > "./logs/nohup_xgb_submit_$NOW.log" &
 
@@ -45,4 +45,4 @@ $PY3 main.py skrf_max_cands 0.8 skrf_$NOW > "./logs/skrf_max_cands_$NOW.log" &
 # 
 
 # [Kill such processes]
-# sudo kill -9 `ps aux | grep "skrf_mdl_weights" | awk '{print $2}'`
+# sudo kill -9 `ps aux | grep "skrf_max_cands" | awk '{print $2}'`
