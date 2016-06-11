@@ -12,17 +12,17 @@ PY3='stdbuf -o0 nohup python3 -u'
 # $PY3 main.py skrf_grid_step 0.4 skrf_grid_step_$NOW > "./logs/nohup_skrf_grid_step_$NOW.log" &
 # $PY3 main.py xgb_grid_step 1.0 xgb_grid_step_$NOW > "./logs/nohup_skrf_grid_step_$NOW.log" &
 # $PY3 main.py skrf_gs_params 1.0 skrf_gs_params_$NOW > "./logs/nohup_skrf_gs_params_$NOW.log" &
-# $PY3 main.py xgb_gs_params 0.5 xgb_gs_params_$NOW > "./logs/nohup_xgb_gs_params_$NOW.log" &
+# $PY3 main.py xgb_gs_params 0.4 xgb_gs_params_$NOW > "./logs/nohup_xgb_gs_params_$NOW.log" &
 
-# python3 main.py skrf 1 skrf_$NOW   # Fastest for debug use
-
+# python3 main.py skrf 0.8 skrf_$NOW   # Fastest for debug use
+# python3 main.py skrf_feats_sel 0.4 skrf_$NOW #> "./logs/skrf_max_cands_$NOW.log" &
+# python3 main.py xgb 0.4 xgb_$NOW #> "./logs/xgb_$NOW.log" &
 
 # [Specials]
-python3 main.py skrf 0.4 skrf_$NOW #> "./logs/skrf_max_cands_$NOW.log" &
 # $PY3 main.py skrf_mdl_weights 3.2 skrf_mdl_weights_$NOW > "./logs/skrf_mdl_weights_$NOW.log" &
 # $PY3 main.py skrf_gs_loc_th 1.0 skrf_20160607_155730 > "./logs/skrf_gs_loc_th_$NOW.log" &
 # $PY3 main.py skrf_gs_place_th 1.0 skrf_20160604_125940 > "./logs/skrf_gs_place_th_$NOW.log" &
-# $PY3 main.py skrf_feats_sel 1.0 skrf_feats_sel_$NOW > "./logs/nohup_skrf_feats_sel_$NOW.log" &
+# $PY3 main.py skrf_feats_sel 0.8 skrf_feats_sel_$NOW > "./logs/nohup_skrf_feats_sel_$NOW.log" &
 # $PY3 main.py skrf_gs_time 1.0 skrf_gs_time_$NOW > "./logs/skrf_gs_time_$NOW.log" &
 # $PY3 main.py skrf_place_min_last_checkin 2.0 skrf_skrf_place_min_last_checkin_$NOW > "./logs/skrf_place_min_last_checkin_$NOW.log" &
 # $PY3 main.py skrf_train_min_time 1.0 skrf_train_min_time_$NOW > "./logs/skrf_train_min_time_$NOW.log" &
@@ -34,7 +34,7 @@ python3 main.py skrf 0.4 skrf_$NOW #> "./logs/skrf_max_cands_$NOW.log" &
 
 # [Submits]
 # python3 main.py skrf_submit 0.4 skrf_submit_$NOW #> "./logs/nohup_skrf_submit_$NOW.log" &
-# $PY3 main.py skrf 10.0 skrf_submit_$NOW > "./logs/nohup_skrf_submit_$NOW.log" &
+$PY3 main.py skrf_submit 10.0 skrf_submit_$NOW > "./logs/nohup_skrf_submit_$NOW.log" &
 # $PY3 main.py xgb_submit 10.0 xgb_submit_$NOW > "./logs/nohup_xgb_submit_$NOW.log" &
 
 
@@ -45,4 +45,4 @@ python3 main.py skrf 0.4 skrf_$NOW #> "./logs/skrf_max_cands_$NOW.log" &
 # 
 
 # [Kill such processes]
-# sudo kill -9 `ps aux | grep "skrf_max_cands" | awk '{print $2}'`
+# sudo kill -9 `ps aux | grep "skrf_feats_sel" | awk '{print $2}'`

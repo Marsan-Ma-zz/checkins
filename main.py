@@ -18,7 +18,7 @@ class main(object):
 
   def __init__(self, root='.', params={}):
     self.timestamp = str(datetime.now().strftime("%Y%m%d_%H%M%S"))
-    self.all_feats = ['accuracy', 'qday', 'month', 'year', 'x', 'y', 'hour', 'weekday']
+    self.all_feats = ['season', 'logacc', 'qday', 'month', 'accuracy', 'weekday', 'hour', 'year', 'x', 'y']
     self.params = {
       'root'            : root,
       'x_cols'          : self.all_feats,
@@ -30,16 +30,17 @@ class main(object):
       #-----[data engineering in parser]-----
       'train_test_split_time'   : 700000,   # confirmed!
       # 'train_test_split_time'   : 100000,   # confirmed!
-      'place_min_checkin'       : 0,
+      'place_min_checkin'       : 3,
       'place_min_last_checkin'  : 600000,   # for submit  20160605_071204_0.6454
       # 'train_min_time'          : 300000,   # for submit (not good, no use!)
       # 'place_max_first_checkin' : 300000,   # for valid only, not for submit!
       # 'train_max_time'          : 500000,   # for valid only, not for submit!
+      'remove_distance_outlier' : 2.0,
       #-----[pre-processing]-----
       'en_preprocessing'        : 0, #'HW',  # 'XYWHP'
       'max_cands'               : 10,
       #-----[post-processing]-----
-      'mdl_weights'             : (0, 1.0, 0),  # good, could probe further!
+      'mdl_weights'             : (0.4, 1.0, 0.4),  # good, could probe further!
       'time_th_wd'              : 0.003,
       'time_th_hr'              : 0.004,
       'popu_th'                 : 0.005,
@@ -47,7 +48,7 @@ class main(object):
       'loc_th_y'                : 2,
     } 
     for k,v in params.items(): self.params[k] = v   # overwrite if setup
-    for f in ['logs', 'models', 'cache', 'submit']:
+    for f in ['logs', 'models', 'data/cache', 'submit']:
       op_path = '%s/%s' % (self.params['root'], f)
       if not os.path.exists(op_path): os.mkdir(op_path)
 
@@ -124,6 +125,12 @@ class main(object):
           self.init_team()
           self.train_alg(alg)
     #------------------------------------------
+    elif 'skrf_remove_distance_outlier' in run_cmd:
+      for std in np.arange(1, 3, 0.5):
+        self.params['remove_distance_outlier'] = std
+        self.init_team()
+        self.train_alg(alg)
+    #------------------------------------------
     elif run_cmd == 'skrf_feats_sel':
       all_feats = self.all_feats
       # baseline
@@ -131,15 +138,10 @@ class main(object):
       self.init_team()
       self.train_alg(alg)
       # drop 1 feature
-      for af in ['month']:
+      for af in all_feats:
         self.params['x_cols'] = [a for a in all_feats if a != af]
         self.init_team()
         self.train_alg(alg)
-      #
-      self.params['size']   = 10.0
-      self.params['stamp']  = "%s_%s" % (self.params['alg'], self.timestamp)
-      self.init_team()
-      self.train_alg(alg, keep_model=True, submit=True)
     #------------------------------------------
     elif run_cmd == 'skrf_gs_time':
       for mfc in [None, 200000, 250000, 300000]:
@@ -161,7 +163,7 @@ class main(object):
           self.evaluate_model(evaluate=True, submit=False)
     #------------------------------------------
     elif run_cmd == 'skrf_place_min_checkin':
-      for mc in np.arange(0, 21, 3):
+      for mc in np.arange(0, 5, 1):
         self.params['place_min_checkin'] = mc
         self.init_team()
         self.train_alg(alg)
@@ -197,15 +199,15 @@ class main(object):
       self.tra, self.eva, self.pas = None, None, None
     elif run_cmd == 'xgb_gs_params':
       self.init_team()
-      for n_estimators in [50, 100, 200, 300, 500]:
-        for max_depth in [12]:
+      for n_estimators in [5, 10, 15, 20, 30]:
+        for max_depth in [11]:
           for learning_rate in [0.15]:
             self.train_alg(alg, params={'n_estimators': n_estimators, 'max_depth': max_depth, 'learning_rate': learning_rate})
       #
-      self.params['size']   = 10.0
-      self.params['stamp']  = "%s_%s" % (self.params['alg'], self.timestamp)
-      self.init_team()
-      self.train_alg(alg, keep_model=True, submit=True)
+      # self.params['size']   = 10.0
+      # self.params['stamp']  = "%s_%s" % (self.params['alg'], self.timestamp)
+      # self.init_team()
+      # self.train_alg(alg, keep_model=True, submit=True)
     #------------------------------------------
     elif run_cmd == 'skrf_place_min_last_checkin':
       for mlc in [550000, 650000]:
@@ -222,7 +224,7 @@ class main(object):
         self.train_alg(alg, keep_model=True, submit=True)
     #------------------------------------------
     elif 'submit' in run_cmd:
-      self.params['train_test_split_time'] = 1e10   # use all samples for training
+      # self.params['train_test_split_time'] = 1e10   # use all samples for training
       self.init_team()
       self.train_alg(alg, keep_model=True, submit=True)
     elif 'eva_exist' in run_cmd:

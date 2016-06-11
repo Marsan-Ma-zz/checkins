@@ -20,6 +20,31 @@
         no month    => 0.6266
         no year     => 0.6174   (!)
        add time     => 0.6330
+        ----------------------
+        all x_cols     => 0.9884 ,0.5300 
+        no yearday     => 0.9885 ,0.5343  (-)
+        no weekofyear  => 0.9887 ,0.5333  (-)
+        no month       => 0.9885 ,0.5342  (?)  > add back: 0.5357
+        no dayofmonth  => 0.9880 ,0.5331 
+        no season      => 0.9883 ,0.5325 
+        no accuracy    => 0.9884 ,0.5306 
+        no logacc      => 0.9884 ,0.5303 
+        no qday        => 0.9887 ,0.5278 
+        no weekday     => 0.9857 ,0.5244 
+        no hour        => 0.9858 ,0.5156 
+        no year        => 0.9871 ,0.5082 
+        no x           => 0.9824 ,0.5012 
+        no y           => 0.9775 ,0.4272
+        ----------------------
+        all x_cols    => 0.5371
+        no dayofmonth => 0.5396 (-)
+        no season     => 0.5373
+        no logacc     => 0.5370
+        no qday       => 0.5360
+        no month      => 0.5354
+        no accuracy   => 0.5378
+        no weekday    => 0.5310
+
     3. try predict with models from surrounding blocks => good! improve ~0.01 with 3-block in x-direction!
         => could try more alternates!
         => x(0, 0, 1, 0, 0)          : 0.6393
@@ -199,8 +224,12 @@
         time_th_hr = 0.005, 0.5402
         time_th_hr = 0.007, 0.5387
     10. drop place fewer than min_checkins
-        place_min_checkin = 0, 0.5411
-        place_min_checkin = 3, 0.5404
+        place_min_checkin = 0, 0.9400/0.5362
+        place_min_checkin = 1, 0.9400/0.5363
+        place_min_checkin = 2, 0.9400/0.5363
+        place_min_checkin = 3, 0.9400/0.5363
+        place_min_checkin = 4, 0.9400/0.5363
+        -------------------------
         place_min_checkin = 6, 0.5404
         place_min_checkin = 9, 0.5404
         place_min_checkin = 12, 0.5403
@@ -252,6 +281,96 @@
           40Y 0.9324  0.4926
           50Y 0.9317  0.4904
         => by introduce too many features => need more samples, so try reduce candidate place_ids counts
+    12. xgboost
+          'max_depth': 7, 'learning_rate': 0.05, 'n_estimators': 5, 0.7432, 0.5223
+          'max_depth': 7, 'learning_rate': 0.1, 'n_estimators': 5, 0.7582, 0.5200
+          'max_depth': 7, 'learning_rate': 0.15, 'n_estimators': 5, 0.7680, 0.5232
+          'max_depth': 9, 'learning_rate': 0.05, 'n_estimators': 5, 0.7446, 0.5215
+          'max_depth': 9, 'learning_rate': 0.1, 'n_estimators': 5, 0.7621, 0.5197
+          'max_depth': 9, 'learning_rate': 0.15, 'n_estimators': 5, 0.7720, 0.5233
+          'max_depth': 11, 'learning_rate': 0.05, 'n_estimators': 5, 0.7452, 0.5220
+          'max_depth': 11, 'learning_rate': 0.1, 'n_estimators': 5, 0.7635, 0.5201
+          'max_depth': 11, 'learning_rate': 0.15, 'n_estimators': 5, 0.7743, 0.5240
+          'max_depth': 13, 'learning_rate': 0.05, 'n_estimators': 5, 0.7454, 0.5219
+          'max_depth': 13, 'learning_rate': 0.1, 'n_estimators': 5, 0.7640, 0.5200
+          'max_depth': 13, 'learning_rate': 0.15, 'n_estimators': 5, 0.7749, 0.5233
+          'max_depth': 15, 'learning_rate': 0.05, 'n_estimators': 5, 0.7454, 0.5219
+          'max_depth': 15, 'learning_rate': 0.1, 'n_estimators': 5, 0.7640, 0.5201
+          'max_depth': 15, 'learning_rate': 0.15, 'n_estimators': 5, 0.7750, 0.5236
+
+          'max_depth': 7, 'learning_rate': 0.05, 'n_estimators': 10, 0.7699, 0.5300
+          'max_depth': 7, 'learning_rate': 0.1, 'n_estimators': 10, 0.7961, 0.5309
+          'max_depth': 7, 'learning_rate': 0.15, 'n_estimators': 10, 0.8152, 0.5294
+          'max_depth': 9, 'learning_rate': 0.05, 'n_estimators': 10, 0.7738, 0.5302
+          'max_depth': 9, 'learning_rate': 0.1, 'n_estimators': 10, 0.8060, 0.5316
+          'max_depth': 9, 'learning_rate': 0.15, 'n_estimators': 10, 0.8259, 0.5283
+          'max_depth': 11, 'learning_rate': 0.05, 'n_estimators': 10, 0.7754, 0.5303
+          'max_depth': 11, 'learning_rate': 0.1, 'n_estimators': 10, 0.8097, 0.5312
+          'max_depth': 11, 'learning_rate': 0.15, 'n_estimators': 10, 0.8321, 0.5300
+          'max_depth': 13, 'learning_rate': 0.05, 'n_estimators': 10, 0.7758, 0.5306
+          'max_depth': 13, 'learning_rate': 0.1, 'n_estimators': 10, 0.8117, 0.5306
+          'max_depth': 13, 'learning_rate': 0.15, 'n_estimators': 10, 0.8342, 0.5293
+          'max_depth': 15, 'learning_rate': 0.05, 'n_estimators': 10, 0.7760, 0.5306
+          'max_depth': 15, 'learning_rate': 0.1, 'n_estimators': 10, 0.8125, 0.5310
+          'max_depth': 15, 'learning_rate': 0.15, 'n_estimators': 10, 0.8353, 0.5300
+
+          'max_depth': 7, 'learning_rate': 0.05, 'n_estimators': 15, 0.7893, 0.5356
+          'max_depth': 7, 'learning_rate': 0.1, 'n_estimators': 15, 0.8240, 0.5334
+          'max_depth': 7, 'learning_rate': 0.15, 'n_estimators': 15, 0.8499, 0.5327
+          'max_depth': 9, 'learning_rate': 0.05, 'n_estimators': 15, 0.7955, 0.5348
+          'max_depth': 9, 'learning_rate': 0.1, 'n_estimators': 15, 0.8361, 0.5336
+          'max_depth': 9, 'learning_rate': 0.15, 'n_estimators': 15, 0.8635, 0.5316
+          'max_depth': 11, 'learning_rate': 0.05, 'n_estimators': 15, 0.7984, 0.5351
+          'max_depth': 11, 'learning_rate': 0.1, 'n_estimators': 15, 0.8425, 0.5338
+    13. skrf
+          'max_depth': 5, 'n_estimators': 200 ,0.7532 ,0.5039
+          'max_depth': 7, 'n_estimators': 200 ,0.8640 ,0.5247
+          'max_depth': 9, 'n_estimators': 200 ,0.9475 ,0.5325
+          'max_depth': 11, 'n_estimators': 200 ,0.9807 ,0.5355
+          'max_depth': 13, 'n_estimators': 200 ,0.9910 ,0.5354
+          'max_depth': 15, 'n_estimators': 200 ,0.9941 ,0.5340
+
+          'max_depth': 5, 'n_estimators': 300 ,0.7535 ,0.5047
+          'max_depth': 7, 'n_estimators': 300 ,0.8638 ,0.5254
+          'max_depth': 9, 'n_estimators': 300 ,0.9477 ,0.5328
+          'max_depth': 11, 'n_estimators': 300 ,0.9808 ,0.5361
+          'max_depth': 13, 'n_estimators': 300 ,0.9912 ,0.5360
+          'max_depth': 15, 'n_estimators': 300 ,0.9941 ,0.5360
+
+          'max_depth': 5, 'n_estimators': 500 ,0.7532 ,0.5039
+          'max_depth': 7, 'n_estimators': 500 ,0.8644 ,0.5268
+          'max_depth': 9, 'n_estimators': 500 ,0.9477 ,0.5346
+          'max_depth': 11, 'n_estimators': 500 ,0.9808 ,0.5356
+          'max_depth': 13, 'n_estimators': 500 ,0.9911 ,0.5363  <--- 2nd BEST!
+          'max_depth': 15, 'n_estimators': 500 ,0.9942 ,0.5366
+
+          'max_depth': 5, 'n_estimators': 800 ,0.7537 ,0.5043
+          'max_depth': 7, 'n_estimators': 800 ,0.8644 ,0.5263
+          'max_depth': 9, 'n_estimators': 800 ,0.9479 ,0.5355
+          'max_depth': 11, 'n_estimators': 800 ,0.9811 ,0.5363
+          'max_depth': 13, 'n_estimators': 800 ,0.9912 ,0.5380  <--- BEST!
+          'max_depth': 15, 'n_estimators': 800 ,0.9941 ,0.5374
+
+          'max_depth': 5, 'n_estimators': 1000 ,0.7536 ,0.5037
+          'max_depth': 7, 'n_estimators': 1000 ,0.8642, 0.5261
+          'max_depth': 9, 'n_estimators': 1000 ,0.9479, 0.5350
+          'max_depth': 11, 'n_estimators': 1000 ,0.9812, 0.5369
+          'max_depth': 13, 'n_estimators': 1000 ,0.9911, 0.5377
+          'max_depth': 15, 'n_estimators': 1000 ,0.9941, 0.5369
+
+    14. remove_distance_outlier: remove outlier from training set which (x, y) too far from average of certain place
+          None    => (0.9402/0.5360?)
+          std1.0  => 0.9863/0.5176
+          std1.5  => 0.9828/0.5320
+          std2.0  => 0.9808/0.5372  <--- BEST!
+          std2.5  => 0.9661/0.5353
+    13. SVM
+    14. KNN
+    15. use data conversion methods in KNN example (fw = [500, 1000, 4, 3, 1./22., 2, 10], black magic)
+    16. add KNN results as input feature
+    17. Blending => collect from output, sum-up score (1st:1, 2nd:0.5, 3rd:1/3)
+          => by same models but each drop 1 feature 
+          => by skrf & xgb & knn
 
 [TODO]
     2. xgboost early stop with validation samples
@@ -348,6 +467,33 @@ x_cols = ['hour2', 'hour3', 'hour4', 'y', 'accuracy', 'hour', 'qday', 'weekday',
   4. add negative samples (at same region but not choosed) to make binary classification problem.
   5. divide into spatial/time grid models, blending models of nearby grids with weights
 
+
+0       0  0.7941  9.0809        54  470702  8523065625    22     4        5   
+1       1  5.9567  4.7968        13  186555  1757726713    14     3        4   
+2       2  8.3078  7.0407        74  322648  1137537235     2     1        1   
+5       5  3.8099  1.9586        75  178065  6289802927    16     3        5   
+6       6  6.3336  4.3720        13  666829  9931249544     2     1        2   
+
+   month  year  
+0     11     1  
+1      5     1  
+2      8     1  
+5      5     1  
+6      4     2  
+
+data ex: df_train.head()    row_id       x       y  accuracy    time    place_id       hour  weekday  \
+0       0  0.7941  9.0809        54  470702  8523065625  14.050000        6   
+1       1  5.9567  4.7968        13  186555  1757726713   6.266667        5   
+2       2  8.3078  7.0407        74  322648  1137537235  18.483333        1   
+5       5  3.8099  1.9586        75  178065  6289802927   8.766667        6   
+6       6  6.3336  4.3720        13  666829  9931249544  18.833333        2   
+
+   yearday  month  year  qday  dayofmonth  weekofyear  season    logacc  
+0      327     11     1     2          23          46       4  3.988984  
+1      130      5     1     1          10          18       2  2.564949  
+2      224      8     1     3          12          32       3  4.304065  
+5      124      5     1     1           4          17       2  4.317488  
+6       98      4     2     3           8          14       2  2.564949  
 
 #------------------------------
 #   Links
