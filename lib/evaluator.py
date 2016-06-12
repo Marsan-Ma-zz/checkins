@@ -87,7 +87,7 @@ class evaluator(object):
           processes.append([x_idx, y_idx, p])
         # collect mp results
         last_block = (x_idx >= len(self.x_ranges)-1) and (y_idx >= len(self.y_ranges)-1)  
-        while (len(processes) > 20) or (processes and last_block):
+        while (len(processes) > 30) or (processes and last_block):
           xi, yi, p = processes.pop(0)
           preds, score = p.get() #predict_clf(mdl_name, X, y, row_id)
           score_total.append(score)
@@ -173,10 +173,10 @@ def predict_clf(mdl_names, mdl_weights, X, y, row_id, xi, yi, popu_th, time_th_w
       # -----[filter avail places]-----
       s = samples.iloc[i]
       avail_place = LOCATION[(LOCATION.x_min <= s.x) & (LOCATION.x_max >= s.x) & (LOCATION.y_min <= s.y) & (LOCATION.y_max >= s.y)].place_id.values
-      # psol = [p for p in psol if (p in avail_place) and 
-      #   (AVAIL_WDAYS.get((p, s.weekday), 0) > time_th_wd) and 
-      #   (AVAIL_HOURS.get((p, s.hour.astype(int)), 0) > time_th_hr) #and
-      #   # (POPULAR[(xi, yi)].get(p, 0) > popu_th)
+      # psol = [p for p in psol #if #(p in avail_place) #and 
+        # (AVAIL_WDAYS.get((p, s.weekday), 0) > time_th_wd) and 
+        # (AVAIL_HOURS.get((p, s.hour.astype(int)), 0) > time_th_hr) #and
+        # (POPULAR[(xi, yi)].get(p, 0) > popu_th)
       # ]
       # -------------------------------
       final_bests.append(psol[:3])

@@ -71,7 +71,7 @@ class trainer(object):
         processes.append(p)
         clf = None  # clear memory
         # prevent memory explode!
-        while (len(processes) > 20): processes.pop(0).get()
+        while (len(processes) > 30): processes.pop(0).get()
       print("[Train] grid(%i,%i): %i samples / %i classes @ %s" % (x_idx, y_idx, len(y_train), len(set(y_train)), conv.now('full')))
       mp_pool.close()
     while processes: processes.pop(0).get()
@@ -84,6 +84,7 @@ class trainer(object):
   #----------------------------------------
   def get_alg(self, alg, params):
     if alg == 'skrf':
+      # clf = ensemble.RandomForestClassifier(n_estimators=params.get('n_estimators', 50), max_depth=params.get('max_depth', 11), n_jobs=-1)
       clf = ensemble.RandomForestClassifier(n_estimators=params.get('n_estimators', 150), max_depth=params.get('max_depth', 11), n_jobs=-1)
       # clf = ensemble.RandomForestClassifier(n_estimators=params.get('n_estimators', 300), max_depth=params.get('max_depth', 11), n_jobs=-1)
       # clf = ensemble.RandomForestClassifier(n_estimators=params.get('n_estimators', 500), max_depth=params.get('max_depth', 11), n_jobs=-1)

@@ -25,8 +25,8 @@
         no yearday     => 0.9885 ,0.5343  (-)
         no weekofyear  => 0.9887 ,0.5333  (-)
         no month       => 0.9885 ,0.5342  (?)  > add back: 0.5357
-        no dayofmonth  => 0.9880 ,0.5331 
-        no season      => 0.9883 ,0.5325 
+        no dayofmonth  => 0.9880 ,0.5331  (-)
+        no season      => 0.9883 ,0.5325  (-)
         no accuracy    => 0.9884 ,0.5306 
         no logacc      => 0.9884 ,0.5303 
         no qday        => 0.9887 ,0.5278 
@@ -314,7 +314,7 @@
           'max_depth': 15, 'learning_rate': 0.1, 'n_estimators': 10, 0.8125, 0.5310
           'max_depth': 15, 'learning_rate': 0.15, 'n_estimators': 10, 0.8353, 0.5300
 
-          'max_depth': 7, 'learning_rate': 0.05, 'n_estimators': 15, 0.7893, 0.5356
+          'max_depth': 7, 'learning_rate': 0.05, 'n_estimators': 15, 0.7893, 0.5356   <-- BEST!!!
           'max_depth': 7, 'learning_rate': 0.1, 'n_estimators': 15, 0.8240, 0.5334
           'max_depth': 7, 'learning_rate': 0.15, 'n_estimators': 15, 0.8499, 0.5327
           'max_depth': 9, 'learning_rate': 0.05, 'n_estimators': 15, 0.7955, 0.5348

@@ -1,4 +1,4 @@
-import os, sys, time, pickle
+import os, sys, time, pickle, operator
 import pandas as pd
 import numpy as np
 import multiprocessing as mp
@@ -18,7 +18,9 @@ class main(object):
 
   def __init__(self, root='.', params={}):
     self.timestamp = str(datetime.now().strftime("%Y%m%d_%H%M%S"))
-    self.all_feats = ['season', 'logacc', 'qday', 'month', 'accuracy', 'weekday', 'hour', 'year', 'x', 'y']
+    # self.all_feats = ['season', 'logacc', 'qday', 'month', 'accuracy', 'weekday', 'hour', 'year', 'x', 'y']
+    # self.all_feats = ['qday', 'month', 'accuracy', 'weekday', 'hour', 'year', 'x', 'y']
+    self.all_feats = ['hour', 'qday', 'weekday', 'month', 'year', 'logacc', 'x', 'y']
     self.params = {
       'root'            : root,
       'x_cols'          : self.all_feats,
@@ -40,7 +42,7 @@ class main(object):
       'en_preprocessing'        : 0, #'HW',  # 'XYWHP'
       'max_cands'               : 10,
       #-----[post-processing]-----
-      'mdl_weights'             : (0.4, 1.0, 0.4),  # good, could probe further!
+      'mdl_weights'             : (0, 1, 0),  # good, could probe further!
       'time_th_wd'              : 0.003,
       'time_th_hr'              : 0.004,
       'popu_th'                 : 0.005,
@@ -73,7 +75,8 @@ class main(object):
   def init_team(self):
     # parser & preprocessing
     self.params['stamp'] = self.params.get('stamp') or "%s_%s" % (self.params['alg'], self.timestamp)
-    self.params['data_cache'] = "%s/data/cache/data_cache_size_%.2f_itv_x%iy%i_mcnt_%i.pkl" % (self.params['root'], self.params['size'], self.params['x_inter'], self.params['y_inter'], self.params['max_cands'])
+    # self.params['data_cache'] = "%s/data/cache/data_cache_size_%.2f_itv_x%iy%i_mcnt_%i.pkl" % (self.params['root'], self.params['size'], self.params['x_inter'], self.params['y_inter'], self.params['max_cands'])
+    self.params['data_cache'] = "%s/data/cache/data_cache_size_10.0_itv_x%iy%i_mcnt_%i.pkl" % (self.params['root'], self.params['x_inter'], self.params['y_inter'], self.params['max_cands'])
     self.pas = parser.parser(self.params)
     if not os.path.exists(self.params['data_cache']):
       df_train, _, _ = self.pas.get_data()
@@ -104,6 +107,29 @@ class main(object):
           self.params['y_step'] = y_step
           self.init_team()
           self.train_alg(alg)
+    #------------------------------------------
+    elif run_cmd == 'skrf_recursive_feature_elimination':
+      fixed_feats = {'x', 'y', 'hour', 'weekday', 'year', 'month'}
+      feats = set(self.all_feats)
+      print("[RFE] checking x_cols for %s" % (feats - fixed_feats))
+      while True:
+        scores = {}
+        self.params['x_cols'] = list(feats)
+        self.init_team()
+        scores['all'] = self.train_alg(alg)
+        print("[RFE] baseline = %.4f" % scores['all'])
+        for af in (feats - fixed_feats):
+          self.params['x_cols'] = [a for a in feats if a != af]
+          self.init_team()
+          print("[RFE] x_cols remove [%s], using %s" % (af, self.params['x_cols']))
+          scores[af] = self.train_alg(alg)
+        rm_feat, rm_score = sorted(scores.items(), key=operator.itemgetter(1), reverse=True)[0]
+        if rm_score > scores['all'] - 0.01: 
+          print("[RFE] base_score = %.4f, remove %s to achieve %.4f" % (scores['all'], rm_feat, rm_score))
+          feats -= set([rm_feat])
+        else:
+          print("[RFE] finished since no feature shall be removed!")
+          break
     #------------------------------------------
     elif 'skrf_mdl_weights' in run_cmd:
       for sw in np.arange(0, 1.2, 0.1):
@@ -224,9 +250,9 @@ class main(object):
         self.train_alg(alg, keep_model=True, submit=True)
     #------------------------------------------
     elif 'submit' in run_cmd:
-      # self.params['train_test_split_time'] = 1e10   # use all samples for training
+      self.params['train_test_split_time'] = 1e10   # use all samples for training
       self.init_team()
-      self.train_alg(alg, keep_model=True, submit=True)
+      self.train_alg(alg, params={'n_estimators': 500}, keep_model=True, submit=True)
     elif 'eva_exist' in run_cmd:
       self.init_team()
       self.evaluate_model(evaluate=True, submit=False)
@@ -268,6 +294,7 @@ class main(object):
       preds_total, _ = self.eva.evaluate(df_test, title='Submit')
       self.eva.gen_submit_file(preds_total, valid_score)
     print("[Finished!] Elapsed time overall for %.2f secs" % (time.time() - start_time))
+    return valid_score
 
 
   # skip training, evaluate from existing model

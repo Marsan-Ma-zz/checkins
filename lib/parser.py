@@ -67,9 +67,8 @@ class parser(object):
       #----------------------------------
       pickle.dump([df_train, df_valid, df_test], open(cache_name, 'wb'))
       print("[get_samples] final: train = %s, valid = %s, test = %s, %.2f secs" % (df_train.shape, df_valid.shape, df_test.shape, time.time() - start_time))
-
     print("data ex: df_train.head():\n", df_train.head())
-      
+
     # filter dead place_ids
     if self.place_min_last_checkin: 
       df_train = self.filter_min_last_checkin(df_train, th=self.place_min_last_checkin)
@@ -126,33 +125,48 @@ class parser(object):
 
 
   def feature_engineering(self, df):
-    initial_date = np.datetime64('2014-01-01T01:01', dtype='datetime64[m]') 
-    d_times = pd.DatetimeIndex(initial_date + np.timedelta64(int(t), 'm') for t in df.time.values)
+    # initial_date = np.datetime64('2014-01-01T01:01', dtype='datetime64[m]') 
+    # d_times = pd.DatetimeIndex(initial_date + np.timedelta64(int(t), 'm') for t in df.time.values)
     
-    # hour < day < week < month < year
-    df['hour']      = (d_times.hour + d_times.minute/60).astype(float)
-    df['weekday']   = d_times.weekday.astype(int)
-    df['yearday']   = (d_times.dayofyear).astype(int)
-    df['month']     = d_times.month.astype(int)
-    df['year']      = (d_times.year - 2013).astype(int)
+    # # hour < day < week < month < year
+    # df['hour']      = (d_times.hour + d_times.minute/60).astype(float)
+    # df['weekday']   = d_times.weekday.astype(int)
+    # df['yearday']   = (d_times.dayofyear).astype(int)
+    # df['month']     = d_times.month.astype(int)
+    # df['year']      = (d_times.year - 2013).astype(int)
 
-    df['qday']        = ((df.hour)//6).astype(int)
-    df['dayofmonth']  = [int(d.strftime("%d")) for d in d_times]
-    df['weekofyear']  = (d_times.dayofyear//7).astype(int)
-    df['season']      = d_times.quarter.astype(int)
-    df['logacc']      = np.log(df.accuracy.values).astype(float)
+    # df['qday']        = ((df.hour)//6).astype(int)
+    # df['dayofmonth']  = [int(d.strftime("%d")) for d in d_times]
+    # df['weekofyear']  = (d_times.dayofyear//7).astype(int)
+    # df['season']      = d_times.quarter.astype(int)
+    # df['logacc']      = np.log(df.accuracy.values).astype(float)
+
+    # df['hour']      = (df['time']//60) % 24
+    # df['qday']      = (df['hour']//6)
+    # df['day']       = (df['time']//60//24)
+    # df['weekday']   = (df['day'] % 7)
+    # df['monthday']  = (df['day'] % 30)
+    # df['yearday']   = (df['day'] % 365)
+    # df['week']      = (df['day']//7) % 52
+    # df['month']     = (df['day']//30) % 12 # rough estimate, month = 30 days
+    # df['season']    = (df['month']//4)
+    # df['year']      = (df['month']//12)
+    # df['logacc']    = np.log(df.accuracy.values).astype(float)
 
     # df['hour']    = (df['time']//60)%24+1 # 1 to 24
-    # # df['hour2']   = (df['time']//60)%24//2+1 # 1 to 12
-    # # df['hour3']   = (df['time']//60)%24//3+1 # 1 to 8
-    # # df['hour4']   = (df['time']//60)%24//4+1 # 1 to 6
-    # df['qday']    = (df['time']//60)%24//6+1 # 1 to 4
-    # df['weekday'] = (df['time']//1440)%7+1
-    # df['month']   = (df['time']//43200)%12+1 # rough estimate, month = 30 days
-    # # df['month2']   = (df['time']//43200)%12//2+1
-    # # df['month3']   = (df['time']//43200)%12//3+1
-    # # df['month6']   = (df['time']//43200)%12//6+1
-    # df['year']    = (df['time']//525600)+1
+    df['hour']    = (df['time']//60 + df['time']%60)%24+1 # 1 to 24
+    df['hour2']   = (df['time']//60)%24//2+1 # 1 to 12
+    df['hour3']   = (df['time']//60)%24//3+1 # 1 to 8
+    df['hour4']   = (df['time']//60)%24//4+1 # 1 to 6
+    df['qday']    = (df['time']//60)%24//6+1 # 1 to 4
+    df['weekday'] = (df['time']//1440)%7+1
+    df['month']   = (df['time']//43200)%12+1 # rough estimate, month = 30 days
+    df['year']    = (df['time']//525600)+1
+    
+    df['day']     = (df['time']//60//24)
+    df['monthday']= (df['day'] % 30)
+    df['season']  = (df['time']//43200//3)%4+1
+    df['logacc']  = np.log(df.accuracy.values).astype(float)
     return df
 
 
