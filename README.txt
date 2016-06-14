@@ -371,6 +371,7 @@
     17. Blending => collect from output, sum-up score (1st:1, 2nd:0.5, 3rd:1/3)
           => by same models but each drop 1 feature 
           => by skrf & xgb & knn
+          => need a way to calculate model "correlation"
 
 [TODO]
     2. xgboost early stop with validation samples

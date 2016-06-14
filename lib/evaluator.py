@@ -122,7 +122,7 @@ class evaluator(object):
   #----------------------------------------
   #   Tasks
   #----------------------------------------
-  def gen_submit_file(self, preds_total, score, fill_dummy=True):
+  def gen_submit_file(self, preds_total, score, fill_dummy=False, title='submit'):
     preds_total['place_id'] = [" ".join([str(k) for k in l]) for l in preds_total[[0,1,2]].values.tolist()]
     #-----[fill not submitted rows, for fast experiment]------
     if fill_dummy:
@@ -131,7 +131,7 @@ class evaluator(object):
       df_dummies = pd.DataFrame([{'row_id': d, 'place_id': "%s %s %s" % (dummy, dummy, dummy)} for d in missing_rows])
       preds_total = pd.concat([preds_total, df_dummies])
     #---------------------------------------------------------
-    preds_total[['row_id', 'place_id']].sort_values(by='row_id').to_csv("%s/submit/submit_%s_%.4f.csv" % (self.root, self.stamp, score), index=False)
+    preds_total[['row_id', 'place_id']].sort_values(by='row_id').to_csv("%s/%s/%s_%s_%.4f.csv" % (self.root, title, title, self.stamp, score), index=False)
     
 
   # clear meta files
@@ -193,5 +193,4 @@ def predict_clf(mdl_names, mdl_weights, X, y, row_id, xi, yi, popu_th, time_th_w
   preds['row_id'] = row_id
   score = map_score(y, preds)
   return preds, score
-
 

@@ -14,12 +14,12 @@ PY3='stdbuf -o0 nohup python3 -u'
 # $PY3 main.py skrf_gs_params 1.0 skrf_gs_params_$NOW > "./logs/nohup_skrf_gs_params_$NOW.log" &
 # $PY3 main.py xgb_gs_params 0.4 xgb_gs_params_$NOW > "./logs/nohup_xgb_gs_params_$NOW.log" &
 
-# python3 main.py skrf_recursive_feature_elimination 0.4 skrf_$NOW   # Fastest for debug use
+# python3 main.py skrf 0.2 skrf_$NOW   # Fastest for debug use
 # python3 main.py skrf_feats_sel 0.4 skrf_$NOW #> "./logs/skrf_max_cands_$NOW.log" &
 # python3 main.py xgb 0.4 xgb_$NOW #> "./logs/xgb_$NOW.log" &
 
 # [Specials]
-# python3 main.py skrf 0.8 skrf_$NOW #> "./logs/skrf_rfe_$NOW.log" &
+# $PY3 main.py skrf_reverse_valid_split_time 0.8 skrf_reverse_valid_split_time_$NOW > "./logs/skrf_reverse_valid_split_time_$NOW.log" &
 # $PY3 main.py skrf_mdl_weights 3.2 skrf_mdl_weights_$NOW > "./logs/skrf_mdl_weights_$NOW.log" &
 # $PY3 main.py skrf_gs_loc_th 1.0 skrf_20160607_155730 > "./logs/skrf_gs_loc_th_$NOW.log" &
 # $PY3 main.py skrf_gs_place_th 1.0 skrf_20160604_125940 > "./logs/skrf_gs_place_th_$NOW.log" &
@@ -35,9 +35,9 @@ PY3='stdbuf -o0 nohup python3 -u'
 
 # [Submits]
 # python3 main.py skrf_submit 0.4 skrf_submit_$NOW #> "./logs/nohup_skrf_submit_$NOW.log" &
-$PY3 main.py skrf_submit 10.0 skrf_submit_$NOW > "./logs/nohup_skrf_submit_$NOW.log" &
+# $PY3 main.py skrf_submit 10.0 skrf_submit_$NOW > "./logs/nohup_skrf_submit_$NOW.log" &
 # $PY3 main.py xgb_submit 10.0 xgb_submit_$NOW > "./logs/nohup_xgb_submit_$NOW.log" &
-
+$PY3 blending.py blending_$NOW > "./logs/blending_$NOW.log" &
 
 # [Submits Existing Model]
 # python3 main.py skrf_eva_exist 0.4 LB_skrf_submit_20160611_233627

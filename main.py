@@ -31,7 +31,6 @@ class main(object):
       'y_inter'         : 1,
       #-----[data engineering in parser]-----
       'train_test_split_time'   : 700000,   # confirmed!
-      # 'train_test_split_time'   : 100000,   # confirmed!
       'place_min_checkin'       : 3,
       'place_min_last_checkin'  : 600000,   # for submit  20160605_071204_0.6454
       # 'train_min_time'          : 300000,   # for submit (not good, no use!)
@@ -48,9 +47,9 @@ class main(object):
       'popu_th'                 : 0.005,
       'loc_th_x'                : 3,
       'loc_th_y'                : 2,
-    } 
+    }
     for k,v in params.items(): self.params[k] = v   # overwrite if setup
-    for f in ['logs', 'models', 'data/cache', 'submit']:
+    for f in ['logs', 'models', 'data/cache', 'submit', 'valid']:
       op_path = '%s/%s' % (self.params['root'], f)
       if not os.path.exists(op_path): os.mkdir(op_path)
 
@@ -79,8 +78,8 @@ class main(object):
     self.params['data_cache'] = "%s/data/cache/data_cache_size_10.0_itv_x%iy%i_mcnt_%i.pkl" % (self.params['root'], self.params['x_inter'], self.params['y_inter'], self.params['max_cands'])
     self.pas = parser.parser(self.params)
     if not os.path.exists(self.params['data_cache']):
-      df_train, _, _ = self.pas.get_data()
-      self.pas.init_data_cache(df_train, self.params)
+      df_train, df_valid, _ = self.pas.get_data()
+      self.pas.init_data_cache(pd.concat([df_train, df_valid]), self.params)
     # workers
     self.tra = trainer.trainer(self.params)
     self.eva = evaluator.evaluator(self.params)
@@ -98,6 +97,12 @@ class main(object):
       for a in ['skrf', 'xgb', 'sklr']:
         self.init_team()
         self.train_alg(a)
+    #------------------------------------------
+    elif 'skrf_reverse_valid_split_time' in run_cmd:
+      self.params['train_test_split_time'] = 100000
+      self.params['place_min_last_checkin'] = None
+      self.init_team()
+      self.train_alg(alg)
     #------------------------------------------
     elif 'skrf_grid_step' in run_cmd:
       for x_step in [0.04, 0.05, 0.08, 0.1, 0.2]:
@@ -249,10 +254,13 @@ class main(object):
         self.init_team()
         self.train_alg(alg, keep_model=True, submit=True)
     #------------------------------------------
-    elif 'submit' in run_cmd:
+    elif 'submit_full' in run_cmd:
       self.params['train_test_split_time'] = 1e10   # use all samples for training
       self.init_team()
       self.train_alg(alg, params={'n_estimators': 500}, keep_model=True, submit=True)
+    elif 'submit' in run_cmd:
+      self.init_team()
+      self.train_alg(alg, params={'n_estimators': 300}, keep_model=True, submit=True)
     elif 'eva_exist' in run_cmd:
       self.init_team()
       self.evaluate_model(evaluate=True, submit=False)
@@ -285,7 +293,9 @@ class main(object):
     if self.params['size'] <= 1:  # eva.train only when dev.
       _, train_score = self.eva.evaluate(df_train, title='Eva.Train')
     if len(df_valid) > 0:
-      _, valid_score = self.eva.evaluate(df_valid, title='Eva.Test')
+      valids_total, valid_score = self.eva.evaluate(df_valid, title='Eva.Test')
+      pickle.dump([valids_total, df_valid], open("%s/valid/valid_%s.pkl" % (self.params['root'], self.params['stamp']), 'wb'))
+      # self.eva.gen_submit_file(valids_total, valid_score, title='valid')
     
     # save & clear
     if not keep_model:

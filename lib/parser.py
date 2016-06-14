@@ -46,8 +46,12 @@ class parser(object):
       df_test = self.parse_data('%s/data/test.csv.zip' % self.root)
       print("[get_samples] origin: train = %s, test = %s" % (df_train.shape, df_test.shape))
       # divide train/valid by time
-      df_valid = df_train[df_train.time >= self.train_test_split_time]
-      df_train = df_train[df_train.time < self.train_test_split_time]
+      if self.train_test_split_time > 300000:
+        df_valid = df_train[df_train.time > self.train_test_split_time]
+        df_train = df_train[df_train.time <= self.train_test_split_time]
+      else: # skrf_reverse_valid_split_time
+        df_valid = df_train[df_train.time <= self.train_test_split_time]
+        df_train = df_train[df_train.time > self.train_test_split_time]
       #-----[Fixed data engineering]-----
       if self.place_min_checkin:
         place_cnt = df_train.place_id.value_counts()
