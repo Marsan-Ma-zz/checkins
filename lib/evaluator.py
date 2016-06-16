@@ -46,7 +46,7 @@ class evaluator(object):
   #----------------------------------------
   #   Main
   #----------------------------------------
-  def evaluate(self, df, title):
+  def evaluate(self, df, title, norm=None):
     preds_total = []
     score_total = []
 
@@ -70,6 +70,10 @@ class evaluator(object):
           mdl_names = ["%s/models/%s/grid_model_x_%s_y_%s.pkl.gz" % (self.root, self.stamp, xi, yi) for xi, yi in w_ary]
           df_grid = df_row[(df_row.y >= y_min) & (df_row.y < y_max)]
           
+          # normalize for scale sensitive algorithms
+          if norm:  
+            for k, v in norm.items(): df_grid[k] = df_grid[k]*v
+
           # preprocessing
           if self.en_preprocessing:
             df_grid, cols_extra = conv.df_preprocess(self.en_preprocessing, df_grid, x_idx, y_idx, LOCATION, AVAIL_WDAYS, AVAIL_HOURS, POPULAR, GRID_CANDS)
@@ -162,8 +166,13 @@ def predict_clf(mdl_names, mdl_weights, X, y, row_id, xi, yi, popu_th, time_th_w
       print("[Exception]:", e, preds)
     return sum(match)/len(match)
   def merge_bests(clfs, weights, samples):
-    sols = [clf.predict_proba(samples) for clf in clfs]
-    sols = [[[(clf.classes_[i], v*w) for i, v in enumerate(line)] for line in sol] for clf, w, sol in zip(clfs, weights, sols)]
+    if isinstance(clfs[0], list):
+      clfs, les = zip(*clfs)
+      sols = [clf.predict_proba(samples) for clf in clfs]
+      sols = [[[(le.inverse_transform(i), v*w) for i, v in enumerate(line)] for line in sol] for clf, le, w, sol in zip(clfs, les, weights, sols)]
+    else:
+      sols = [clf.predict_proba(samples) for clf in clfs]
+      sols = [[[(clf.classes_[i], v*w) for i, v in enumerate(line)] for line in sol] for clf, w, sol in zip(clfs, weights, sols)]
     final_bests = []
     for i in range(len(samples)):
       psol = [j for k in [s[i] for s in sols] for j in k]
@@ -171,8 +180,8 @@ def predict_clf(mdl_names, mdl_weights, X, y, row_id, xi, yi, popu_th, time_th_w
       psol = sorted(list(psol.items()), key=lambda v: v[1], reverse=True)
       psol = [p for p,v in psol]
       # -----[filter avail places]-----
-      s = samples.iloc[i]
-      avail_place = LOCATION[(LOCATION.x_min <= s.x) & (LOCATION.x_max >= s.x) & (LOCATION.y_min <= s.y) & (LOCATION.y_max >= s.y)].place_id.values
+      # s = samples.iloc[i]
+      # avail_place = LOCATION[(LOCATION.x_min <= s.x) & (LOCATION.x_max >= s.x) & (LOCATION.y_min <= s.y) & (LOCATION.y_max >= s.y)].place_id.values
       # psol = [p for p in psol #if #(p in avail_place) #and 
         # (AVAIL_WDAYS.get((p, s.weekday), 0) > time_th_wd) and 
         # (AVAIL_HOURS.get((p, s.hour.astype(int)), 0) > time_th_hr) #and

@@ -8,6 +8,8 @@ import xgboost as xgb
 
 from datetime import datetime
 from sklearn.cross_validation import train_test_split
+from sklearn.preprocessing import LabelEncoder
+from sklearn.neighbors import KNeighborsClassifier
 from sklearn import linear_model, ensemble
 
 from lib import conventions as conv
@@ -43,10 +45,10 @@ class trainer(object):
   #----------------------------------------
   #   Main
   #----------------------------------------
-  def train(self, df_train, alg="skrf", params={}):
+  def train(self, df_train, alg="skrf", mdl_config={}, norm=None):
     mdl_path = "%s/models/%s" % (self.root, self.stamp)
     os.mkdir(mdl_path)
-    print("[Train] start with params=%s, write models to %s @ %s" % (params, mdl_path, conv.now('full')))
+    print("[Train] start with mdl_config=%s, write models to %s @ %s" % (mdl_config, mdl_path, conv.now('full')))
     
     processes = []
     for x_idx, (x_min, x_max) in enumerate(self.x_ranges):
@@ -57,6 +59,10 @@ class trainer(object):
         y_min, y_max = conv.trim_range(y_min, y_max, self.size)
         df_grid = df_row[(df_row.y >= y_min) & (df_row.y < y_max)]
 
+        # normalize for scale sensitive algorithms
+        if norm:  
+          for k, v in norm.items(): df_grid[k] = df_grid[k]*v
+
         # preprocessing
         if self.en_preprocessing:
           df_grid, cols_extra = conv.df_preprocess(self.en_preprocessing, df_grid, x_idx, y_idx, LOCATION, AVAIL_WDAYS, AVAIL_HOURS, POPULAR, GRID_CANDS)
@@ -65,9 +71,9 @@ class trainer(object):
           X_train, y_train, _ = conv.df2sample(df_grid, self.x_cols)
 
         # save model (can't stay in memory, too large)
-        clf = self.get_alg(alg, params)
+        clf = self.get_alg(alg, mdl_config)
         mdl_name = "%s/models/%s/grid_model_x_%s_y_%s.pkl.gz" % (self.root, self.stamp, x_idx, y_idx)
-        p = mp_pool.apply_async(save_model, (mdl_name, clf, X_train, y_train))
+        p = mp_pool.apply_async(save_model, (alg, mdl_name, clf, X_train, y_train))
         processes.append(p)
         clf = None  # clear memory
         # prevent memory explode!
@@ -82,22 +88,31 @@ class trainer(object):
   #----------------------------------------
   #   Tasks
   #----------------------------------------
-  def get_alg(self, alg, params):
+  def get_alg(self, alg, mdl_config):
     if alg == 'skrf':
-      # clf = ensemble.RandomForestClassifier(n_estimators=params.get('n_estimators', 50), max_depth=params.get('max_depth', 11), n_jobs=-1)
-      # clf = ensemble.RandomForestClassifier(n_estimators=params.get('n_estimators', 150), max_depth=params.get('max_depth', 11), n_jobs=-1)
-      clf = ensemble.RandomForestClassifier(n_estimators=params.get('n_estimators', 300), max_depth=params.get('max_depth', 11), n_jobs=-1)
-      # clf = ensemble.RandomForestClassifier(n_estimators=params.get('n_estimators', 500), max_depth=params.get('max_depth', 11), n_jobs=-1)
+      # clf = ensemble.RandomForestClassifier(n_estimators=mdl_config.get('n_estimators', 50), max_depth=mdl_config.get('max_depth', 11), n_jobs=-1)
+      # clf = ensemble.RandomForestClassifier(n_estimators=mdl_config.get('n_estimators', 150), max_depth=mdl_config.get('max_depth', 11), n_jobs=-1)
+      clf = ensemble.RandomForestClassifier(n_estimators=mdl_config.get('n_estimators', 300), max_depth=mdl_config.get('max_depth', 11), n_jobs=-1)
+      # clf = ensemble.RandomForestClassifier(n_estimators=mdl_config.get('n_estimators', 500), max_depth=mdl_config.get('max_depth', 11), n_jobs=-1)
     elif alg == 'skgbc':
-      clf = ensemble.GradientBoostingClassifier(n_estimators=params.get('n_estimators', 30), max_depth=params.get('max_depth', 5))
+      clf = ensemble.GradientBoostingClassifier(n_estimators=mdl_config.get('n_estimators', 30), max_depth=mdl_config.get('max_depth', 5))
     elif alg == 'sklr':
       clf = linear_model.LogisticRegression(multi_class='multinomial', solver = 'lbfgs')
     elif alg == 'xgb':
       # https://github.com/dmlc/xgboost/blob/master/python-package/xgboost/sklearn.py
-      clf = xgb.XGBClassifier(n_estimators=params.get('n_estimators', 30), max_depth=params.get('max_depth', 15), learning_rate=params.get('learning_rate', 0.15), objective="multi:softprob", silent=True)
+      clf = xgb.XGBClassifier(n_estimators=mdl_config.get('n_estimators', 30), max_depth=mdl_config.get('max_depth', 15), learning_rate=mdl_config.get('learning_rate', 0.15), objective="multi:softprob", silent=True)
+    elif alg == 'knn':
+      clf = KNeighborsClassifier(n_neighbors=25, weights='distance', metric='manhattan', n_jobs=-1)
     return clf
   
 
-def save_model(mdl_name, clf, X_train, y_train):
-  clf.fit(X_train, y_train)
-  pickle.dump(clf, gzip.open(mdl_name, 'wb'))
+def save_model(alg, mdl_name, clf, X_train, y_train):
+  if alg == 'knn':
+    le = LabelEncoder()
+    y_train = le.fit_transform(y_train)
+    X_train = X_train.values.astype(int)
+    clf.fit(X_train, y_train)
+    pickle.dump([clf, le], gzip.open(mdl_name, 'wb'))
+  else:
+    clf.fit(X_train, y_train)
+    pickle.dump(clf, gzip.open(mdl_name, 'wb'))

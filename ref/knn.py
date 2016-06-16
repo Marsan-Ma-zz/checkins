@@ -60,12 +60,12 @@ def process_one_cell(df_train, df_test, grid_id, th):
     le = LabelEncoder()
     y = le.fit_transform(df_cell_train.place_id.values)
     X = df_cell_train.drop(['place_id', 'grid_cell'], axis=1).values.astype(int)
-    X_test = df_cell_test.drop(['grid_cell'], axis = 1).values.astype(int)
     
     #Applying the classifier
-    clf = KNeighborsClassifier(n_neighbors=25, weights='distance', 
-                               metric='manhattan')
+    clf = KNeighborsClassifier(n_neighbors=25, weights='distance', metric='manhattan')
     clf.fit(X, y)
+    
+    X_test = df_cell_test.drop(['grid_cell'], axis = 1).values.astype(int)
     y_pred = clf.predict_proba(X_test)
     pred_labels = le.inverse_transform(np.argsort(y_pred, axis=1)[:,::-1][:,:3])    
     return pred_labels, row_ids
@@ -104,10 +104,10 @@ if __name__ == '__main__':
     """
     """
     print('Loading data ...')
-    df_train = pd.read_csv('../input/train.csv',
+    df_train = pd.read_csv('../data/train.csv.zip',
                            usecols=['row_id','x','y','time','place_id'], 
                            index_col = 0)
-    df_test = pd.read_csv('../input/test.csv',
+    df_test = pd.read_csv('../data/test.csv.zip',
                           usecols=['row_id','x','y','time'],
                           index_col = 0)
  

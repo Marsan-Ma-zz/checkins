@@ -357,26 +357,51 @@
           'max_depth': 11, 'n_estimators': 1000 ,0.9812, 0.5369
           'max_depth': 13, 'n_estimators': 1000 ,0.9911, 0.5377
           'max_depth': 15, 'n_estimators': 1000 ,0.9941, 0.5369
-
-    14. remove_distance_outlier: remove outlier from training set which (x, y) too far from average of certain place
+    14. KNN
+          -----[x, y weights]-----
+          x=300, y=600 0.5634
+          x=300, y=800 0.5622
+          x=300, y=1000 0.5627
+          x=300, y=1200 0.5594
+          x=300, y=1400 0.5575
+          x=500, y=600 0.5674
+          x=500, y=800 0.5690
+          x=500, y=1000 0.5686
+          x=500, y=1200 0.5660
+          x=500, y=1400 0.5660
+          x=700, y=600 0.5633
+          x=700, y=800 0.5677
+          x=700, y=1000 0.5693
+          x=700, y=1200 0.5693  <--- BEST!
+          x=700, y=1400 0.5683
+          x=900, y=600 0.5569
+          x=900, y=800 0.5635
+          x=900, y=1000 0.5640
+          x=900, y=1200 0.5642
+    15. remove_distance_outlier: remove outlier from training set which (x, y) too far from average of certain place
           None    => (0.9402/0.5360?)
           std1.0  => 0.9863/0.5176
           std1.5  => 0.9828/0.5320
           std2.0  => 0.9808/0.5372  <--- BEST!
           std2.5  => 0.9661/0.5353
-    13. SVM
-    14. KNN
-    15. use data conversion methods in KNN example (fw = [500, 1000, 4, 3, 1./22., 2, 10], black magic)
-    16. add KNN results as input feature
-    17. Blending => collect from output, sum-up score (1st:1, 2nd:0.5, 3rd:1/3)
-          => by same models but each drop 1 feature 
-          => by skrf & xgb & knn
-          => need a way to calculate model "correlation"
-
+    16. SVM
+    17. KNN 
+          0.5218 for no x/y_inter, 
+          tab1: 'x_inter'/'y_inter' = 2/2, mdl_weights = (0.4, 1, 0.4)   => 0.5153
+          tab2: 'x_inter'/'y_inter' = 1/1, mdl_weights = (0.4, 1, 0.4)   => 0.5045
+          tab3: blending for rank_w = [1, 0.4, 0.2]   => improve 0.00019 only.
+    18. [TODO]
+          => knn with inter for submit        (tonight)
+          => knn with larger grid for submit  (tonight)
+          => blending: weight more on kings
+          => blending: by same models but drop 1 feature 
+          
 [TODO]
     2. xgboost early stop with validation samples
     3. grid-wise parameter search
     
+
+    Markus: "I think the basic ideas are out there already: learning various joint or individual distributions for the space and time variables for each place_id (and the overall relative popularities). The challenge is doing this in a computationally efficient manner without losing too much information."
 
 [COMBINE]
   {'mdl_weights': (0, 1, 0),       'time_th' : -1,    'loc_th_x' : 1000,  'loc_th_y' : 1000 } => tr=0.9925 / te=0.6325

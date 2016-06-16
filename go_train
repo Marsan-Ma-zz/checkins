@@ -14,9 +14,14 @@ PY3='stdbuf -o0 nohup python3 -u'
 # $PY3 main.py skrf_gs_params 1.0 skrf_gs_params_$NOW > "./logs/nohup_skrf_gs_params_$NOW.log" &
 # $PY3 main.py xgb_gs_params 0.4 xgb_gs_params_$NOW > "./logs/nohup_xgb_gs_params_$NOW.log" &
 
-# python3 main.py skrf 0.2 skrf_$NOW   # Fastest for debug use
+# python3 main.py skrf_fast 0.2 skrf_$NOW   # Fastest for debug use
 # python3 main.py skrf_feats_sel 0.4 skrf_$NOW #> "./logs/skrf_max_cands_$NOW.log" &
 # python3 main.py xgb 0.4 xgb_$NOW #> "./logs/xgb_$NOW.log" &
+
+# [KNN]
+# python3 main.py knn 0.5 knn_$NOW   # Fastest for debug use
+# $PY3 main.py knn_grid_step 1 knn_grid_step_$NOW > "./logs/knn_grid_step_$NOW.log" &
+# $PY3 main.py knn_grid_weights 0.5 knn_grid_weights_$NOW > "./logs/knn_grid_weights_$NOW.log" &
 
 # [Specials]
 # $PY3 main.py skrf_reverse_valid_split_time 0.8 skrf_reverse_valid_split_time_$NOW > "./logs/skrf_reverse_valid_split_time_$NOW.log" &
@@ -35,9 +40,13 @@ PY3='stdbuf -o0 nohup python3 -u'
 
 # [Submits]
 # python3 main.py skrf_submit 0.4 skrf_submit_$NOW #> "./logs/nohup_skrf_submit_$NOW.log" &
+# $PY3 main.py knn_submit_full 10.0 knn_submit_$NOW > "./logs/knn_submit_$NOW.log" &
+$PY3 main.py knn_try_inter_submit_full 10.0 knn_try_inter_submit_full_$NOW > "./logs/knn_try_inter_submit_full_$NOW.log" &
+# $PY3 main.py knn_try_large_grid_submit_full 10.0 knn_try_large_grid_submit_full_$NOW > "./logs/knn_try_large_grid_submit_full_$NOW.log" &
 # $PY3 main.py skrf_submit 10.0 skrf_submit_$NOW > "./logs/nohup_skrf_submit_$NOW.log" &
+# $PY3 main.py skrf_try_submit 10.0 skrf_try_submit_$NOW > "./logs/skrf_try_submit_$NOW.log" &
 # $PY3 main.py xgb_submit 10.0 xgb_submit_$NOW > "./logs/nohup_xgb_submit_$NOW.log" &
-$PY3 blending.py blending_$NOW > "./logs/blending_$NOW.log" &
+# $PY3 blending.py blending_$NOW > "./logs/blending_$NOW.log" &
 
 # [Submits Existing Model]
 # python3 main.py skrf_eva_exist 0.4 LB_skrf_submit_20160611_233627
@@ -46,4 +55,4 @@ $PY3 blending.py blending_$NOW > "./logs/blending_$NOW.log" &
 # 
 
 # [Kill such processes]
-# sudo kill -9 `ps aux | grep "skrf_recursive_feature_elimination" | awk '{print $2}'`
+# sudo kill -9 `ps aux | grep "knn_try_large_grid_submit_full" | awk '{print $2}'`

@@ -1,4 +1,4 @@
-import os, sys, time, pickle, operator
+import os, sys, time, pickle, gzip, operator
 import pandas as pd
 import numpy as np
 import multiprocessing as mp
@@ -92,7 +92,32 @@ class main(object):
     run_cmd = self.params['alg']
     alg = run_cmd.split('_')[0]
     print("[RUN_CMD] %s" % run_cmd)
-    #------------------------------------------
+    #==========================================
+    #   Shared config
+    #==========================================
+    if 'knn' in run_cmd:
+      self.params['norm'] = {
+        'x': 500, 'y':1000, 
+        'hour':4, 'logacc':1, 'weekday':3, 
+        'qday':1, 'month':2, 'year':10, 'day':1./22,
+      }
+      # self.params['norm'] = {'x': 700, 'y':1100, 'hour':4, 'qday':1, 'logacc':1, 'weekday':3, 'day':1./22., 'month':2, 'year':10}
+      self.params['x_cols'] = [x for x in self.params['x_cols'] if x in self.params['norm'].keys()]
+      self.params['x_step'] = 0.25
+      self.params['y_step'] = 0.25
+
+    if 'try_inter' in run_cmd:
+      self.params['x_inter'] = 2
+      self.params['y_inter'] = 2
+      self.params['mdl_weights'] = (0.4, 1, 0.4)
+
+    if 'try_large_grid' in run_cmd:
+      self.params['x_step'] = 1
+      self.params['y_step'] = 1
+
+    #==========================================
+    #   Choose-one config
+    #==========================================
     if run_cmd == 'all':
       for a in ['skrf', 'xgb', 'sklr']:
         self.init_team()
@@ -104,12 +129,24 @@ class main(object):
       self.init_team()
       self.train_alg(alg)
     #------------------------------------------
-    elif 'skrf_grid_step' in run_cmd:
-      for x_step in [0.04, 0.05, 0.08, 0.1, 0.2]:
-        for y_step in [0.08]:
+    elif '_grid_step' in run_cmd:
+      # for x_step in [0.04, 0.05, 0.08, 0.1, 0.2]:
+      #   for y_step in [0.04, 0.05, 0.08, 0.1, 0.2]:
+      for x_step in [0.1, 0.2, 0.5, 1]:
+        for y_step in [0.1, 0.2, 0.5, 1]:
           print("=====[%s for step=(%.2f, %.2f)]=====" % (run_cmd, x_step, y_step))
           self.params['x_step'] = x_step
           self.params['y_step'] = y_step
+          self.init_team()
+          self.train_alg(alg)
+    #------------------------------------------
+    elif run_cmd == 'knn_grid_weights':
+      # self.params['norm'] = {'x': 500, 'y':1000, 'hour':4, 'qday':1, 'logacc':1, 'weekday':3, 'day':1./22., 'month':2, 'year':10}
+      for logacc in np.arange(1, 10, 2):
+        for qday in np.arange(1, 10, 2):   
+          print("[knn_grid_weights] logacc=%i, qday=%i" % (logacc, qday))
+          self.params['norm']['logacc'] = logacc
+          self.params['norm']['qday'] = qday
           self.init_team()
           self.train_alg(alg)
     #------------------------------------------
@@ -221,7 +258,7 @@ class main(object):
       self.init_team()
       for n_estimators in [200, 300, 500, 800, 1000]:
         for max_depth in [12]:
-          self.train_alg(alg, params={'n_estimators': n_estimators, 'max_depth': max_depth})
+          self.train_alg(alg, mdl_config={'n_estimators': n_estimators, 'max_depth': max_depth})
       #
       self.params['size']   = 10.0
       self.params['stamp']  = "%s_%s" % (self.params['alg'], self.timestamp)
@@ -257,10 +294,13 @@ class main(object):
     elif 'submit_full' in run_cmd:
       self.params['train_test_split_time'] = 1e10   # use all samples for training
       self.init_team()
-      self.train_alg(alg, params={'n_estimators': 500}, keep_model=True, submit=True)
-    elif 'submit' in run_cmd:
+      self.train_alg(alg, mdl_config={'n_estimators': 500}, keep_model=True, submit=True)
+    elif 'skrf_submit' in run_cmd:
       self.init_team()
-      self.train_alg(alg, params={'n_estimators': 300}, keep_model=True, submit=True)
+      self.train_alg(alg, mdl_config={'n_estimators': 300}, keep_model=True, submit=True)
+    elif 'xgb_submit' in run_cmd:
+      self.init_team()
+      self.train_alg(alg, mdl_config={'n_estimators': 30}, keep_model=True, submit=True)
     elif 'eva_exist' in run_cmd:
       self.init_team()
       self.evaluate_model(evaluate=True, submit=False)
@@ -270,7 +310,7 @@ class main(object):
     #------------------------------------------
     elif 'fast' in run_cmd: # fast flow debug
       self.init_team()
-      self.train_alg(alg, params={'n_estimators': 5})
+      self.train_alg(alg, mdl_config={'n_estimators': 5})
     #------------------------------------------
     else: # single model
       self.init_team()
@@ -281,42 +321,57 @@ class main(object):
   #----------------------------------------
   #   Main
   #----------------------------------------
-  def train_alg(self, alg, keep_model=False, submit=False, params={}):
+  def train_alg(self, alg, keep_model=False, submit=False, mdl_config={}):
     # get data
     start_time = time.time()
+    norm = self.params.get('norm')
     df_train, df_valid, df_test = self.pas.get_data()
       
     # train & test
-    print("[train_alg]: %s" % params)
-    self.tra.train(df_train, alg=alg, params=params)
+    print("[train_alg]: %s" % mdl_config)
+    self.tra.train(df_train, alg=alg, mdl_config=mdl_config, norm=norm)
     train_score, valid_score = 0, 0
     if self.params['size'] <= 1:  # eva.train only when dev.
-      _, train_score = self.eva.evaluate(df_train, title='Eva.Train')
+      _, train_score = self.eva.evaluate(df_train, title='Eva.Train', norm=norm)
     if len(df_valid) > 0:
-      valids_total, valid_score = self.eva.evaluate(df_valid, title='Eva.Test')
+      valids_total, valid_score = self.eva.evaluate(df_valid, title='Eva.Test', norm=norm)
       pickle.dump([valids_total, df_valid], open("%s/valid/valid_%s.pkl" % (self.params['root'], self.params['stamp']), 'wb'))
       # self.eva.gen_submit_file(valids_total, valid_score, title='valid')
     
+    if alg == 'skrf': print("[skrf feature_importance]", self.get_feature_importance())
+
     # save & clear
     if not keep_model:
       self.eva.clear_meta_files()
     if submit:
-      preds_total, _ = self.eva.evaluate(df_test, title='Submit')
+      preds_total, _ = self.eva.evaluate(df_test, title='Submit', norm=norm)
       self.eva.gen_submit_file(preds_total, valid_score)
     print("[Finished!] Elapsed time overall for %.2f secs" % (time.time() - start_time))
     return valid_score
+
+
+  def get_feature_importance(self):
+    mfolder = '%s/models/%s/' % (self.params['root'], self.params['stamp'])
+    mpath = mfolder+'grid_model_x_0_y_0.pkl.gz'
+    clf = pickle.load(gzip.open(mpath, 'rb'))
+
+    cols = [c for c in self.params['x_cols'] if c not in ['place_id', 'row_id']]
+    fimp = dict(zip(*[cols, clf.feature_importances_]))
+    fimp = sorted(fimp.items(), key=lambda v: v[1], reverse=True)
+    return fimp
 
 
   # skip training, evaluate from existing model
   def evaluate_model(self, evaluate=False, submit=False):
     print("[Evaluate_model] with params=%s" % (self.params))
     start_time = time.time()
+    norm = self.params.get('norm')
     df_train, df_valid, df_test = self.pas.get_data()
     valid_score = 0.0
     if evaluate:
-      _, valid_score = self.eva.evaluate(df_valid, title='Test')
+      _, valid_score = self.eva.evaluate(df_valid, title='Test', norm=norm)
     if submit:
-      preds_total, _ = self.eva.evaluate(df_test, title='Submit')
+      preds_total, _ = self.eva.evaluate(df_test, title='Submit', norm=norm)
       self.eva.gen_submit_file(preds_total, valid_score)
     print("[Finished!] evaluate_model for %.2f secs" % (time.time() - start_time))
 

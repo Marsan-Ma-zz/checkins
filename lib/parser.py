@@ -71,6 +71,7 @@ class parser(object):
       #----------------------------------
       pickle.dump([df_train, df_valid, df_test], open(cache_name, 'wb'))
       print("[get_samples] final: train = %s, valid = %s, test = %s, %.2f secs" % (df_train.shape, df_valid.shape, df_test.shape, time.time() - start_time))
+    
     print("data ex: df_train.head():\n", df_train.head())
 
     # filter dead place_ids
@@ -158,7 +159,7 @@ class parser(object):
     # df['logacc']    = np.log(df.accuracy.values).astype(float)
 
     # df['hour']    = (df['time']//60)%24+1 # 1 to 24
-    df['hour']    = (df['time']//60 + df['time']%60)%24+1 # 1 to 24
+    df['hour']    = (df['time']/60)%24+1 # 1 to 24
     df['hour2']   = (df['time']//60)%24//2+1 # 1 to 12
     df['hour3']   = (df['time']//60)%24//3+1 # 1 to 8
     df['hour4']   = (df['time']//60)%24//4+1 # 1 to 6
