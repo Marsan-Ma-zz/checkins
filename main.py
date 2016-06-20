@@ -112,8 +112,8 @@ class main(object):
       self.params['mdl_weights'] = (0.4, 1, 0.4)
 
     if 'try_large_grid' in run_cmd:
-      self.params['x_step'] = 1
-      self.params['y_step'] = 1
+      self.params['x_step'] = 0.4
+      self.params['y_step'] = 0.4
 
     #==========================================
     #   Choose-one config
@@ -294,13 +294,10 @@ class main(object):
     elif 'submit_full' in run_cmd:
       self.params['train_test_split_time'] = 1e10   # use all samples for training
       self.init_team()
-      self.train_alg(alg, mdl_config={'n_estimators': 500}, keep_model=True, submit=True)
-    elif 'skrf_submit' in run_cmd:
+      self.train_alg(alg, keep_model=True, submit=True)
+    elif '_submit' in run_cmd:
       self.init_team()
-      self.train_alg(alg, mdl_config={'n_estimators': 300}, keep_model=True, submit=True)
-    elif 'xgb_submit' in run_cmd:
-      self.init_team()
-      self.train_alg(alg, mdl_config={'n_estimators': 30}, keep_model=True, submit=True)
+      self.train_alg(alg, keep_model=True, submit=True)
     elif 'eva_exist' in run_cmd:
       self.init_team()
       self.evaluate_model(evaluate=True, submit=False)

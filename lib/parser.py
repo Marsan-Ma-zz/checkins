@@ -35,7 +35,7 @@ class parser(object):
   #----------------------------------------
   #   Main
   #----------------------------------------
-  def get_data(self, overwrite=False):
+  def get_data(self, overwrite=True):
     start_time = time.time()
     cache_name = "%s/data/cache/cache_get_data_split_%i_rmol_%.2f_mci_%i.pkl" % (self.root, self.train_test_split_time, self.remove_distance_outlier, self.place_min_checkin)
     if (os.path.exists(cache_name) and not overwrite):
@@ -159,13 +159,28 @@ class parser(object):
     # df['logacc']    = np.log(df.accuracy.values).astype(float)
 
     # df['hour']    = (df['time']//60)%24+1 # 1 to 24
+    # df['hour']    = (df['time']/60)%24+1 # 1 to 24
+    # df['hour2']   = (df['time']/60)%24%2+1
+    # df['hour3']   = (df['time']/60)%24%3+1
+    # df['hour4']   = (df['time']/60)%24%4+1
+    # df['hour6']   = (df['time']/60)%24%6+1
+    # df['qday']    = (df['time']/60)%24/6+1 # 1 to 4
+    # df['weekday'] = (df['time']/1440)%7+1
+    # df['month']   = (df['time']/43200)%12+1 # rough estimate, month = 30 days
+    # df['year']    = (df['time']/525600)+1
+    
+    # df['day']     = (df['time']/60/24)
+    # df['monthday']= (df['day'] % 30)
+    # df['season']  = (df['time']/43200/3)%4+1
+    # df['logacc']  = np.log(df.accuracy.values).astype(float)
+
     df['hour']    = (df['time']/60)%24+1 # 1 to 24
     df['hour2']   = (df['time']//60)%24//2+1 # 1 to 12
     df['hour3']   = (df['time']//60)%24//3+1 # 1 to 8
     df['hour4']   = (df['time']//60)%24//4+1 # 1 to 6
     df['qday']    = (df['time']//60)%24//6+1 # 1 to 4
-    df['weekday'] = (df['time']//1440)%7+1
-    df['month']   = (df['time']//43200)%12+1 # rough estimate, month = 30 days
+    df['weekday'] = (df['time']/1440)%7+1
+    df['month']   = (df['time']/43200)%12+1 # rough estimate, month = 30 days
     df['year']    = (df['time']//525600)+1
     
     df['day']     = (df['time']//60//24)

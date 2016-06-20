@@ -384,21 +384,34 @@
           std1.5  => 0.9828/0.5320
           std2.0  => 0.9808/0.5372  <--- BEST!
           std2.5  => 0.9661/0.5353
-    16. SVM
-    17. KNN 
+    16. KNN 
           0.5218 for no x/y_inter, 
           tab1: 'x_inter'/'y_inter' = 2/2, mdl_weights = (0.4, 1, 0.4)   => 0.5153
           tab2: 'x_inter'/'y_inter' = 1/1, mdl_weights = (0.4, 1, 0.4)   => 0.5045
           tab3: blending for rank_w = [1, 0.4, 0.2]   => improve 0.00019 only.
-    18. [TODO]
-          => knn with inter for submit        (tonight)
-          => knn with larger grid for submit  (tonight)
-          => blending: weight more on kings
+    17. SVM
+    18. Blending:
+          (rank_ws_1_0.6_0.4) weight more on kings? seems should not to ...
+            gs_top_w1.5 => 
+            gs_top_w1.7 => 
+            gs_top_w1.9 => 
+            gs_top_w2 => 0.58529  <--- BEST?
+            gs_top_w3 => 0.58513
+            gs_top_w5 => 0.58489
+          (top_w2)
+            gs_rank_ws_1_0.8_0.6 => 0.58479
+            gs_rank_ws_1_0.8_0.4 => 0.58492
+            gs_rank_ws_1_0.6_0.4 => 0.58529
+            gs_rank_ws_1_0.6_0.1 =>
+            gs_rank_ws_1_0.4_0.2 =>
+    19. [TODO]
+          => Diego: remove ash, mod weight to [1, 0.6, 0.4]
           => blending: by same models but drop 1 feature 
-          
-[TODO]
-    2. xgboost early stop with validation samples
-    3. grid-wise parameter search
+          => blending meterials from different model setup (tree depth, knn distance type, ...)
+          => check correlation with small grids first.
+          => xgboost early stop with validation samples
+          => use latter sample (near test samples) only
+          => remove place_min_last_checkin
     
 
     Markus: "I think the basic ideas are out there already: learning various joint or individual distributions for the space and time variables for each place_id (and the overall relative popularities). The challenge is doing this in a computationally efficient manner without losing too much information."
