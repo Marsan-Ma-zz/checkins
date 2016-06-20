@@ -90,19 +90,53 @@ class trainer(object):
   #----------------------------------------
   def get_alg(self, alg, mdl_config):
     if alg == 'skrf':
-      # clf = ensemble.RandomForestClassifier(n_estimators=mdl_config.get('n_estimators', 50), max_depth=mdl_config.get('max_depth', 11), n_jobs=-1)
-      # clf = ensemble.RandomForestClassifier(n_estimators=mdl_config.get('n_estimators', 150), max_depth=mdl_config.get('max_depth', 11), n_jobs=-1)
-      clf = ensemble.RandomForestClassifier(n_estimators=mdl_config.get('n_estimators', 300), max_depth=mdl_config.get('max_depth', 11), n_jobs=-1)
-      # clf = ensemble.RandomForestClassifier(n_estimators=mdl_config.get('n_estimators', 500), max_depth=mdl_config.get('max_depth', 11), n_jobs=-1)
+      clf = ensemble.RandomForestClassifier(
+        n_estimators=mdl_config.get('n_estimators', 300), 
+        max_features=mdl_config.get('max_features', 'auto'),  
+        max_depth=mdl_config.get('max_depth', 11), 
+        n_jobs=-1
+      )
+    elif alg == 'skrfp':
+      clf = ensemble.RandomForestClassifier(
+        n_estimators=mdl_config.get('n_estimators', 300),
+        max_features=mdl_config.get('max_features', 'auto'),   
+        max_depth=mdl_config.get('max_depth', 11), 
+        criterion='entropy', 
+        n_jobs=-1
+      )
+    elif alg =='sket':
+      clf = ensemble.ExtraTreesClassifier(
+        n_estimators=mdl_config.get('n_estimators', 800), 
+        max_features=mdl_config.get('max_features', 'auto'),  
+        max_depth=mdl_config.get('max_depth', 15), 
+        n_jobs=-1
+      )
+    elif alg =='sketp':
+      clf = ensemble.ExtraTreesClassifier(
+        n_estimators=mdl_config.get('n_estimators', 800), 
+        max_features=mdl_config.get('max_features', 'auto'),  
+        max_depth=mdl_config.get('max_depth', 15), 
+        criterion='entropy', 
+        n_jobs=-1
+      )
     elif alg == 'skgbc':
-      clf = ensemble.GradientBoostingClassifier(n_estimators=mdl_config.get('n_estimators', 30), max_depth=mdl_config.get('max_depth', 5))
-    elif alg == 'sklr':
-      clf = linear_model.LogisticRegression(multi_class='multinomial', solver = 'lbfgs')
+      clf = ensemble.GradientBoostingClassifier(
+        n_estimators=mdl_config.get('n_estimators', 30), 
+        max_depth=mdl_config.get('max_depth', 5)
+      )
     elif alg == 'xgb':
       # https://github.com/dmlc/xgboost/blob/master/python-package/xgboost/sklearn.py
-      clf = xgb.XGBClassifier(n_estimators=mdl_config.get('n_estimators', 30), max_depth=mdl_config.get('max_depth', 15), learning_rate=mdl_config.get('learning_rate', 0.15), objective="multi:softprob", silent=True)
+      clf = xgb.XGBClassifier(
+        n_estimators=mdl_config.get('n_estimators', 30), 
+        max_depth=mdl_config.get('max_depth', 7), 
+        learning_rate=mdl_config.get('learning_rate', 0.1), 
+        objective="multi:softprob", 
+        silent=True
+      )
     elif alg == 'knn':
       clf = KNeighborsClassifier(n_neighbors=25, weights='distance', metric='manhattan', n_jobs=-1)
+    elif alg == 'sklr':
+      clf = linear_model.LogisticRegression(multi_class='multinomial', solver = 'lbfgs')
     return clf
   
 

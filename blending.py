@@ -92,16 +92,18 @@ class blendor(object):
         # ('lb_blending_20160617_215629_0.58463.csv.gz'       , self.top_w.get(0, 2.0) ),
         # ('lb_marsan_blending_0614_0.58378.csv.gz'           , 2.0 ),
         # ('lb_marsan_blending_0613_0.58299.csv.gz'           , 2.0 ),
+        ('lb_anouymous_0.58018.csv.gz'                        , 1.5 ),
         # ('lb_marsan_blending_0613_0.57664.csv.gz'           , 2.0 ),
-        ('lb_anouymous_0.57842.csv.gz'                        , 1.5 ),
+        # ('lb_anouymous_0.57842.csv.gz'                        , 1.5 ),
         ('lb_sub_knn_daten-kieker_0.57189.csv.gz'             , 1.2 ),
-        ('skrf_submit_full_20160620_000902_0.57114.csv.gz'    , 1.5 ),
+        ('skrf_submit_full_20160620_000902_0.57114.csv.gz'    , 1.2 ),
         # ('lb_sub_knn_danielspringt_0.57068.csv.gz'          , 1.2 ),
         # ('lb_daniel_0.57068.csv.gz'                         , 1.0 ),
         # ('lb_grid_knn_lonely_shepard_0.57004.csv.gz'        , 1.0 ),
+        ('knn_grid_0.8_20160618_081945_0.56999.csv.gz'        , 1.0 ),
         
         #-----[Knight]-----
-        ('submit_knn_0.4_grid_20160617_091633_0.56919.csv.gz',0.9 ),
+        # ('submit_knn_0.4_grid_20160617_091633_0.56919.csv.gz',0.9 ),
         # ('submit_knn_submit_20160615_230955_0.56815.csv.gz',  0.8 ),
         ('submit_skrf_submit_20160605_195424_0.56552.csv.gz', 0.7 ),
         ('submit_skrf_submit_20160608_174129_0.56533.csv.gz', 0.7 ),
@@ -182,9 +184,9 @@ class blendor(object):
 #   Main Flow
 #===========================================
 if __name__ == '__main__':
-  # blendor(do_blend=False).run()   # cal corr only
-  bla = blendor(do_blend=True)
+  blendor(do_blend=False).run()   # cal corr only
+  # bla = blendor(do_blend=True)
   # bla.run('debug')
-  bla.run('gs_top_w')
+  # bla.run('gs_top_w')
   # bla.run('gs_rank_w')
 

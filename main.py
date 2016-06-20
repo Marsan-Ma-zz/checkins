@@ -18,9 +18,8 @@ class main(object):
 
   def __init__(self, root='.', params={}):
     self.timestamp = str(datetime.now().strftime("%Y%m%d_%H%M%S"))
-    # self.all_feats = ['season', 'logacc', 'qday', 'month', 'accuracy', 'weekday', 'hour', 'year', 'x', 'y']
-    # self.all_feats = ['qday', 'month', 'accuracy', 'weekday', 'hour', 'year', 'x', 'y']
     self.all_feats = ['hour', 'qday', 'weekday', 'month', 'year', 'logacc', 'x', 'y']
+    # self.all_feats = ['p720', 'p1260', 'p1440', 'p1680', 'monthday', 'hour', 'qday', 'weekday', 'month', 'year', 'logacc', 'x', 'y']
     self.params = {
       'root'            : root,
       'x_cols'          : self.all_feats,
@@ -77,9 +76,9 @@ class main(object):
     # self.params['data_cache'] = "%s/data/cache/data_cache_size_%.2f_itv_x%iy%i_mcnt_%i.pkl" % (self.params['root'], self.params['size'], self.params['x_inter'], self.params['y_inter'], self.params['max_cands'])
     self.params['data_cache'] = "%s/data/cache/data_cache_size_10.0_itv_x%iy%i_mcnt_%i.pkl" % (self.params['root'], self.params['x_inter'], self.params['y_inter'], self.params['max_cands'])
     self.pas = parser.parser(self.params)
-    if not os.path.exists(self.params['data_cache']):
-      df_train, df_valid, _ = self.pas.get_data()
-      self.pas.init_data_cache(pd.concat([df_train, df_valid]), self.params)
+    # if not os.path.exists(self.params['data_cache']):
+    #   df_train, df_valid, _ = self.pas.get_data()
+    #   self.pas.init_data_cache(pd.concat([df_train, df_valid]), self.params)
     # workers
     self.tra = trainer.trainer(self.params)
     self.eva = evaluator.evaluator(self.params)
@@ -119,7 +118,7 @@ class main(object):
     #   Choose-one config
     #==========================================
     if run_cmd == 'all':
-      for a in ['skrf', 'xgb', 'sklr']:
+      for a in ['skrf', 'skrfp', 'sket', 'sketp', 'knn', 'xgb', 'skgbc']:
         self.init_team()
         self.train_alg(a)
     #------------------------------------------
@@ -151,7 +150,7 @@ class main(object):
           self.train_alg(alg)
     #------------------------------------------
     elif run_cmd == 'skrf_recursive_feature_elimination':
-      fixed_feats = {'x', 'y', 'hour', 'weekday', 'year', 'month'}
+      fixed_feats = {'logacc', 'qday', 'x', 'y', 'hour', 'weekday', 'year', 'month'}
       feats = set(self.all_feats)
       print("[RFE] checking x_cols for %s" % (feats - fixed_feats))
       while True:
@@ -258,18 +257,19 @@ class main(object):
       self.init_team()
       for n_estimators in [200, 300, 500, 800, 1000]:
         for max_depth in [12]:
-          self.train_alg(alg, mdl_config={'n_estimators': n_estimators, 'max_depth': max_depth})
-      #
-      self.params['size']   = 10.0
-      self.params['stamp']  = "%s_%s" % (self.params['alg'], self.timestamp)
+          for max_feats in [0.4, 0.6, 0.8, 1.0]:
+            self.train_alg(alg, mdl_config={'n_estimators': n_estimators, 'max_depth': max_depth, 'max_features': max_feats})
+    elif run_cmd in ['sket_gs_params', 'sketp_gs_params']:
       self.init_team()
-      self.train_alg(alg, keep_model=True, submit=True)
-      self.tra, self.eva, self.pas = None, None, None
+      for n_estimators in [800]:
+        for max_depth in [15]:
+          for max_feats in [0.45, 0.5, 0.55]:
+            self.train_alg(alg, mdl_config={'n_estimators': n_estimators, 'max_depth': max_depth, 'max_features': max_feats})
     elif run_cmd == 'xgb_gs_params':
       self.init_team()
-      for n_estimators in [5, 10, 15, 20, 30]:
-        for max_depth in [11]:
-          for learning_rate in [0.15]:
+      for n_estimators in [30, 35, 40]:
+        for max_depth in [3, 4, 5]:
+          for learning_rate in [0.1]:
             self.train_alg(alg, params={'n_estimators': n_estimators, 'max_depth': max_depth, 'learning_rate': learning_rate})
       #
       # self.params['size']   = 10.0
@@ -325,7 +325,7 @@ class main(object):
     df_train, df_valid, df_test = self.pas.get_data()
       
     # train & test
-    print("[train_alg]: %s" % mdl_config)
+    print("[train_alg]: alg=%s, mdl_config=%s" % (alg, mdl_config))
     self.tra.train(df_train, alg=alg, mdl_config=mdl_config, norm=norm)
     train_score, valid_score = 0, 0
     if self.params['size'] <= 1:  # eva.train only when dev.

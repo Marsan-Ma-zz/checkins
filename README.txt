@@ -282,6 +282,58 @@
           50Y 0.9317  0.4904
         => by introduce too many features => need more samples, so try reduce candidate place_ids counts
     12. xgboost
+          [0620]
+          'n_estimators': 15, 'max_depth': 7, 'learning_rate': 0.05 / 0.5343
+          'n_estimators': 15, 'max_depth': 7, 'learning_rate': 0.1 / 0.5357
+          'n_estimators': 15, 'max_depth': 7, 'learning_rate': 0.15 / 0.5351
+          'n_estimators': 15, 'max_depth': 9, 'learning_rate': 0.05 / 0.5336
+          'n_estimators': 15, 'max_depth': 9, 'learning_rate': 0.1 / 0.5354 
+          'n_estimators': 15, 'max_depth': 9, 'learning_rate': 0.15 / 0.5342
+          'n_estimators': 15, 'max_depth': 11, 'learning_rate': 0.05 / 0.5336
+          'n_estimators': 15, 'max_depth': 11, 'learning_rate': 0.1 / 0.5347
+          'n_estimators': 15, 'max_depth': 11, 'learning_rate': 0.15 / 0.5340
+
+          'n_estimators': 20, 'max_depth': 7, 'learning_rate': 0.05 / 0.5375
+          'n_estimators': 20, 'max_depth': 7, 'learning_rate': 0.1 / 0.5378 
+          'n_estimators': 20, 'max_depth': 7, 'learning_rate': 0.15 / 0.5370
+          'n_estimators': 20, 'max_depth': 9, 'learning_rate': 0.05 / 0.5364 
+          'n_estimators': 20, 'max_depth': 9, 'learning_rate': 0.1 / 0.5372
+          'n_estimators': 20, 'max_depth': 9, 'learning_rate': 0.15 / 0.5352
+          'n_estimators': 20, 'max_depth': 11, 'learning_rate': 0.05 / 0.5357
+          'n_estimators': 20, 'max_depth': 11, 'learning_rate': 0.1 / 0.5358 
+          'n_estimators': 20, 'max_depth': 11, 'learning_rate': 0.15 / 0.5324
+
+          'n_estimators': 30, 'max_depth': 7, 'learning_rate': 0.05 / 0.5381
+          'n_estimators': 30, 'max_depth': 7, 'learning_rate': 0.1 / 0.5397    
+          'n_estimators': 30, 'max_depth': 7, 'learning_rate': 0.15 / 0.5353
+          'n_estimators': 30, 'max_depth': 9, 'learning_rate': 0.05 / 0.5370
+          'n_estimators': 30, 'max_depth': 9, 'learning_rate': 0.1 / 0.5390
+          'n_estimators': 30, 'max_depth': 9, 'learning_rate': 0.15 / 0.5357
+          'n_estimators': 30, 'max_depth': 11, 'learning_rate': 0.05 / 0.5375
+          'n_estimators': 30, 'max_depth': 11, 'learning_rate': 0.1 / 0.5374
+          'n_estimators': 30, 'max_depth': 11, 'learning_rate': 0.15 / 0.5338
+
+          'learning_rate': 0.1, 'n_estimators': 30, 'max_depth': 3 / 0.5369
+          'learning_rate': 0.1, 'n_estimators': 30, 'max_depth': 4 / 0.5403
+          'learning_rate': 0.1, 'n_estimators': 30, 'max_depth': 5 / 0.5415
+          'learning_rate': 0.1, 'n_estimators': 35, 'max_depth': 3 / 0.5405
+          'learning_rate': 0.1, 'n_estimators': 35, 'max_depth': 4 / 0.5413
+          'learning_rate': 0.1, 'n_estimators': 35, 'max_depth': 5 / 0.5424
+          'learning_rate': 0.1, 'n_estimators': 40, 'max_depth': 3 / 0.5408
+
+          'n_estimators': 40, 'learning_rate': 0.1, 'max_depth': 5 / 0.5429   <--- BEST!!!
+          'n_estimators': 40, 'learning_rate': 0.1, 'max_depth': 6 / 0.5406
+          'n_estimators': 40, 'learning_rate': 0.1, 'max_depth': 7 / 0.5397
+
+          'n_estimators': 60, 'learning_rate': 0.1, 'max_depth': 5 / 0.5412
+          'n_estimators': 60, 'learning_rate': 0.1, 'max_depth': 6 / 0.5389
+          'n_estimators': 60, 'learning_rate': 0.1, 'max_depth': 7 / 0.5380
+          
+          'n_estimators': 80, 'learning_rate': 0.1, 'max_depth': 5 / 0.5395
+          'n_estimators': 80, 'learning_rate': 0.1, 'max_depth': 6 / 0.5364
+          'n_estimators': 80, 'learning_rate': 0.1, 'max_depth': 7 / 0.5374
+
+          [Old]
           'max_depth': 7, 'learning_rate': 0.05, 'n_estimators': 5, 0.7432, 0.5223
           'max_depth': 7, 'learning_rate': 0.1, 'n_estimators': 5, 0.7582, 0.5200
           'max_depth': 7, 'learning_rate': 0.15, 'n_estimators': 5, 0.7680, 0.5232
@@ -389,26 +441,58 @@
           tab1: 'x_inter'/'y_inter' = 2/2, mdl_weights = (0.4, 1, 0.4)   => 0.5153
           tab2: 'x_inter'/'y_inter' = 1/1, mdl_weights = (0.4, 1, 0.4)   => 0.5045
           tab3: blending for rank_w = [1, 0.4, 0.2]   => improve 0.00019 only.
-    17. SVM
+    17. sket
+          'n_estimators': 200, 'max_depth': 8 / 0.4912
+          'n_estimators': 200, 'max_depth': 10 / 0.5148
+          'n_estimators': 200, 'max_depth': 12 / 0.5191
+          'n_estimators': 300, 'max_depth': 8 / 0.4925
+          'n_estimators': 300, 'max_depth': 10 / 0.5156
+          'n_estimators': 300, 'max_depth': 12 / 0.5201
+          'n_estimators': 500, 'max_depth': 8 / 0.4948
+          'n_estimators': 500, 'max_depth': 10 / 0.5160
+          'n_estimators': 500, 'max_depth': 12 / 0.5226
+          'n_estimators': 800, 'max_depth': 8 / 0.4949
+          'n_estimators': 800, 'max_depth': 10 / 0.5164
+          'n_estimators': 800, 'max_depth': 12 / 0.5235  <-
+          'n_estimators': 1000, 'max_depth': 8 / 0.4955
+          'n_estimators': 1000, 'max_depth': 10 / 0.5165
+          'n_estimators': 1000, 'max_depth': 12 / 0.5227
+
+          'max_depth': 12, 'n_estimators': 700 / 0.5235
+          'max_depth': 15, 'n_estimators': 700 / 0.5263
+          'max_depth': 18, 'n_estimators': 700 / 0.5243
+          'max_depth': 12, 'n_estimators': 800 / 0.5236
+          'max_depth': 15, 'n_estimators': 800 / 0.5267   <-
+          'max_depth': 18, 'n_estimators': 800 / 0.5251
+          'max_depth': 12, 'n_estimators': 900 / 0.5246
+          'max_depth': 15, 'n_estimators': 900 / 0.5260 
+          'max_depth': 18, 'n_estimators': 900 / 0.5245
+
+          'max_features': 0.4, 'max_depth': 14, 'n_estimators': 800 / 0.5311
+          'max_features': 0.7, 'max_depth': 14, 'n_estimators': 800 / 0.5313
+          'max_features': 1.0, 'max_depth': 14, 'n_estimators': 800 / 0.5251
+          'max_features': 0.4, 'max_depth': 15, 'n_estimators': 800 / 0.5330  <-
+          'max_features': 0.7, 'max_depth': 15, 'n_estimators': 800 / 0.5302
+          'max_features': 1.0, 'max_depth': 15, 'n_estimators': 800 / 0.5269
+          'max_features': 0.4, 'max_depth': 16, 'n_estimators': 800 / 0.5309
+          'max_features': 0.7, 'max_depth': 16, 'n_estimators': 800 / 0.5318
+          'max_features': 1.0, 'max_depth': 16, 'n_estimators': 800 / 0.5253
+
     18. Blending:
           (rank_ws_1_0.6_0.4) weight more on kings? seems should not to ...
             gs_top_w1.5 => 
-            gs_top_w1.7 => 
-            gs_top_w1.9 => 
+            gs_top_w1.8 => 
             gs_top_w2 => 0.58529  <--- BEST?
             gs_top_w3 => 0.58513
             gs_top_w5 => 0.58489
           (top_w2)
             gs_rank_ws_1_0.8_0.6 => 0.58479
             gs_rank_ws_1_0.8_0.4 => 0.58492
-            gs_rank_ws_1_0.6_0.4 => 0.58529
-            gs_rank_ws_1_0.6_0.1 =>
-            gs_rank_ws_1_0.4_0.2 =>
+            gs_rank_ws_1_0.6_0.4 => 0.58529 <--- BEST?
+            gs_rank_ws_1_0.6_0.1 => 0.58501
+            gs_rank_ws_1_0.4_0.2 => 0.58493
     19. [TODO]
-          => Diego: remove ash, mod weight to [1, 0.6, 0.4]
-          => blending: by same models but drop 1 feature 
-          => blending meterials from different model setup (tree depth, knn distance type, ...)
-          => check correlation with small grids first.
+          => blending: try use all kings even similar 
           => xgboost early stop with validation samples
           => use latter sample (near test samples) only
           => remove place_min_last_checkin

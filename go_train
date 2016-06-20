@@ -12,8 +12,13 @@ PY3='stdbuf -o0 nohup python3 -u'
 # $PY3 main.py skrf_grid_step 0.4 skrf_grid_step_$NOW > "./logs/nohup_skrf_grid_step_$NOW.log" &
 # $PY3 main.py xgb_grid_step 1.0 xgb_grid_step_$NOW > "./logs/nohup_skrf_grid_step_$NOW.log" &
 # $PY3 main.py skrf_gs_params 1.0 skrf_gs_params_$NOW > "./logs/nohup_skrf_gs_params_$NOW.log" &
+$PY3 main.py sket_gs_params 0.4 sket_gs_params_$NOW > "./logs/nohup_sket_gs_params_$NOW.log" &
 # $PY3 main.py xgb_gs_params 0.4 xgb_gs_params_$NOW > "./logs/nohup_xgb_gs_params_$NOW.log" &
 
+
+# python3 main.py sketp 0.4
+
+# $PY3 main.py all 0.4 all_$NOW > "./logs/all_$NOW.log"  # Fastest for debug use
 # python3 main.py skrf 0.2 skrf_$NOW   # Fastest for debug use
 # python3 main.py skrf_feats_sel 0.4 skrf_$NOW #> "./logs/skrf_max_cands_$NOW.log" &
 # python3 main.py xgb 0.4 xgb_$NOW #> "./logs/xgb_$NOW.log" &
@@ -36,7 +41,7 @@ PY3='stdbuf -o0 nohup python3 -u'
 # $PY3 main.py skrf_gs_time_th_wd 0.4 skrf_20160607_155730 > "./logs/skrf_gs_time_th_wd_$NOW.log" &
 # $PY3 main.py skrf_gs_time_th_hr 0.4 skrf_gs_time_th_hr_$NOW > "./logs/skrf_gs_time_th_hr_$NOW.log" &
 # $PY3 main.py skrf_place_min_checkin 0.4 skrf_place_min_checkin_$NOW > "./logs/skrf_place_min_checkin_$NOW.log" &
-
+# $PY3 main.py skrf_recursive_feature_elimination 0.4 skrf_recursive_feature_elimination_$NOW > "./logs/skrf_recursive_feature_elimination_$NOW.log" &
 
 # [Submits]
 # python3 main.py skrf_submit 0.4 skrf_submit_$NOW #> "./logs/nohup_skrf_submit_$NOW.log" &
@@ -46,7 +51,7 @@ PY3='stdbuf -o0 nohup python3 -u'
 # $PY3 main.py skrf_submit_full 10.0 skrf_submit_full_$NOW > "./logs/nohup_skrf_submit_full_$NOW.log" &
 # $PY3 main.py skrf_try_submit 10.0 skrf_try_submit_$NOW > "./logs/skrf_try_submit_$NOW.log" &
 # $PY3 main.py xgb_submit 10.0 xgb_submit_$NOW > "./logs/nohup_xgb_submit_$NOW.log" &
-$PY3 blending.py blending_$NOW > "./logs/blending_$NOW.log" &
+# $PY3 blending.py blending_$NOW > "./logs/blending_$NOW.log" &
 
 # [Submits Existing Model]
 # python3 main.py skrf_eva_exist 0.4 LB_skrf_submit_20160611_233627
@@ -55,4 +60,4 @@ $PY3 blending.py blending_$NOW > "./logs/blending_$NOW.log" &
 # 
 
 # [Kill such processes]
-# sudo kill -9 `ps aux | grep "skrf_submit" | awk '{print $2}'`
+# sudo kill -9 `ps aux | grep "sket_gs_params" | awk '{print $2}'`
