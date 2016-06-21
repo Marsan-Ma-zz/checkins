@@ -253,17 +253,17 @@ class main(object):
         self.init_team()
         self.evaluate_model(evaluate=True, submit=False)
     #------------------------------------------
-    elif run_cmd == 'skrf_gs_params':
+    elif run_cmd in ['skrf_gs_params', 'skrfp_gs_params']:
       self.init_team()
-      for n_estimators in [200, 300, 500, 800, 1000]:
-        for max_depth in [12]:
-          for max_feats in [0.4, 0.6, 0.8, 1.0]:
+      for max_feats in [0.3, 0.35, 0.4]:
+        for n_estimators in [500]:
+          for max_depth in [15]:
             self.train_alg(alg, mdl_config={'n_estimators': n_estimators, 'max_depth': max_depth, 'max_features': max_feats})
     elif run_cmd in ['sket_gs_params', 'sketp_gs_params']:
       self.init_team()
-      for n_estimators in [800]:
-        for max_depth in [15]:
-          for max_feats in [0.45, 0.5, 0.55]:
+      for n_estimators in [800, 1200, 1500]:
+        for max_depth in [13, 15, 18]:
+          for max_feats in ['auto', 0.4, 0.5, 0.6]:
             self.train_alg(alg, mdl_config={'n_estimators': n_estimators, 'max_depth': max_depth, 'max_features': max_feats})
     elif run_cmd == 'xgb_gs_params':
       self.init_team()
@@ -271,11 +271,6 @@ class main(object):
         for max_depth in [3, 4, 5]:
           for learning_rate in [0.1]:
             self.train_alg(alg, params={'n_estimators': n_estimators, 'max_depth': max_depth, 'learning_rate': learning_rate})
-      #
-      # self.params['size']   = 10.0
-      # self.params['stamp']  = "%s_%s" % (self.params['alg'], self.timestamp)
-      # self.init_team()
-      # self.train_alg(alg, keep_model=True, submit=True)
     #------------------------------------------
     elif run_cmd == 'skrf_place_min_last_checkin':
       for mlc in [550000, 650000]:

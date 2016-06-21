@@ -11,8 +11,9 @@ PY3='stdbuf -o0 nohup python3 -u'
 
 # $PY3 main.py skrf_grid_step 0.4 skrf_grid_step_$NOW > "./logs/nohup_skrf_grid_step_$NOW.log" &
 # $PY3 main.py xgb_grid_step 1.0 xgb_grid_step_$NOW > "./logs/nohup_skrf_grid_step_$NOW.log" &
-# $PY3 main.py skrf_gs_params 1.0 skrf_gs_params_$NOW > "./logs/nohup_skrf_gs_params_$NOW.log" &
-$PY3 main.py sket_gs_params 0.4 sket_gs_params_$NOW > "./logs/nohup_sket_gs_params_$NOW.log" &
+# $PY3 main.py skrf_gs_params 0.8 skrf_gs_params_$NOW > "./logs/nohup_skrf_gs_params_$NOW.log" &
+# $PY3 main.py skrfp_gs_params 0.8 skrfp_gs_params_$NOW > "./logs/nohup_skrfp_gs_params_$NOW.log" &
+# $PY3 main.py sket_gs_params 0.4 sket_gs_params_$NOW > "./logs/nohup_sket_gs_params_$NOW.log" &
 # $PY3 main.py xgb_gs_params 0.4 xgb_gs_params_$NOW > "./logs/nohup_xgb_gs_params_$NOW.log" &
 
 
@@ -49,6 +50,7 @@ $PY3 main.py sket_gs_params 0.4 sket_gs_params_$NOW > "./logs/nohup_sket_gs_para
 # $PY3 main.py knn_try_inter_submit_full 10.0 knn_try_inter_submit_full_$NOW > "./logs/knn_try_inter_submit_full_$NOW.log" &
 # $PY3 main.py knn_try_large_grid_submit_full 10.0 knn_try_large_grid_submit_full_$NOW > "./logs/knn_try_large_grid_submit_full_$NOW.log" &
 # $PY3 main.py skrf_submit_full 10.0 skrf_submit_full_$NOW > "./logs/nohup_skrf_submit_full_$NOW.log" &
+$PY3 main.py skrfp_submit_full 10.0 skrfp_submit_full_$NOW > "./logs/nohup_skrfp_submit_full_$NOW.log" &
 # $PY3 main.py skrf_try_submit 10.0 skrf_try_submit_$NOW > "./logs/skrf_try_submit_$NOW.log" &
 # $PY3 main.py xgb_submit 10.0 xgb_submit_$NOW > "./logs/nohup_xgb_submit_$NOW.log" &
 # $PY3 blending.py blending_$NOW > "./logs/blending_$NOW.log" &
@@ -60,4 +62,4 @@ $PY3 main.py sket_gs_params 0.4 sket_gs_params_$NOW > "./logs/nohup_sket_gs_para
 # 
 
 # [Kill such processes]
-# sudo kill -9 `ps aux | grep "sket_gs_params" | awk '{print $2}'`
+# sudo kill -9 `ps aux | grep "skrf_submit_full" | awk '{print $2}'`

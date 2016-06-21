@@ -1,5 +1,6 @@
 import os, sys, time, pickle, gzip
-from mechanize import Browser
+from robobrowser import RoboBrowser
+
 from lxml import html
 from time import sleep
 
@@ -8,39 +9,48 @@ from datetime import datetime
 #===========================================
 #   Submitter
 #===========================================  
-def submitor(object):
+class submitora(object):
 
-  def __init__(username, password, competition='facebook-v-predicting-check-ins'):
+
+  def __init__(self, username, password, competition='facebook-v-predicting-check-ins'):
     self.base = 'https://www.kaggle.com'
+    self.login_url = '/'.join([self.base, 'account', 'login'])
     self.submit_url = '/'.join([self.base, 'c', competition, 'submissions', 'attach'])
     self.username = username
     self.password = password
 
 
-  def submit(entry, message=None):
-    browser = Browser()
-    browser.open(self.base)
-    browser.select_form(nr=0)
-    browser['UserName'] = self.username
-    browser['Password'] = self.password
-    browser.submit()
+  def submit(self, entry, message=None):
+    browser = RoboBrowser(history=True)
+
+    # [login]
+    browser.open(self.login_url)
+    login_form = browser.get_form(action='/account/login')
+    login_form['UserName'].value = self.username
+    login_form['Password'].value = self.password
+    browser.submit_form(login_form)
+    myname = browser.select('#header-account')[0].text
+    print("[login] as \"%s\" @ %s" % (myname, datetime.now()))
+
+    # [submit]
     browser.open(self.submit_url)
-    browser.select_form(nr=0)
-    browser.form.add_file(open(entry), filename=entry)
+    submit_form = browser.get_form(action='/competitions/submissions/accept')
+    submit_form['SubmissionUpload'].value = open(entry, 'r')
+    if message: submit_form['SubmissionDescription'] = message
+    browser.submit_form(submit_form)
+    print("submitted @ %s" % datetime.now())
+    score = browser.select(".my-submission")[0].select(".score")[0].text
+    print("[result] score as %s @ %s" % (score, datetime.now()))
+    return score
 
-    if message:
-        browser['SubmissionDescription'] = message
 
-    browser.submit()
-
-    while True:
-      leaderboard = html.fromstring(browser.response().read())
-      score = leaderboard.cssselect('.submission-results strong')
-
-      if len(score) and score[0].text_content():
-          score = score[0].text_content()
-          break
-
-      sleep(30)
-      browser.reload()
+#===========================================
+#   Main Flow
+#===========================================
+if __name__ == '__main__':
+  sub = submitora(username='marsan@gmail.com', password='kaguya54')
+  sub.submit(
+    entry="/home/workspace/checkins/submit/blending_20160621_214954.csv",
+    message="test2",
+  )
 

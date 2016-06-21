@@ -81,7 +81,7 @@ class trainer(object):
       print("[Train] grid(%i,%i): %i samples / %i classes @ %s" % (x_idx, y_idx, len(y_train), len(set(y_train)), conv.now('full')))
       mp_pool.close()
     while processes: processes.pop(0).get()
-    print("[Train] done @ %s" % conv.now('full'))
+    print("[Train] done, rest processes=%i (should be 0!) @ %s" % (len(processes), conv.now('full')))
     
       
 
@@ -91,33 +91,33 @@ class trainer(object):
   def get_alg(self, alg, mdl_config):
     if alg == 'skrf':
       clf = ensemble.RandomForestClassifier(
-        n_estimators=mdl_config.get('n_estimators', 300), 
-        max_features=mdl_config.get('max_features', 'auto'),  
-        max_depth=mdl_config.get('max_depth', 11), 
-        n_jobs=-1
+        n_estimators=mdl_config.get('n_estimators', 500), 
+        max_features=mdl_config.get('max_features', 0.35),  
+        max_depth=mdl_config.get('max_depth', 15), 
+        n_jobs=-1,
       )
     elif alg == 'skrfp':
       clf = ensemble.RandomForestClassifier(
-        n_estimators=mdl_config.get('n_estimators', 300),
-        max_features=mdl_config.get('max_features', 'auto'),   
-        max_depth=mdl_config.get('max_depth', 11), 
-        criterion='entropy', 
-        n_jobs=-1
+        n_estimators=mdl_config.get('n_estimators', 500), 
+        max_features=mdl_config.get('max_features', 0.35),
+        max_depth=mdl_config.get('max_depth', 15), 
+        criterion='entropy',
+        n_jobs=-1,
       )
     elif alg =='sket':
       clf = ensemble.ExtraTreesClassifier(
         n_estimators=mdl_config.get('n_estimators', 800), 
-        max_features=mdl_config.get('max_features', 'auto'),  
+        max_features=mdl_config.get('max_features', 0.5),  
         max_depth=mdl_config.get('max_depth', 15), 
-        n_jobs=-1
+        n_jobs=-1,
       )
     elif alg =='sketp':
       clf = ensemble.ExtraTreesClassifier(
-        n_estimators=mdl_config.get('n_estimators', 800), 
-        max_features=mdl_config.get('max_features', 'auto'),  
-        max_depth=mdl_config.get('max_depth', 15), 
+        n_estimators=mdl_config.get('n_estimators', 1000), 
+        max_features=mdl_config.get('max_features', 0.5),  
+        max_depth=mdl_config.get('max_depth', 11), 
         criterion='entropy', 
-        n_jobs=-1
+        n_jobs=-1,
       )
     elif alg == 'skgbc':
       clf = ensemble.GradientBoostingClassifier(

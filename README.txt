@@ -393,14 +393,14 @@
           'max_depth': 7, 'n_estimators': 500 ,0.8644 ,0.5268
           'max_depth': 9, 'n_estimators': 500 ,0.9477 ,0.5346
           'max_depth': 11, 'n_estimators': 500 ,0.9808 ,0.5356
-          'max_depth': 13, 'n_estimators': 500 ,0.9911 ,0.5363  <--- 2nd BEST!
+          'max_depth': 13, 'n_estimators': 500 ,0.9911 ,0.5363  <--
           'max_depth': 15, 'n_estimators': 500 ,0.9942 ,0.5366
 
           'max_depth': 5, 'n_estimators': 800 ,0.7537 ,0.5043
           'max_depth': 7, 'n_estimators': 800 ,0.8644 ,0.5263
           'max_depth': 9, 'n_estimators': 800 ,0.9479 ,0.5355
           'max_depth': 11, 'n_estimators': 800 ,0.9811 ,0.5363
-          'max_depth': 13, 'n_estimators': 800 ,0.9912 ,0.5380  <--- BEST!
+          'max_depth': 13, 'n_estimators': 800 ,0.9912 ,0.5380  <--
           'max_depth': 15, 'n_estimators': 800 ,0.9941 ,0.5374
 
           'max_depth': 5, 'n_estimators': 1000 ,0.7536 ,0.5037
@@ -409,7 +409,133 @@
           'max_depth': 11, 'n_estimators': 1000 ,0.9812, 0.5369
           'max_depth': 13, 'n_estimators': 1000 ,0.9911, 0.5377
           'max_depth': 15, 'n_estimators': 1000 ,0.9941, 0.5369
-    14. KNN
+
+          'max_features': 0.4, 'n_estimators': 300, 'max_depth': 11, 0.5368
+          'max_features': 0.45, 'n_estimators': 300, 'max_depth': 11, 0.5368
+          'max_features': 0.5, 'n_estimators': 300, 'max_depth': 11, 0.5337
+          'max_features': 0.6, 'n_estimators': 300, 'max_depth': 11, 0.5337
+          'max_features': 'auto', 'n_estimators': 300, 'max_depth': 11, 0.5356
+          -----0621-------------------
+          'max_features': 'auto', 'n_estimators': 300, 'max_depth': 7 / 0.5220
+          'max_features': 0.35, 'n_estimators': 300, 'max_depth': 7 / 0.5220
+          'max_features': 0.4, 'n_estimators': 300, 'max_depth': 7 / 0.5310
+          'max_features': 0.45, 'n_estimators': 300, 'max_depth': 7 / 0.5310
+          'max_features': 0.5, 'n_estimators': 300, 'max_depth': 7 / 0.5316
+          'max_features': 0.55, 'n_estimators': 300, 'max_depth': 7 / 0.5316
+          'max_features': 0.6, 'n_estimators': 300, 'max_depth': 7 / 0.5316
+
+          'max_features': 'auto', 'n_estimators': 300, 'max_depth': 9 / 0.5369
+          'max_features': 0.35, 'n_estimators': 300, 'max_depth': 9 / 0.5369
+          'max_features': 0.4, 'n_estimators': 300, 'max_depth': 9 / 0.5403
+          'max_features': 0.45, 'n_estimators': 300, 'max_depth': 9 / 0.5403
+          'max_features': 0.5, 'n_estimators': 300, 'max_depth': 9 / 0.5386
+          'max_features': 0.55, 'n_estimators': 300, 'max_depth': 9 / 0.5386
+          'max_features': 0.6, 'n_estimators': 300, 'max_depth': 9 / 0.5386
+
+          'max_features': 'auto', 'n_estimators': 300, 'max_depth': 11 / 0.5405
+          'max_features': 0.35, 'n_estimators': 300, 'max_depth': 11 / 0.5405
+          'max_features': 0.4, 'n_estimators': 300, 'max_depth': 11 / 0.5416  
+          'max_features': 0.45, 'n_estimators': 300, 'max_depth': 11 / 0.5416
+          'max_features': 0.5, 'n_estimators': 300, 'max_depth': 11 / 0.5384
+          'max_features': 0.55, 'n_estimators': 300, 'max_depth': 11 / 0.5384
+          'max_features': 0.6, 'n_estimators': 300, 'max_depth': 11 / 0.5384
+
+          'max_features': 'auto', 'n_estimators': 300, 'max_depth': 13 / 0.5412
+          'max_features': 0.35, 'n_estimators': 300, 'max_depth': 13 / 0.5412
+          'max_features': 0.4, 'n_estimators': 300, 'max_depth': 13 / 0.5406
+          'max_features': 0.45, 'n_estimators': 300, 'max_depth': 13 / 0.5406
+          'max_features': 0.5, 'n_estimators': 300, 'max_depth': 13 / 0.5373
+          'max_features': 0.55, 'n_estimators': 300, 'max_depth': 13 / 0.5373
+          'max_features': 0.6, 'n_estimators': 300, 'max_depth': 13 / 0.5373
+
+          'max_features': 'auto', 'n_estimators': 300, 'max_depth': 15 / 0.5418 
+          'max_features': 0.35, 'n_estimators': 300, 'max_depth': 15 / 0.5418
+          'max_features': 0.4, 'n_estimators': 300, 'max_depth': 15 / 0.5399
+          'max_features': 0.45, 'n_estimators': 300, 'max_depth': 15 / 0.5399
+          'max_features': 0.5, 'n_estimators': 300, 'max_depth': 15 / 0.5371
+          'max_features': 0.55, 'n_estimators': 300, 'max_depth': 15 / 0.5371
+          'max_features': 0.6, 'n_estimators': 300, 'max_depth': 15 / 0.5371
+
+          'max_features': 'auto', 'n_estimators': 500, 'max_depth': 7 / 0.5228
+          'max_features': 0.35, 'n_estimators': 500, 'max_depth': 7 / 0.5228
+          'max_features': 0.4, 'n_estimators': 500, 'max_depth': 7 / 0.5310
+          'max_features': 0.45, 'n_estimators': 500, 'max_depth': 7 / 0.5310
+          'max_features': 0.5, 'n_estimators': 500, 'max_depth': 7 / 0.5319
+          'max_features': 0.55, 'n_estimators': 500, 'max_depth': 7 / 0.5319
+          'max_features': 0.6, 'n_estimators': 500, 'max_depth': 7 / 0.5319
+
+          'max_features': 'auto', 'n_estimators': 500, 'max_depth': 9 / 0.5370
+          'max_features': 0.35, 'n_estimators': 500, 'max_depth': 9 / 0.5370
+          'max_features': 0.4, 'n_estimators': 500, 'max_depth': 9 / 0.5411
+          'max_features': 0.45, 'n_estimators': 500, 'max_depth': 9 / 0.5411
+          'max_features': 0.5, 'n_estimators': 500, 'max_depth': 9 / 0.5394
+          'max_features': 0.55, 'n_estimators': 500, 'max_depth': 9 / 0.5394
+          'max_features': 0.6, 'n_estimators': 500, 'max_depth': 9 / 0.5394
+
+          'max_features': 'auto', 'n_estimators': 500, 'max_depth': 11 / 0.5411
+          'max_features': 0.35, 'n_estimators': 500, 'max_depth': 11 / 0.5411
+          'max_features': 0.4, 'n_estimators': 500, 'max_depth': 11 / 0.5422  <--
+          'max_features': 0.45, 'n_estimators': 500, 'max_depth': 11 / 0.5422
+          'max_features': 0.5, 'n_estimators': 500, 'max_depth': 11 / 0.5390
+          'max_features': 0.55, 'n_estimators': 500, 'max_depth': 11 / 0.5390
+          'max_features': 0.6, 'n_estimators': 500, 'max_depth': 11 / 0.5390
+
+          'max_features': 'auto', 'n_estimators': 500, 'max_depth': 13 / 0.5422
+          'max_features': 0.35, 'n_estimators': 500, 'max_depth': 13 / 0.5422
+          'max_features': 0.4, 'n_estimators': 500, 'max_depth': 13 / 0.5414
+          'max_features': 0.45, 'n_estimators': 500, 'max_depth': 13 / 0.5414
+          'max_features': 0.5, 'n_estimators': 500, 'max_depth': 13 / 0.5381
+          'max_features': 0.55, 'n_estimators': 500, 'max_depth': 13 / 0.5381
+          'max_features': 0.6, 'n_estimators': 500, 'max_depth': 13 / 0.5381
+
+          'max_features': 'auto', 'n_estimators': 500, 'max_depth': 15 / 0.5426 <--- BEST!!
+          'max_features': 0.35, 'n_estimators': 500, 'max_depth': 15 / 0.5426
+          'max_features': 0.4, 'n_estimators': 500, 'max_depth': 15 / 0.5413
+          'max_features': 0.45, 'n_estimators': 500, 'max_depth': 15 / 0.5413
+          'max_features': 0.5, 'n_estimators': 500, 'max_depth': 15 / 0.5379
+          'max_features': 0.55, 'n_estimators': 500, 'max_depth': 15 / 0.5379
+          'max_features': 0.6, 'n_estimators': 500, 'max_depth': 15 / 0.5379
+
+          'max_features': 'auto', 'n_estimators': 700, 'max_depth': 7 / 0.5228
+          'max_features': 0.35, 'n_estimators': 700, 'max_depth': 7 / 0.5228
+          'max_features': 0.4, 'n_estimators': 700, 'max_depth': 7 / 0.5314
+          'max_features': 0.45, 'n_estimators': 700, 'max_depth': 7 / 0.5314
+          'max_features': 0.5, 'n_estimators': 700, 'max_depth': 7 / 0.5322
+          'max_features': 0.55, 'n_estimators': 700, 'max_depth': 7 / 0.5322
+          'max_features': 0.6, 'n_estimators': 700, 'max_depth': 7 / 0.5322
+
+          'max_features': 'auto', 'n_estimators': 700, 'max_depth': 9 / 0.5374
+          'max_features': 0.35, 'n_estimators': 700, 'max_depth': 9 / 0.5374
+          'max_features': 0.4, 'n_estimators': 700, 'max_depth': 9 / 0.5412
+          'max_features': 0.45, 'n_estimators': 700, 'max_depth': 9 / 0.5412
+          'max_features': 0.5, 'n_estimators': 700, 'max_depth': 9 / 0.5398
+          'max_features': 0.55, 'n_estimators': 700, 'max_depth': 9 / 0.5398
+          'max_features': 0.6, 'n_estimators': 700, 'max_depth': 9 / 0.5398
+
+          'max_features': 'auto', 'n_estimators': 700, 'max_depth': 11 / 0.5410
+          'max_features': 0.35, 'n_estimators': 700, 'max_depth': 11 / 0.5410
+          'max_features': 0.4, 'n_estimators': 700, 'max_depth': 11 / 0.5423  <--
+          'max_features': 0.45, 'n_estimators': 700, 'max_depth': 11 / 0.5423
+          'max_features': 0.5, 'n_estimators': 700, 'max_depth': 11 / 0.5392
+          'max_features': 0.55, 'n_estimators': 700, 'max_depth': 11 / 0.5392
+          'max_features': 0.6, 'n_estimators': 700, 'max_depth': 11 / 0.5392
+
+          'max_features': 'auto', 'n_estimators': 700, 'max_depth': 13 / 0.5424
+    14. skrfp
+          'max_depth': 13, 'max_features': 0.3, 'n_estimators': 300 / 0.5404
+          'max_depth': 15, 'max_features': 0.3, 'n_estimators': 300 / 0.5419
+          'max_depth': 17, 'max_features': 0.3, 'n_estimators': 300 / 0.5415
+          'max_depth': 13, 'max_features': 0.3, 'n_estimators': 500 / 0.5419
+          'max_depth': 15, 'max_features': 0.3, 'n_estimators': 500 / 0.5427  <-
+          'max_depth': 17, 'max_features': 0.3, 'n_estimators': 500 / 0.5427
+          'max_depth': 13, 'max_features': 0.3, 'n_estimators': 700 / 0.5424
+          'max_depth': 15, 'max_features': 0.3, 'n_estimators': 700 / 0.5425
+          'max_depth': 17, 'max_features': 0.3, 'n_estimators': 700 / 0.5426
+
+          'max_depth': 15, 'max_features': 0.3, 'n_estimators': 500 / 0.5428  <-- BEST!
+          'max_depth': 15, 'max_features': 0.35, 'n_estimators': 500 / 0.5428
+          'max_depth': 15, 'max_features': 0.4, 'n_estimators': 500 / 0.5426
+    15. KNN
           -----[x, y weights]-----
           x=300, y=600 0.5634
           x=300, y=800 0.5622
@@ -430,18 +556,18 @@
           x=900, y=800 0.5635
           x=900, y=1000 0.5640
           x=900, y=1200 0.5642
-    15. remove_distance_outlier: remove outlier from training set which (x, y) too far from average of certain place
+    16. remove_distance_outlier: remove outlier from training set which (x, y) too far from average of certain place
           None    => (0.9402/0.5360?)
           std1.0  => 0.9863/0.5176
           std1.5  => 0.9828/0.5320
           std2.0  => 0.9808/0.5372  <--- BEST!
           std2.5  => 0.9661/0.5353
-    16. KNN 
+    17. KNN 
           0.5218 for no x/y_inter, 
           tab1: 'x_inter'/'y_inter' = 2/2, mdl_weights = (0.4, 1, 0.4)   => 0.5153
           tab2: 'x_inter'/'y_inter' = 1/1, mdl_weights = (0.4, 1, 0.4)   => 0.5045
           tab3: blending for rank_w = [1, 0.4, 0.2]   => improve 0.00019 only.
-    17. sket
+    18. sket
           'n_estimators': 200, 'max_depth': 8 / 0.4912
           'n_estimators': 200, 'max_depth': 10 / 0.5148
           'n_estimators': 200, 'max_depth': 12 / 0.5191
@@ -478,27 +604,48 @@
           'max_features': 0.7, 'max_depth': 16, 'n_estimators': 800 / 0.5318
           'max_features': 1.0, 'max_depth': 16, 'n_estimators': 800 / 0.5253
 
-    18. Blending:
+          'max_depth': 15, 'max_features': 0.45, 'n_estimators': 800 / 0.5322
+          'max_depth': 15, 'max_features': 0.5, 'n_estimators': 800 / 0.5333  <--- BEST!!
+          'max_depth': 15, 'max_features': 0.55, 'n_estimators': 800 / 0.5333
+          'max_depth': 15, 'max_features': 'auto', 'n_estimators': 800 / 0.5250
+    19. sketp
+          'n_estimators': 600, 'max_features': 0.5, 'max_depth': 13 / 0.5296
+          'n_estimators': 600, 'max_features': 0.5, 'max_depth': 15 / 0.5279
+          'n_estimators': 800, 'max_features': 0.5, 'max_depth': 9 / 0.5293
+          'n_estimators': 800, 'max_features': 0.5, 'max_depth': 11 / 0.5301
+          'n_estimators': 800, 'max_features': 0.5, 'max_depth': 13 / 0.5299
+          'n_estimators': 800, 'max_features': 0.5, 'max_depth': 15 / 0.5281
+          'n_estimators': 1000, 'max_features': 0.5, 'max_depth': 9 / 0.5292
+          'n_estimators': 1000, 'max_features': 0.5, 'max_depth': 11 / 0.5305 <- BEST!!
+          'n_estimators': 1000, 'max_features': 0.5, 'max_depth': 13 / 0.5299
+          'n_estimators': 1000, 'max_features': 0.5, 'max_depth': 15 / 0.5284
+          'n_estimators': 1500, 'max_features': 0.5, 'max_depth': 9 / 0.5296
+          'n_estimators': 1500, 'max_features': 0.5, 'max_depth': 11 / 0.5308
+          'n_estimators': 1500, 'max_features': 0.5, 'max_depth': 13 / 0.5304
+          'n_estimators': 1500, 'max_features': 0.5, 'max_depth': 15 / 0.5292
+
+    20. Blending:
           (rank_ws_1_0.6_0.4) weight more on kings? seems should not to ...
-            gs_top_w1.5 => 
-            gs_top_w1.8 => 
-            gs_top_w2 => 0.58529  <--- BEST?
+            gs_top_w2 => 0.58529
             gs_top_w3 => 0.58513
             gs_top_w5 => 0.58489
+            [0621]
+            gs_top_w1.5 => 0.58627    <--- BEST?
+            gs_top_w1.7 => 0.58622
+            gs_top_w1.9 => 0.58617
+            top10 average => 0.58394
           (top_w2)
             gs_rank_ws_1_0.8_0.6 => 0.58479
             gs_rank_ws_1_0.8_0.4 => 0.58492
             gs_rank_ws_1_0.6_0.4 => 0.58529 <--- BEST?
             gs_rank_ws_1_0.6_0.1 => 0.58501
             gs_rank_ws_1_0.4_0.2 => 0.58493
-    19. [TODO]
-          => blending: try use all kings even similar 
+    21. [TODO]
           => xgboost early stop with validation samples
           => use latter sample (near test samples) only
           => remove place_min_last_checkin
+          => tSNE group result as training feature?
     
-
-    Markus: "I think the basic ideas are out there already: learning various joint or individual distributions for the space and time variables for each place_id (and the overall relative popularities). The challenge is doing this in a computationally efficient manner without losing too much information."
 
 [COMBINE]
   {'mdl_weights': (0, 1, 0),       'time_th' : -1,    'loc_th_x' : 1000,  'loc_th_y' : 1000 } => tr=0.9925 / te=0.6325
@@ -590,33 +737,6 @@ x_cols = ['hour2', 'hour3', 'hour4', 'y', 'accuracy', 'hour', 'qday', 'weekday',
   4. add negative samples (at same region but not choosed) to make binary classification problem.
   5. divide into spatial/time grid models, blending models of nearby grids with weights
 
-
-0       0  0.7941  9.0809        54  470702  8523065625    22     4        5   
-1       1  5.9567  4.7968        13  186555  1757726713    14     3        4   
-2       2  8.3078  7.0407        74  322648  1137537235     2     1        1   
-5       5  3.8099  1.9586        75  178065  6289802927    16     3        5   
-6       6  6.3336  4.3720        13  666829  9931249544     2     1        2   
-
-   month  year  
-0     11     1  
-1      5     1  
-2      8     1  
-5      5     1  
-6      4     2  
-
-data ex: df_train.head()    row_id       x       y  accuracy    time    place_id       hour  weekday  \
-0       0  0.7941  9.0809        54  470702  8523065625  14.050000        6   
-1       1  5.9567  4.7968        13  186555  1757726713   6.266667        5   
-2       2  8.3078  7.0407        74  322648  1137537235  18.483333        1   
-5       5  3.8099  1.9586        75  178065  6289802927   8.766667        6   
-6       6  6.3336  4.3720        13  666829  9931249544  18.833333        2   
-
-   yearday  month  year  qday  dayofmonth  weekofyear  season    logacc  
-0      327     11     1     2          23          46       4  3.988984  
-1      130      5     1     1          10          18       2  2.564949  
-2      224      8     1     3          12          32       3  4.304065  
-5      124      5     1     1           4          17       2  4.317488  
-6       98      4     2     3           8          14       2  2.564949  
 
 #------------------------------
 #   Links

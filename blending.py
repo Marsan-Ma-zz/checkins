@@ -25,21 +25,52 @@ def csv2df(mname, out='df', nrows=None):
   return df
 
 
-def submit_blendings(models, mdl_weights, rank_w, output_fname):
+# def submit_blendings(models, mdl_weights, rank_w, output_fname):
+#   print("[Start]", datetime.now())    
+#   with open(output_fname, 'wt') as f:
+#     f.write("row_id,place_id\n")
+#     mdl_cnt = len(models)
+#     for idx, k in enumerate(models[0].keys()):
+#       # collect voting
+#       stat = defaultdict(float)
+#       for v,w in [(models[i][k], mdl_weights[i]) for i in range(mdl_cnt)]:
+#         for rank, pid in v.items():
+#           stat[pid] += rank_w[rank]*w
+#         stat[0] = 0 # prevent empty submit
+#       stat = sorted(stat.items(), key=lambda v: v[1], reverse=True)
+#       stat = [pid for pid,val in stat][:3]
+#       f.write("%s,%s %s %s\n" % (idx, stat[0], stat[1], stat[2]))
+#       # err check
+#       for i in range(3):
+#         v[i] = int(v[i] or 0)
+#         if v[i] < 1000000000: print("[Error] in k=%i, v=%s" % (k,v))
+#       if (idx % 1e5 == 0): print('%i samples blended @ %s' % (idx, datetime.now()))
+#   print("[All done]", datetime.now())    
+
+
+def submit_blendings(models, mdl_weights, rank_w, output_fname, rows=None):
   print("[Start]", datetime.now())    
   with open(output_fname, 'wt') as f:
     f.write("row_id,place_id\n")
     mdl_cnt = len(models)
-    for idx, k in enumerate(models[0].keys()):
+    idx = 0
+    while True:
       # collect voting
       stat = defaultdict(float)
-      for v,w in [(models[i][k], mdl_weights[i]) for i in range(mdl_cnt)]:
+      try:
+        raw = [(next(models[i]), mdl_weights[i]) for i in range(mdl_cnt)]
+      except StopIteration:
+        print("generator exhausted, idx=%i @ %s" % (idx, datetime.now()))
+        break
+      for v,w in raw:
         for rank, pid in v.items():
           stat[pid] += rank_w[rank]*w
         stat[0] = 0 # prevent empty submit
       stat = sorted(stat.items(), key=lambda v: v[1], reverse=True)
       stat = [pid for pid,val in stat][:3]
       f.write("%s,%s %s %s\n" % (idx, stat[0], stat[1], stat[2]))
+      idx += 1
+      if (rows and (idx >= rows)): break
       # err check
       for i in range(3):
         v[i] = int(v[i] or 0)
@@ -69,6 +100,15 @@ def load_models(mdl_names, out='dic', rows=None):
   return models
 
 
+def file2gen(fname):
+  f = gzip.open("/home/workspace/checkins/data/submits/%s" % fname)
+  f.readline() # cast header
+  for line in f:
+    line = line.decode(encoding='UTF-8').replace("\n", '').split(',')
+    row_id = line[0]
+    place_id = line[1].split(' ')
+    yield {i: (int(p) if p.isdigit() else 0) for i, p in enumerate(place_id)}
+  f.close()
 
 #===========================================
 #   Blendor
@@ -88,13 +128,14 @@ class blendor(object):
   def init_models(self):
     self.mdl_names = [
         #-----[King]-----
-        ('blending_gs_top_w2_20160619_180546_0.58529.csv.gz', self.top_w.get(0, 2.0) ),
+        ('blending_gs_top_w2_20160619_180546_0.58529.csv.gz'  , 2.0 ),
         # ('lb_blending_20160617_215629_0.58463.csv.gz'       , self.top_w.get(0, 2.0) ),
         # ('lb_marsan_blending_0614_0.58378.csv.gz'           , 2.0 ),
         # ('lb_marsan_blending_0613_0.58299.csv.gz'           , 2.0 ),
         ('lb_anouymous_0.58018.csv.gz'                        , 1.5 ),
         # ('lb_marsan_blending_0613_0.57664.csv.gz'           , 2.0 ),
         # ('lb_anouymous_0.57842.csv.gz'                        , 1.5 ),
+        # ('lb_hamed_0.57946.csv.gz'                            , 1.2 ),
         ('lb_sub_knn_daten-kieker_0.57189.csv.gz'             , 1.2 ),
         ('skrf_submit_full_20160620_000902_0.57114.csv.gz'    , 1.2 ),
         # ('lb_sub_knn_danielspringt_0.57068.csv.gz'          , 1.2 ),
@@ -140,10 +181,10 @@ class blendor(object):
       print(corr_matrix)
 
     if self.do_blend:  # blending
-      models = load_models(self.mdl_names, out='dic', rows=self.do_blend_rows)
-      submit_blendings(models, mdl_weights, self.rank_w, output_fname)
+      # models = load_models(self.mdl_names, out='dic', rows=self.do_blend_rows)
+      models = [file2gen(fname) for fname, w in self.mdl_names]
+      submit_blendings(models, mdl_weights, self.rank_w, output_fname, rows=self.do_blend_rows)
       print("[Finished!!] blending results saved in %s @ %s" % (output_fname, datetime.now()))
-
 
   def run(self, cmd=None):
     #---------------------------------------------
@@ -169,8 +210,8 @@ class blendor(object):
         print("[RUN] done gs_rank_ws=%s" % (rank_w))
     #---------------------------------------------
     elif cmd == 'debug':
-      self.do_corr_rows = 100000
-      self.do_blend_rows = 100000
+      self.do_corr_rows = 1000
+      self.do_blend_rows = 1000
       self.launch()
     elif cmd == 'try_submit':
       smt = submit.submitor(username='', password='')
@@ -184,9 +225,9 @@ class blendor(object):
 #   Main Flow
 #===========================================
 if __name__ == '__main__':
-  blendor(do_blend=False).run()   # cal corr only
-  # bla = blendor(do_blend=True)
-  # bla.run('debug')
-  # bla.run('gs_top_w')
+  # blendor(do_blend=True).run('debug')   # cal corr only
+  bla = blendor(do_blend=True)
+  # bla.run()
+  bla.run('gs_top_w')
   # bla.run('gs_rank_w')
 
