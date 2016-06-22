@@ -6,7 +6,8 @@ pool_size = mp.cpu_count()
 
 from datetime import datetime
 from collections import defaultdict, OrderedDict
-# from lib import submit
+
+from lib import submit
 
 #----------------------------------------
 #   Blending Models
@@ -23,29 +24,6 @@ def csv2df(mname, out='df', nrows=None):
     df = dict(zip(df.row_id.values, df[[0,1,2]].astype(int).to_dict('records')))
   print("%s loaded @ %s" % (mname, datetime.now()))
   return df
-
-
-# def submit_blendings(models, mdl_weights, rank_w, output_fname):
-#   print("[Start]", datetime.now())    
-#   with open(output_fname, 'wt') as f:
-#     f.write("row_id,place_id\n")
-#     mdl_cnt = len(models)
-#     for idx, k in enumerate(models[0].keys()):
-#       # collect voting
-#       stat = defaultdict(float)
-#       for v,w in [(models[i][k], mdl_weights[i]) for i in range(mdl_cnt)]:
-#         for rank, pid in v.items():
-#           stat[pid] += rank_w[rank]*w
-#         stat[0] = 0 # prevent empty submit
-#       stat = sorted(stat.items(), key=lambda v: v[1], reverse=True)
-#       stat = [pid for pid,val in stat][:3]
-#       f.write("%s,%s %s %s\n" % (idx, stat[0], stat[1], stat[2]))
-#       # err check
-#       for i in range(3):
-#         v[i] = int(v[i] or 0)
-#         if v[i] < 1000000000: print("[Error] in k=%i, v=%s" % (k,v))
-#       if (idx % 1e5 == 0): print('%i samples blended @ %s' % (idx, datetime.now()))
-#   print("[All done]", datetime.now())    
 
 
 def submit_blendings(models, mdl_weights, rank_w, output_fname, rows=None):
@@ -115,15 +93,19 @@ def file2gen(fname):
 #===========================================
 class blendor(object):
 
-  def __init__(self, top_w={0: 2.0}, rank_w=[1, 0.6, 0.4], do_corr=True, do_blend=True):
+  def __init__(self, top_w={0: 2.0}, rank_w=[1, 0.6, 0.4], do_corr=True, do_blend=True, do_upload=False):
     self.root = '.'
     self.top_w = top_w
     self.rank_w = rank_w
     self.do_corr = do_corr
     self.do_blend = do_blend
+    self.do_upload = do_upload
+    #
+    self.mdl_names = []
     self.output_fname = ""
     self.do_corr_rows = 100000
     self.do_blend_rows = None
+
 
   def init_models(self):
     self.mdl_names = [
@@ -142,7 +124,7 @@ class blendor(object):
         # ('lb_daniel_0.57068.csv.gz'                         , 1.0 ),
         # ('lb_grid_knn_lonely_shepard_0.57004.csv.gz'        , 1.0 ),
         ('knn_grid_0.8_20160618_081945_0.56999.csv.gz'        , 1.0 ),
-        
+        ('skrf_submit_full_20160621_234034_0.56992.csv.gz'    , 1.0 ),
         #-----[Knight]-----
         # ('submit_knn_0.4_grid_20160617_091633_0.56919.csv.gz',0.9 ),
         # ('submit_knn_submit_20160615_230955_0.56815.csv.gz',  0.8 ),
@@ -168,23 +150,24 @@ class blendor(object):
 
 
   def launch(self, stamp=None):
-    self.init_models()
+    if not self.mdl_names: self.init_models()
     mdl_weights = [v for k,v in self.mdl_names]
     stamp = stamp or str(datetime.now().strftime("%Y%m%d_%H%M%S"))
-    output_fname = "%s/submit/blending_%s.csv" % (self.root, stamp)
+    self.output_fname = "%s/submit/blending_%s.csv" % (self.root, stamp)
     print(self.mdl_names)
     
     if self.do_corr:  # check model correlation
       models = load_models(self.mdl_names, out='df', rows=self.do_corr_rows)
       corr_matrix = np.array([[None if i >= j else cal_correlation(models[i], models[j]) for j in range(len(models))] for i in range(len(models))])
       print('-'*10, "[corr_matrix]", '-'*40)
-      print(corr_matrix)
+      for c in corr_matrix: print(c)
 
     if self.do_blend:  # blending
       # models = load_models(self.mdl_names, out='dic', rows=self.do_blend_rows)
       models = [file2gen(fname) for fname, w in self.mdl_names]
-      submit_blendings(models, mdl_weights, self.rank_w, output_fname, rows=self.do_blend_rows)
-      print("[Finished!!] blending results saved in %s @ %s" % (output_fname, datetime.now()))
+      submit_blendings(models, mdl_weights, self.rank_w, self.output_fname, rows=self.do_blend_rows)
+      print("[Finished!!] blending results saved in %s @ %s" % (self.output_fname, datetime.now()))
+    
 
   def run(self, cmd=None):
     #---------------------------------------------
@@ -213,12 +196,16 @@ class blendor(object):
       self.do_corr_rows = 1000
       self.do_blend_rows = 1000
       self.launch()
-    elif cmd == 'try_submit':
-      smt = submit.submitor(username='', password='')
-      smt.submit("./submit/")
+    elif cmd == 'average':
+      self.init_models()
+      self.mdl_names = [(k, 1) for k,v in self.mdl_names]
+      self.launch()
     else:
       self.launch()
-
+    # auto-submit
+    if self.do_upload:
+      submit.submitor().submit(entry=self.output_fname, message=self.mdl_names)
+    
 
 
 #===========================================
@@ -226,8 +213,9 @@ class blendor(object):
 #===========================================
 if __name__ == '__main__':
   # blendor(do_blend=True).run('debug')   # cal corr only
-  bla = blendor(do_blend=True)
+  blendor(do_blend=True, do_upload=True).run('average')
   # bla.run()
-  bla.run('gs_top_w')
+  # bla.run('submit')
+  # bla.run('gs_top_w')
   # bla.run('gs_rank_w')
 

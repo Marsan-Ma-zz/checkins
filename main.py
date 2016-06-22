@@ -9,7 +9,7 @@ from datetime import datetime
 from collections import Counter
 
 from lib import conventions as conv
-from lib import evaluator, parser, trainer
+from lib import evaluator, parser, trainer, submit
 
 #===========================================
 #   Main Flow
@@ -289,7 +289,7 @@ class main(object):
     elif 'submit_full' in run_cmd:
       self.params['train_test_split_time'] = 1e10   # use all samples for training
       self.init_team()
-      self.train_alg(alg, keep_model=True, submit=True)
+      self.train_alg(alg, keep_model=True, submit=True, upload=True)
     elif '_submit' in run_cmd:
       self.init_team()
       self.train_alg(alg, keep_model=True, submit=True)
@@ -313,7 +313,7 @@ class main(object):
   #----------------------------------------
   #   Main
   #----------------------------------------
-  def train_alg(self, alg, keep_model=False, submit=False, mdl_config={}):
+  def train_alg(self, alg, keep_model=False, submit=False, upload=False, mdl_config={}):
     # get data
     start_time = time.time()
     norm = self.params.get('norm')
@@ -337,7 +337,8 @@ class main(object):
       self.eva.clear_meta_files()
     if submit:
       preds_total, _ = self.eva.evaluate(df_test, title='Submit', norm=norm)
-      self.eva.gen_submit_file(preds_total, valid_score)
+      sfile = self.eva.gen_submit_file(preds_total, valid_score)
+      if upload: submit.submitor().submit(entry=sfile, message=self.params)
     print("[Finished!] Elapsed time overall for %.2f secs" % (time.time() - start_time))
     return valid_score
 

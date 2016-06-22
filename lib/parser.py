@@ -9,6 +9,7 @@ from collections import Counter
 from sklearn.cross_validation import train_test_split
 
 from lib import conventions as conv
+from lib import bhtsne
 
 #===========================================
 #   Evaluator

@@ -641,10 +641,12 @@
             gs_rank_ws_1_0.6_0.1 => 0.58501
             gs_rank_ws_1_0.4_0.2 => 0.58493
     21. [TODO]
-          => xgboost early stop with validation samples
+          => tSNE group result as training feature?
+          => by grid optimization?
           => use latter sample (near test samples) only
           => remove place_min_last_checkin
-          => tSNE group result as training feature?
+          => xgboost early stop with validation samples
+          
     
 
 [COMBINE]

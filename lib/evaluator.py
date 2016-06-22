@@ -135,8 +135,9 @@ class evaluator(object):
       df_dummies = pd.DataFrame([{'row_id': d, 'place_id': "%s %s %s" % (dummy, dummy, dummy)} for d in missing_rows])
       preds_total = pd.concat([preds_total, df_dummies])
     #---------------------------------------------------------
-    preds_total[['row_id', 'place_id']].sort_values(by='row_id').to_csv("%s/%s/%s_%s_%.4f.csv" % (self.root, title, title, self.stamp, score), index=False)
-    
+    fname = "%s/%s/%s_%s_%.4f.csv" % (self.root, title, title, self.stamp, score)
+    preds_total[['row_id', 'place_id']].sort_values(by='row_id').to_csv(fname, index=False)
+    return fname
 
   # clear meta files
   def clear_meta_files(self):

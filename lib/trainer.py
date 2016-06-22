@@ -106,14 +106,14 @@ class trainer(object):
       )
     elif alg =='sket':
       clf = ensemble.ExtraTreesClassifier(
-        n_estimators=mdl_config.get('n_estimators', 800), 
+        n_estimators=mdl_config.get('n_estimators', 500), 
         max_features=mdl_config.get('max_features', 0.5),  
         max_depth=mdl_config.get('max_depth', 15), 
         n_jobs=-1,
       )
     elif alg =='sketp':
       clf = ensemble.ExtraTreesClassifier(
-        n_estimators=mdl_config.get('n_estimators', 1000), 
+        n_estimators=mdl_config.get('n_estimators', 500), 
         max_features=mdl_config.get('max_features', 0.5),  
         max_depth=mdl_config.get('max_depth', 11), 
         criterion='entropy', 

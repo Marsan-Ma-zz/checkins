@@ -50,7 +50,9 @@ PY3='stdbuf -o0 nohup python3 -u'
 # $PY3 main.py knn_try_inter_submit_full 10.0 knn_try_inter_submit_full_$NOW > "./logs/knn_try_inter_submit_full_$NOW.log" &
 # $PY3 main.py knn_try_large_grid_submit_full 10.0 knn_try_large_grid_submit_full_$NOW > "./logs/knn_try_large_grid_submit_full_$NOW.log" &
 # $PY3 main.py skrf_submit_full 10.0 skrf_submit_full_$NOW > "./logs/nohup_skrf_submit_full_$NOW.log" &
-$PY3 main.py skrfp_submit_full 10.0 skrfp_submit_full_$NOW > "./logs/nohup_skrfp_submit_full_$NOW.log" &
+# $PY3 main.py skrfp_submit_full 10.0 skrfp_submit_full_$NOW > "./logs/nohup_skrfp_submit_full_$NOW.log" &
+# $PY3 main.py sket_submit_full 10.0 sket_submit_full_$NOW > "./logs/nohup_sket_submit_full_$NOW.log" &
+# $PY3 main.py sketp_submit_full 10.0 sketp_submit_full_$NOW > "./logs/nohup_sketp_submit_full_$NOW.log" &
 # $PY3 main.py skrf_try_submit 10.0 skrf_try_submit_$NOW > "./logs/skrf_try_submit_$NOW.log" &
 # $PY3 main.py xgb_submit 10.0 xgb_submit_$NOW > "./logs/nohup_xgb_submit_$NOW.log" &
 # $PY3 blending.py blending_$NOW > "./logs/blending_$NOW.log" &
