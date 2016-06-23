@@ -134,6 +134,7 @@ class blendor(object):
         ('submit_skrf_submit_20160605_195424_0.56552.csv.gz', 0.7 ),
         ('submit_skrf_submit_20160608_174129_0.56533.csv.gz', 0.7 ),
         ('submit_sket_20160622_130909_0.56315.csv.gz'       , 0.7 ),
+        ('sketp_submit_full_20160622_180604_0.56173.csv.gz' , 0.7 ),
         ('submit_skrf_submit_20160604_171454_0.56130.csv.gz', 0.5 ),
         ('submit_skrf_submit_20160602_104038_0.56093.csv.gz', 0.7 ),
         ('submit_sketp_20160622_180604_0.56082.csv.gz'      , 0.7 ),

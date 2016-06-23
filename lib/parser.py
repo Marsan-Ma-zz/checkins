@@ -38,20 +38,17 @@ class parser(object):
   #----------------------------------------
   #   Main
   #----------------------------------------
-  def get_data(self, overwrite=False, debug=False):
+  def get_data(self, overwrite=False):
     start_time = time.time()
-    cache_name = "%s/data/cache/cache_get_data_split_%i_rmol_%.2f_mci_%i.pkl" % (self.root, self.train_test_split_time, self.remove_distance_outlier, self.place_min_checkin)
+    cache_name = "%s/data/cache/cache_get_data_split_%i_size_%.2f_rmol_%.2f_mci_%i.pkl" % (self.root, self.train_test_split_time, self.size, self.remove_distance_outlier, self.place_min_checkin)
     if (os.path.exists(cache_name) and not overwrite):
       df_train, df_valid, df_test = pickle.load(open(cache_name, 'rb'))
       print("[get_samples] from cache: df_train = %s, df_valid = %s, df_test = %s, %.2f secs" % (df_train.shape, df_valid.shape, df_test.shape, time.time() - start_time))
     else:
       df_train = self.parse_data('%s/data/train.csv.zip' % self.root)
       df_test = self.parse_data('%s/data/test.csv.zip' % self.root)
-
-      if debug:
-        df_train = df_train[(df_train.x <= self.size) & (df_train.y <= self.size)]
-        df_test = df_test[(df_test.x <= self.size) & (df_test.y <= self.size)]
-      
+      df_train = df_train[(df_train.x <= self.size) & (df_train.y <= self.size)]
+      df_test = df_test[(df_test.x <= self.size) & (df_test.y <= self.size)]
       print("[get_samples] from csv: train = %s, test = %s" % (df_train.shape, df_test.shape))
       # divide train/valid by time
       if self.train_test_split_time > 300000:
@@ -213,7 +210,7 @@ class parser(object):
     stat_loc        = None #self.location_estimation(df)
     stat_wdays      = self.agg_avail_wdays(df)
     stat_hours      = self.agg_avail_hours(df)
-    stat_popular    = self.popularity(df, params)
+    stat_popular    = None #self.popularity(df, params)
     grid_candidates = None #self.get_grid_candidates(df, stat_loc, params['max_cands'], params)
     # info for post-processing
     pickle.dump([stat_loc, stat_wdays, stat_hours, stat_popular, grid_candidates], open(params['data_cache'], 'wb'))

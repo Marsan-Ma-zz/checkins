@@ -35,7 +35,7 @@ class main(object):
       # 'train_min_time'          : 300000,   # for submit (not good, no use!)
       # 'place_max_first_checkin' : 300000,   # for valid only, not for submit!
       # 'train_max_time'          : 500000,   # for valid only, not for submit!
-      'remove_distance_outlier' : 2.0,
+      'remove_distance_outlier' : True,
       #-----[pre-processing]-----
       'en_preprocessing'        : 0, #'HW',  # 'XYWHP'
       'max_cands'               : 10,
@@ -288,13 +288,14 @@ class main(object):
     elif 'submit_rf_family' in run_cmd:
       self.params['train_test_split_time'] = 1e10   # use all samples for training
       self.init_team()
-      self.train_alg('skrf', submit=True, upload=True)
-      self.train_alg('skrfp', submit=True, upload=True)
+      for a in ['skrf', 'skrfp']:
+        self.train_alg(a, keep_model=True, submit=True, upload=True)
+      self.train_alg('knn', submit=True, upload=True)
     elif 'submit_et_family' in run_cmd:
       self.params['train_test_split_time'] = 1e10   # use all samples for training
       self.init_team()
-      self.train_alg('sket', submit=True, upload=True)
-      self.train_alg('sketp', submit=True, upload=True)
+      for a in ['sket', 'sketp']:
+        self.train_alg(a, submit=True, upload=True)
     elif 'submit_full' in run_cmd:
       self.params['train_test_split_time'] = 1e10   # use all samples for training
       self.init_team()
@@ -333,14 +334,15 @@ class main(object):
     print("[train_alg]: alg=%s, mdl_config=%s" % (alg, mdl_config))
     self.tra.train(df_train, alg=alg, mdl_config=mdl_config, norm=norm)
     train_score, valid_score = 0, 0
-    if self.params['size'] <= 1:  # eva.train only when dev.
+    if self.params['size'] <= 0.5:  # eva.train only when dev.
       _, train_score = self.eva.evaluate(df_train, title='Eva.Train', norm=norm)
     if len(df_valid) > 0:
       valids_total, valid_score = self.eva.evaluate(df_valid, title='Eva.Test', norm=norm)
       pickle.dump([valids_total, df_valid], open("%s/valid/valid_%s.pkl" % (self.params['root'], self.params['stamp']), 'wb'))
       # self.eva.gen_submit_file(valids_total, valid_score, title='valid')
     
-    if alg == 'skrf': print("[skrf feature_importance]", self.get_feature_importance())
+    if alg in ['skrf', 'skrfp', 'sket', 'sketp']: 
+      print("[skrf feature_importance]", self.get_feature_importance())
 
     # save & clear
     if not keep_model:
