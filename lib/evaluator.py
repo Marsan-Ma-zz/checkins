@@ -178,17 +178,18 @@ def predict_clf(mdl_names, mdl_weights, X, y, row_id, xi, yi, popu_th, time_th_w
     for i in range(len(samples)):
       psol = [j for k in [s[i] for s in sols] for j in k]
       psol = OrderedDict(sorted(psol, key=lambda v: v[1]))
+      # -----[filter avail places]-----
+      s = samples.iloc[i]
+      avail_place = LOCATION[(LOCATION.x_min <= s.x) & (LOCATION.x_max >= s.x) & (LOCATION.y_min <= s.y) & (LOCATION.y_max >= s.y)].place_id.values
+      psol = {p: (v if (p in avail_place) and 
+        (AVAIL_WDAYS.get((p, s.weekday.astype(int)), 0) > time_th_wd) and 
+        (AVAIL_HOURS.get((p, s.hour.astype(int)), 0) > time_th_hr) #and
+        # (POPULAR[(xi, yi)].get(p, 0) > popu_th)
+        else v/10) for p,v in psol.items()
+      }
+      # -------------------------------
       psol = sorted(list(psol.items()), key=lambda v: v[1], reverse=True)
       psol = [p for p,v in psol]
-      # -----[filter avail places]-----
-      # s = samples.iloc[i]
-      # avail_place = LOCATION[(LOCATION.x_min <= s.x) & (LOCATION.x_max >= s.x) & (LOCATION.y_min <= s.y) & (LOCATION.y_max >= s.y)].place_id.values
-      # psol = [p for p in psol #if #(p in avail_place) #and 
-        # (AVAIL_WDAYS.get((p, s.weekday), 0) > time_th_wd) and 
-        # (AVAIL_HOURS.get((p, s.hour.astype(int)), 0) > time_th_hr) #and
-        # (POPULAR[(xi, yi)].get(p, 0) > popu_th)
-      # ]
-      # -------------------------------
       final_bests.append(psol[:3])
     return final_bests
   #

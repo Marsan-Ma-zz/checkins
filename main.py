@@ -35,7 +35,7 @@ class main(object):
       # 'train_min_time'          : 300000,   # for submit (not good, no use!)
       # 'place_max_first_checkin' : 300000,   # for valid only, not for submit!
       # 'train_max_time'          : 500000,   # for valid only, not for submit!
-      'remove_distance_outlier' : 0, #2.0,
+      'remove_distance_outlier' : 2.0,
       #-----[pre-processing]-----
       'en_preprocessing'        : 0, #'HW',  # 'XYWHP'
       'max_cands'               : 10,
@@ -75,9 +75,9 @@ class main(object):
     self.params['stamp'] = self.params.get('stamp') or "%s_%s" % (self.params['alg'], self.timestamp)
     self.params['data_cache'] = "%s/data/cache/data_cache_size_10.0_itv_x%iy%i_mcnt_%i.pkl" % (self.params['root'], self.params['x_inter'], self.params['y_inter'], self.params['max_cands'])
     self.pas = parser.parser(self.params)
-    # if not os.path.exists(self.params['data_cache']):
-    #   df_train, df_valid, _ = self.pas.get_data()
-    #   self.pas.init_data_cache(pd.concat([df_train, df_valid]), self.params)
+    if not os.path.exists(self.params['data_cache']):
+      df_train, df_valid, _ = self.pas.get_data()
+      self.pas.init_data_cache(pd.concat([df_train, df_valid]), self.params)
     # workers
     self.tra = trainer.trainer(self.params)
     self.eva = evaluator.evaluator(self.params)
@@ -276,19 +276,19 @@ class main(object):
         self.params['place_min_last_checkin'] = mlc
         self.params['stamp'] = "%s_%s_%i" % (self.params['alg'], self.timestamp, mlc/1e4)
         self.init_team()
-        self.train_alg(alg, keep_model=True, submit=True)
+        self.train_alg(alg, submit=True)
     #------------------------------------------
     elif run_cmd == 'skrf_train_min_time':
       for mlc in [0, 50000, 100000, 150000, 200000]:
         self.params['train_min_time'] = mlc
         self.params['stamp'] = "%s_%s_%i" % (self.params['alg'], self.timestamp, mlc/1e4)
         self.init_team()
-        self.train_alg(alg, keep_model=True, submit=True)
+        self.train_alg(alg, submit=True)
     #------------------------------------------
     elif 'submit_full' in run_cmd:
       self.params['train_test_split_time'] = 1e10   # use all samples for training
       self.init_team()
-      self.train_alg(alg, keep_model=True, submit=True, upload=True)
+      self.train_alg(alg, submit=True, upload=True)
     elif '_submit' in run_cmd:
       self.init_team()
       self.train_alg(alg, keep_model=True, submit=True)
@@ -296,8 +296,9 @@ class main(object):
       self.init_team()
       self.evaluate_model(evaluate=True, submit=False)
     elif 'smt_exist' in run_cmd:
+      self.params['train_test_split_time'] = 1e10
       self.init_team()
-      self.evaluate_model(evaluate=False, submit=True)
+      self.evaluate_model(evaluate=False, submit=True, upload=True)
     #------------------------------------------
     elif 'fast' in run_cmd: # fast flow debug
       self.init_team()
@@ -354,7 +355,7 @@ class main(object):
 
 
   # skip training, evaluate from existing model
-  def evaluate_model(self, evaluate=False, submit=False):
+  def evaluate_model(self, evaluate=False, submit=False, upload=False):
     print("[Evaluate_model] with params=%s" % (self.params))
     start_time = time.time()
     norm = self.params.get('norm')
@@ -364,7 +365,8 @@ class main(object):
       _, valid_score = self.eva.evaluate(df_valid, title='Test', norm=norm)
     if submit:
       preds_total, _ = self.eva.evaluate(df_test, title='Submit', norm=norm)
-      self.eva.gen_submit_file(preds_total, valid_score)
+      sfile = self.eva.gen_submit_file(preds_total, valid_score)
+      if upload: submiter.submiter().submit(entry=sfile, message=self.params)
     print("[Finished!] evaluate_model for %.2f secs" % (time.time() - start_time))
 
 

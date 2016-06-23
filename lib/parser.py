@@ -8,7 +8,7 @@ from datetime import datetime
 from collections import Counter
 
 from lib import conventions as conv
-from lib import bhtsne, grouper
+from lib import grouper
 
 #===========================================
 #   Evaluator
@@ -38,7 +38,7 @@ class parser(object):
   #----------------------------------------
   #   Main
   #----------------------------------------
-  def get_data(self, overwrite=False, debug=False):
+  def get_data(self, overwrite=False, debug=True):
     start_time = time.time()
     cache_name = "%s/data/cache/cache_get_data_split_%i_rmol_%.2f_mci_%i.pkl" % (self.root, self.train_test_split_time, self.remove_distance_outlier, self.place_min_checkin)
     if (os.path.exists(cache_name) and not overwrite):
@@ -210,11 +210,11 @@ class parser(object):
   def init_data_cache(self, df, params):
     # ----- collect & save -----
     print("[init_data_cache] start @ %s" % conv.now('full'))
-    stat_loc        = self.location_estimation(df)
+    stat_loc        = None # self.location_estimation(df)
     stat_wdays      = self.agg_avail_wdays(df)
     stat_hours      = self.agg_avail_hours(df)
     stat_popular    = self.popularity(df, params)
-    grid_candidates = self.get_grid_candidates(df, stat_loc, params['max_cands'], params)
+    grid_candidates = None # self.get_grid_candidates(df, stat_loc, params['max_cands'], params)
     # info for post-processing
     pickle.dump([stat_loc, stat_wdays, stat_hours, stat_popular, grid_candidates], open(params['data_cache'], 'wb'))
     print("[init_data_cache] written in %s @ %s" % (params['data_cache'], conv.now('full')))
@@ -246,7 +246,8 @@ class parser(object):
   
   # ----- available time: wdays -----
   def agg_avail_wdays(self, df):
-    avail_wdays = df.groupby('place_id').weekday.apply(lambda x: Counter(x))
+    df['weekday_int'] = df.weekday.astype(int)
+    avail_wdays = df.groupby('place_id').weekday_int.apply(lambda x: Counter(x))
     avail_wdays = avail_wdays.to_dict()
     sum_wdays   = df.place_id.value_counts()
     stat_wdays  = {(pid, i): v/sum_wdays[pid] for (pid, i), v in avail_wdays.items()}

@@ -646,16 +646,35 @@
           perplexity 100 => 0.5411
           perplexity 150 => 0.5411
           perplexity 200 => 0.5417
+          perplexirt 3*len(set(df_grid.place_id.values)) => tab1
     22. KMeans
-    22. old paras
+    22. check old paras again
           baseline => 0.5424
           no remove_distance_outlier => 0.5422
           no place_min_last_checkin => 0.5458 (+++!)
           no place_min_last_checkin, remove_distance_outlier=2.0 => 0.5468 (+!)
-          no place_min_last_checkin, remove_distance_outlier=2.0, place_min_checkin=0 => 0.5450
-          no place_min_last_checkin, remove_distance_outlier=2.0, place_min_checkin=3 => 0.5468
-          no place_min_last_checkin, remove_distance_outlier=2.0, place_min_checkin=5 => 0.5459
-          no place_min_last_checkin, remove_distance_outlier=2.0, place_min_checkin=8 => 0.5466
+          ----
+          place_min_checkin=0 => 0.5450
+          place_min_checkin=3 => 0.5468
+          place_min_checkin=5 => 0.5459
+          place_min_checkin=8 => 0.5466
+          ----
+          'mdl_weights'=(0.4, 1, 0.4) => 0.5410
+          'mdl_weights'=(0.4, 1, 0.4) + x_inter=2 => 0.5458
+          'mdl_weights'=(0.4, 1, 0.4) + x_inter=2 + x_step=0.04 => 0.5374
+          ----
+          y_step=0.04 => 0.5410
+          y_step=0.1  => 0.5451
+          x_step=0.04 => 0.5371
+          ----
+          enable avail_place => 0.5408
+          AVAIL_WDAYS => 0.5462 (++!)
+          AVAIL_HOURS(0.004) => 0.5554 (+++!)  / use p/2: 0.5524 / use p/10: 0.5550 / use 0: 0.5544
+          AVAIL_HOURS(0.002) => 0.5540
+          AVAIL_HOURS(0.004) + AVAIL_HOURS(0.003) => 0.5568 (+!)
+          AVAIL_HOURS(0.004) + AVAIL_HOURS(0.003) + avail_place => (tab1)
+          AVAIL_HOURS(0.004) + AVAIL_HOURS(0.003) + POPULAR(0.005) => 0.5559
+
     21. [TODO]
           => tSNE group result as training feature?
           => by grid optimization?
