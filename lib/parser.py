@@ -6,10 +6,9 @@ pool_size = mp.cpu_count()
 
 from datetime import datetime
 from collections import Counter
-from sklearn.cross_validation import train_test_split
 
 from lib import conventions as conv
-from lib import bhtsne
+from lib import bhtsne, grouper
 
 #===========================================
 #   Evaluator
@@ -20,6 +19,7 @@ class parser(object):
     self.size = params['size']
     self.root = params['root']
     self.sample_rate = 1.0 # this datasets not good for sampling, always use 100% samples.
+    self.x_cols = params['x_cols']
 
     # [data engineering]
     # time
@@ -32,11 +32,13 @@ class parser(object):
     self.place_max_first_checkin = params.get('place_max_first_checkin')
     # ctrl
     self.remove_distance_outlier = params['remove_distance_outlier']
+    # special
+    self.grp = grouper.grouper(params)
 
   #----------------------------------------
   #   Main
   #----------------------------------------
-  def get_data(self, overwrite=False):
+  def get_data(self, overwrite=False, debug=False):
     start_time = time.time()
     cache_name = "%s/data/cache/cache_get_data_split_%i_rmol_%.2f_mci_%i.pkl" % (self.root, self.train_test_split_time, self.remove_distance_outlier, self.place_min_checkin)
     if (os.path.exists(cache_name) and not overwrite):
@@ -45,7 +47,12 @@ class parser(object):
     else:
       df_train = self.parse_data('%s/data/train.csv.zip' % self.root)
       df_test = self.parse_data('%s/data/test.csv.zip' % self.root)
-      print("[get_samples] origin: train = %s, test = %s" % (df_train.shape, df_test.shape))
+
+      if debug:
+        df_train = df_train[(df_train.x <= self.size) & (df_train.y <= self.size)]
+        df_test = df_test[(df_test.x <= self.size) & (df_test.y <= self.size)]
+      
+      print("[get_samples] from csv: train = %s, test = %s" % (df_train.shape, df_test.shape))
       # divide train/valid by time
       if self.train_test_split_time > 300000:
         df_valid = df_train[df_train.time > self.train_test_split_time]
@@ -70,6 +77,8 @@ class parser(object):
         df_train = df_train[~df_train.row_id.isin(outliers)]
         print("[remove_distance_outlier] remove %i outliers, len(df_train)=%i @ %s" % (len(outliers), len(df_train), datetime.now()))
       #----------------------------------
+      # tsne
+      # df_train, df_valid, df_test = self.grp.add_grp(df_train, df_valid, df_test)
       pickle.dump([df_train, df_valid, df_test], open(cache_name, 'wb'))
       print("[get_samples] final: train = %s, valid = %s, test = %s, %.2f secs" % (df_train.shape, df_valid.shape, df_test.shape, time.time() - start_time))
     
@@ -176,21 +185,21 @@ class parser(object):
     # df['logacc']  = np.log(df.accuracy.values).astype(float)
 
     df['hour']    = (df['time']/60)%24+1 # 1 to 24
-    df['hour2']   = (df['time']/60)%24%2+1 # 1 to 12
-    df['hour3']   = (df['time']/60)%24%3+1 # 1 to 8
-    df['hour4']   = (df['time']/60)%24%4+1 # 1 to 6
+    # df['hour2']   = (df['time']/60)%24%2+1 # 1 to 12
+    # df['hour3']   = (df['time']/60)%24%3+1 # 1 to 8
+    # df['hour4']   = (df['time']/60)%24%4+1 # 1 to 6
     df['qday']    = (df['time']/60)%24%6+1 # 1 to 4
-    df['p720']    = (df['time'])%720
-    df['p1260']   = (df['time'])%1260
-    df['p1440']   = (df['time'])%1440   # equal to df['hour']
-    df['p1680']   = (df['time'])%1680
+    # df['p720']    = (df['time'])%720
+    # df['p1260']   = (df['time'])%1260
+    # df['p1440']   = (df['time'])%1440   # equal to df['hour']
+    # df['p1680']   = (df['time'])%1680
     df['weekday'] = (df['time']/1440)%7+1
     df['month']   = (df['time']/43200)%12+1 # rough estimate, month = 30 days
     df['year']    = (df['time']//525600)+1
     
     df['day']     = (df['time']//60//24)
-    df['monthday']= (df['day'] % 30)
-    df['season']  = (df['time']//43200//3)%4+1
+    # df['monthday']= (df['day'] % 30)
+    # df['season']  = (df['time']//43200//3)%4+1
     df['logacc']  = np.log(df.accuracy.values).astype(float)
     return df
 

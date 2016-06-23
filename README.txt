@@ -640,6 +640,22 @@
             gs_rank_ws_1_0.6_0.4 => 0.58529 <--- BEST?
             gs_rank_ws_1_0.6_0.1 => 0.58501
             gs_rank_ws_1_0.4_0.2 => 0.58493
+    21. bhtsne
+          no tsne => 0.5424
+          perplexity 30 => 0.5408
+          perplexity 100 => 0.5411
+          perplexity 150 => 0.5411
+          perplexity 200 => 0.5417
+    22. KMeans
+    22. old paras
+          baseline => 0.5424
+          no remove_distance_outlier => 0.5422
+          no place_min_last_checkin => 0.5458 (+++!)
+          no place_min_last_checkin, remove_distance_outlier=2.0 => 0.5468 (+!)
+          no place_min_last_checkin, remove_distance_outlier=2.0, place_min_checkin=0 => 0.5450
+          no place_min_last_checkin, remove_distance_outlier=2.0, place_min_checkin=3 => 0.5468
+          no place_min_last_checkin, remove_distance_outlier=2.0, place_min_checkin=5 => 0.5459
+          no place_min_last_checkin, remove_distance_outlier=2.0, place_min_checkin=8 => 0.5466
     21. [TODO]
           => tSNE group result as training feature?
           => by grid optimization?

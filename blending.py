@@ -110,28 +110,33 @@ class blendor(object):
   def init_models(self):
     self.mdl_names = [
         #-----[King]-----
-        ('blending_gs_top_w2_20160619_180546_0.58529.csv.gz'  , 2.0 ),
+        ('blending_20160621_214954_0.58657.csv.gz'            , 2.0 ),
+        # ('lb_marsan_blending_0622_0.58569.csv.gz'             , 2.0 ),
+        # ('blending_gs_top_w2_20160619_180546_0.58529.csv.gz'  , 2.0 ),
         # ('lb_blending_20160617_215629_0.58463.csv.gz'       , self.top_w.get(0, 2.0) ),
         # ('lb_marsan_blending_0614_0.58378.csv.gz'           , 2.0 ),
         # ('lb_marsan_blending_0613_0.58299.csv.gz'           , 2.0 ),
-        ('lb_anouymous_0.58018.csv.gz'                        , 1.5 ),
+        # ('lb_anouymous_0.58018.csv.gz'                        , 1.8 ),
         # ('lb_marsan_blending_0613_0.57664.csv.gz'           , 2.0 ),
         # ('lb_anouymous_0.57842.csv.gz'                        , 1.5 ),
         # ('lb_hamed_0.57946.csv.gz'                            , 1.2 ),
-        ('lb_sub_knn_daten-kieker_0.57189.csv.gz'             , 1.2 ),
+        # ('lb_sub_knn_daten-kieker_0.57189.csv.gz'             , 1.2 ),
         ('skrf_submit_full_20160620_000902_0.57114.csv.gz'    , 1.2 ),
         # ('lb_sub_knn_danielspringt_0.57068.csv.gz'          , 1.2 ),
+        ('skrfp_submit_full_20160621_0.57054.csv.gz'          , 1.2 ),
         # ('lb_daniel_0.57068.csv.gz'                         , 1.0 ),
         # ('lb_grid_knn_lonely_shepard_0.57004.csv.gz'        , 1.0 ),
-        ('knn_grid_0.8_20160618_081945_0.56999.csv.gz'        , 1.0 ),
+        # ('knn_grid_0.8_20160618_081945_0.56999.csv.gz'        , 1.0 ),
         ('skrf_submit_full_20160621_234034_0.56992.csv.gz'    , 1.0 ),
         #-----[Knight]-----
         # ('submit_knn_0.4_grid_20160617_091633_0.56919.csv.gz',0.9 ),
         # ('submit_knn_submit_20160615_230955_0.56815.csv.gz',  0.8 ),
         ('submit_skrf_submit_20160605_195424_0.56552.csv.gz', 0.7 ),
         ('submit_skrf_submit_20160608_174129_0.56533.csv.gz', 0.7 ),
+        ('submit_sket_20160622_130909_0.56315.csv.gz'       , 0.7 ),
         ('submit_skrf_submit_20160604_171454_0.56130.csv.gz', 0.5 ),
         ('submit_skrf_submit_20160602_104038_0.56093.csv.gz', 0.7 ),
+        ('submit_sketp_20160622_180604_0.56082.csv.gz'      , 0.7 ),
         ('submit_knn_inter_20160616_172918_0.55919.csv.gz'  , 0.6 ),
         ('xgb_submit_full_20160616_0.55615.csv.gz'          , 0.6 ),
         ('submit_skrf_submit_20160612_214750_0.55583.csv.gz', 0.5 ),
@@ -193,8 +198,8 @@ class blendor(object):
         print("[RUN] done gs_rank_ws=%s" % (rank_w))
     #---------------------------------------------
     elif cmd == 'debug':
-      self.do_corr_rows = 1000
-      self.do_blend_rows = 1000
+      self.do_corr_rows = 100000
+      self.do_blend_rows = 100000
       self.launch()
     elif cmd == 'average':
       self.init_models()
@@ -213,7 +218,7 @@ class blendor(object):
 #===========================================
 if __name__ == '__main__':
   # blendor(do_blend=True).run('debug')   # cal corr only
-  blendor(do_blend=True, do_upload=True).run('average')
+  blendor(do_blend=True, do_upload=True).run()
   # bla.run()
   # bla.run('submit')
   # bla.run('gs_top_w')

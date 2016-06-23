@@ -9,7 +9,7 @@ from datetime import datetime
 from collections import Counter
 
 from lib import conventions as conv
-from lib import evaluator, parser, trainer, submit
+from lib import evaluator, parser, trainer, submiter
 
 #===========================================
 #   Main Flow
@@ -18,7 +18,7 @@ class main(object):
 
   def __init__(self, root='.', params={}):
     self.timestamp = str(datetime.now().strftime("%Y%m%d_%H%M%S"))
-    self.all_feats = ['hour', 'qday', 'weekday', 'month', 'year', 'logacc', 'x', 'y']
+    self.all_feats = ['hour', 'qday', 'weekday', 'month', 'year', 'logacc', 'x', 'y'] #, 'tsne_x', 'tsne_y', 'kmeans']
     # self.all_feats = ['p720', 'p1260', 'p1440', 'p1680', 'monthday', 'hour', 'qday', 'weekday', 'month', 'year', 'logacc', 'x', 'y']
     self.params = {
       'root'            : root,
@@ -30,12 +30,12 @@ class main(object):
       'y_inter'         : 1,
       #-----[data engineering in parser]-----
       'train_test_split_time'   : 700000,   # confirmed!
-      'place_min_checkin'       : 3,
-      'place_min_last_checkin'  : 600000,   # for submit  20160605_071204_0.6454
+      'place_min_checkin'       : 3, #3,
+      # 'place_min_last_checkin'  : 0, #600000,   # for submit  20160605_071204_0.6454
       # 'train_min_time'          : 300000,   # for submit (not good, no use!)
       # 'place_max_first_checkin' : 300000,   # for valid only, not for submit!
       # 'train_max_time'          : 500000,   # for valid only, not for submit!
-      'remove_distance_outlier' : 2.0,
+      'remove_distance_outlier' : 0, #2.0,
       #-----[pre-processing]-----
       'en_preprocessing'        : 0, #'HW',  # 'XYWHP'
       'max_cands'               : 10,
@@ -73,7 +73,6 @@ class main(object):
   def init_team(self):
     # parser & preprocessing
     self.params['stamp'] = self.params.get('stamp') or "%s_%s" % (self.params['alg'], self.timestamp)
-    # self.params['data_cache'] = "%s/data/cache/data_cache_size_%.2f_itv_x%iy%i_mcnt_%i.pkl" % (self.params['root'], self.params['size'], self.params['x_inter'], self.params['y_inter'], self.params['max_cands'])
     self.params['data_cache'] = "%s/data/cache/data_cache_size_10.0_itv_x%iy%i_mcnt_%i.pkl" % (self.params['root'], self.params['x_inter'], self.params['y_inter'], self.params['max_cands'])
     self.pas = parser.parser(self.params)
     # if not os.path.exists(self.params['data_cache']):
@@ -338,7 +337,7 @@ class main(object):
     if submit:
       preds_total, _ = self.eva.evaluate(df_test, title='Submit', norm=norm)
       sfile = self.eva.gen_submit_file(preds_total, valid_score)
-      if upload: submit.submitor().submit(entry=sfile, message=self.params)
+      if upload: submiter.submiter().submit(entry=sfile, message=self.params)
     print("[Finished!] Elapsed time overall for %.2f secs" % (time.time() - start_time))
     return valid_score
 

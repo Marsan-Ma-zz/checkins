@@ -1,4 +1,4 @@
-import os, sys, time, pickle, gzip
+import os, re, sys, time, pickle, gzip
 from robobrowser import RoboBrowser
 
 from lxml import html
@@ -9,14 +9,15 @@ from datetime import datetime
 #===========================================
 #   Submitter
 #===========================================  
-class submitor(object):
+class submiter(object):
 
 
   def __init__(self, competition='facebook-v-predicting-check-ins'):
     self.base = 'https://www.kaggle.com'
     self.login_url = '/'.join([self.base, 'account', 'login'])
     self.submit_url = '/'.join([self.base, 'c', competition, 'submissions', 'attach'])
-    
+    self.submit_dashboard = '/'.join([self.base, 'c', competition, 'submissions'])
+
   def read_account(self):
     if os.path.exists("./.kaggle"):
       self.username, self.password = open("./.kaggle", 'rt').readline().replace("\n",'').split(',')
@@ -47,11 +48,26 @@ class submitor(object):
     print("[SUBMIT] submitted @ %s" % datetime.now())
 
     # [receive score]
-    # score = browser.select(".my-submission")[0].select(".score")[0].text
-    for i in range(10):
-      score = browser.select('.submission-results strong')
-      if score:
-        print(score)
+    sleep(300)
+    fname = entry.split('/')[-1]
+    print("finding %s" % fname)
+    score = None
+    fmt = re.compile('\d+(\.\d+)?')
+    while not score:
+      browser.open(self.submit_dashboard)
+      for tr in browser.select(".submissions tr"):
+        tds = tr.select("td")
+        if (len(tds) >= 4) and (fname in tds[1].text):
+          score = tds[2].text.strip()
+          break
+          # try:
+          #   score = float(tds[2].text.strip())
+            # break
+          # except ValueError:
+          #   pass
+      if not score:
+        print("%s not found, waiting 10 secs ..." % fname)
+        sleep(10)
     print("[SUBMIT] result score as %s @ %s" % (score, datetime.now()))
     return score
 
@@ -60,9 +76,9 @@ class submitor(object):
 #   Main Flow
 #===========================================
 if __name__ == '__main__':
-  sub = submitor()
+  sub = submiter()
   sub.submit(
-    entry="/home/workspace/checkins/submit/submit_skrf_submit_full_20160621_234034_0.0000.csv",
+    entry="/home/workspace/checkins/submit/submit_sket_submit_full_20160622_130909_0.0000.csv",
     message="",
   )
 

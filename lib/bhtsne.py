@@ -48,7 +48,7 @@ from tempfile import mkdtemp
 from random import random
 from datetime import datetime
 
-root_path = '.'
+root_path = '/tmp/bhtsne'
 
 ### Constants
 BH_TSNE_BIN_PATH = path_join(dirname(__file__), 'bhtsne/bh_tsne')
@@ -106,7 +106,7 @@ def bh_tsne(samples, no_dims=DEFAULT_NO_DIMS, perplexity=DEFAULT_PERPLEXITY, the
 
     # bh_tsne works with fixed input and output paths, give it a temporary
     #   directory to work in so we don't clutter the filesystem
-    loginfo = "%i_%i_%s" % (no_dims, perplexity, datetime.now().strftime("%Y%m%d_%H%M%S"))
+    loginfo = "%i_%i_%s_%i" % (no_dims, perplexity, datetime.now().strftime("%Y%m%d_%H%M%S_%f"), int(10000*random()))
     tmp_dir_path = root_path + "/logs/bhtsne_%s" % loginfo
     os.makedirs(tmp_dir_path)
     # with TmpDir(loginfo) as tmp_dir_path:
@@ -132,8 +132,8 @@ def bh_tsne(samples, no_dims=DEFAULT_NO_DIMS, perplexity=DEFAULT_PERPLEXITY, the
         bh_tsne_p = Popen((abspath(BH_TSNE_BIN_PATH), ), cwd=tmp_dir_path,
                 # bh_tsne is very noisy on stdout, tell it to use stderr
                 #   if it is to print any output
-                stdout=stderr if verbose else dev_null)
-                # stdout=dev_null)
+                # stdout=stderr if verbose else dev_null)
+                stdout=dev_null)
         bh_tsne_p.wait()
         assert not bh_tsne_p.returncode, ('ERROR: Call to bh_tsne exited '
                 'with a non-zero return code exit status, please ' +

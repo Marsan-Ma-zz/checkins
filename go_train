@@ -17,10 +17,10 @@ PY3='stdbuf -o0 nohup python3 -u'
 # $PY3 main.py xgb_gs_params 0.4 xgb_gs_params_$NOW > "./logs/nohup_xgb_gs_params_$NOW.log" &
 
 
-# python3 main.py sketp 0.4
+# python3 main.py skrf 0.4
 
 # $PY3 main.py all 0.4 all_$NOW > "./logs/all_$NOW.log"  # Fastest for debug use
-# python3 main.py skrf 0.2 skrf_$NOW   # Fastest for debug use
+python3 main.py skrf 0.8 skrf_$NOW #> "./logs/skrf_$NOW.log" &
 # python3 main.py skrf_feats_sel 0.4 skrf_$NOW #> "./logs/skrf_max_cands_$NOW.log" &
 # python3 main.py xgb 0.4 xgb_$NOW #> "./logs/xgb_$NOW.log" &
 
@@ -64,4 +64,4 @@ PY3='stdbuf -o0 nohup python3 -u'
 # 
 
 # [Kill such processes]
-# sudo kill -9 `ps aux | grep "skrf_submit_full" | awk '{print $2}'`
+# sudo kill -9 `ps aux | grep "skrf_20160623_110916" | awk '{print $2}'`
