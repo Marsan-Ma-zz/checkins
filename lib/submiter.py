@@ -48,28 +48,28 @@ class submiter(object):
     print("[SUBMIT] submitted @ %s" % datetime.now())
 
     # [receive score]
-    sleep(300)
-    fname = entry.split('/')[-1]
-    print("finding %s" % fname)
-    score = None
-    fmt = re.compile('\d+(\.\d+)?')
-    while not score:
-      browser.open(self.submit_dashboard)
-      for tr in browser.select(".submissions tr"):
-        tds = tr.select("td")
-        if (len(tds) >= 4) and (fname in tds[1].text):
-          score = tds[2].text.strip()
-          break
-          # try:
-          #   score = float(tds[2].text.strip())
-            # break
-          # except ValueError:
-          #   pass
-      if not score:
-        print("%s not found, waiting 10 secs ..." % fname)
-        sleep(10)
-    print("[SUBMIT] result score as %s @ %s" % (score, datetime.now()))
-    return score
+    # sleep(300)
+    # fname = entry.split('/')[-1]
+    # print("finding %s" % fname)
+    # score = None
+    # fmt = re.compile('\d+(\.\d+)?')
+    # while not score:
+    #   browser.open(self.submit_dashboard)
+    #   for tr in browser.select(".submissions tr"):
+    #     tds = tr.select("td")
+    #     if (len(tds) >= 4) and (fname in tds[1].text):
+    #       score = tds[2].text.strip()
+    #       break
+    #       # try:
+    #       #   score = float(tds[2].text.strip())
+    #         # break
+    #       # except ValueError:
+    #       #   pass
+    #   if not score:
+    #     print("%s not found, waiting 10 secs ..." % fname)
+    #     sleep(10)
+    # print("[SUBMIT] result score as %s @ %s" % (score, datetime.now()))
+    # return score
 
 
 #===========================================

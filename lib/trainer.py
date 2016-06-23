@@ -36,10 +36,6 @@ class trainer(object):
     global LOCATION, AVAIL_WDAYS, AVAIL_HOURS, POPULAR, GRID_CANDS
     if os.path.exists(self.data_cache):
       LOCATION, AVAIL_WDAYS, AVAIL_HOURS, POPULAR, GRID_CANDS = pickle.load(open(self.data_cache, 'rb'))
-      LOCATION['x_min'] = LOCATION.x_mean - self.loc_th_x*LOCATION.x_std
-      LOCATION['x_max'] = LOCATION.x_mean + self.loc_th_x*LOCATION.x_std
-      LOCATION['y_min'] = LOCATION.y_mean - self.loc_th_y*LOCATION.y_std
-      LOCATION['y_max'] = LOCATION.y_mean + self.loc_th_y*LOCATION.y_std
     
 
   #----------------------------------------

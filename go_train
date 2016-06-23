@@ -20,7 +20,7 @@ PY3='stdbuf -o0 nohup python3 -u'
 # python3 main.py skrf 0.4
 
 # $PY3 main.py all 0.4 all_$NOW > "./logs/all_$NOW.log"  # Fastest for debug use
-python3 main.py skrf 0.8 skrf_$NOW #> "./logs/skrf_$NOW.log" &
+# python3 main.py skrf 0.8 skrf_$NOW #> "./logs/skrf_$NOW.log" &
 # python3 main.py skrf_feats_sel 0.4 skrf_$NOW #> "./logs/skrf_max_cands_$NOW.log" &
 # python3 main.py xgb 0.4 xgb_$NOW #> "./logs/xgb_$NOW.log" &
 
@@ -50,6 +50,8 @@ python3 main.py skrf 0.8 skrf_$NOW #> "./logs/skrf_$NOW.log" &
 # $PY3 main.py knn_try_inter_submit_full 10.0 knn_try_inter_submit_full_$NOW > "./logs/knn_try_inter_submit_full_$NOW.log" &
 # $PY3 main.py knn_try_large_grid_submit_full 10.0 knn_try_large_grid_submit_full_$NOW > "./logs/knn_try_large_grid_submit_full_$NOW.log" &
 # $PY3 main.py skrf_submit_full 10.0 skrf_submit_full_$NOW > "./logs/nohup_skrf_submit_full_$NOW.log" &
+$PY3 main.py skrf_submit_rf_family 10.0 skrf_submit_rf_family_$NOW > "./logs/nohup_skrf_submit_rf_family_$NOW.log" &
+# $PY3 main.py skrf_submit_et_family 10.0 skrf_submit_et_family_$NOW > "./logs/nohup_skrf_submit_et_family_$NOW.log" &
 # $PY3 main.py skrfp_submit_full 10.0 skrfp_submit_full_$NOW > "./logs/nohup_skrfp_submit_full_$NOW.log" &
 # $PY3 main.py sket_submit_full 10.0 sket_submit_full_$NOW > "./logs/nohup_sket_submit_full_$NOW.log" &
 # $PY3 main.py sketp_submit_full 10.0 sketp_submit_full_$NOW > "./logs/nohup_sketp_submit_full_$NOW.log" &
@@ -60,6 +62,7 @@ python3 main.py skrf 0.8 skrf_$NOW #> "./logs/skrf_$NOW.log" &
 # [Submits Existing Model]
 # python3 main.py skrf_eva_exist 0.4 LB_skrf_submit_20160611_233627
 # $PY3 main.py skrf_smt_exist 10.0 skrf_submit_20160605_195424 > "./logs/nohup_skrf_submit_20160605_195424.log" &
+# $PY3 main.py sketp_smt_exist 10.0 sketp_submit_full_20160622_180604 > "./logs/nohup_sketp_submit_full_20160622_180604.log" &
 # python3 main.py xgb_eva_exist 1.0 xgb_gs_params_20160530_041055 > "./logs/nohup_xgb_eva_exist.log" &
 # 
 

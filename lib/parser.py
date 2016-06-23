@@ -67,7 +67,7 @@ class parser(object):
         df_train = df_train[~df_train.place_id.isin(cold_places)]
       
       if self.remove_distance_outlier:
-        stat_loc = self.location_estimation(df_train, th=self.remove_distance_outlier)
+        stat_loc = self.location_estimation(df_train)
         stat_loc = dict(zip(stat_loc.place_id, stat_loc[['x_min', 'x_max', 'y_min', 'y_max']].to_dict('records')))
         outliers = []
         for rid, pid, xv, yv in df_train[['row_id', 'place_id', 'x', 'y']].values.tolist():
@@ -197,7 +197,7 @@ class parser(object):
     df['month']   = (df['time']/43200)%12+1 # rough estimate, month = 30 days
     df['year']    = (df['time']//525600)+1
     
-    df['day']     = (df['time']//60//24)
+    # df['day']     = (df['time']//60//24)
     # df['monthday']= (df['day'] % 30)
     # df['season']  = (df['time']//43200//3)%4+1
     df['logacc']  = np.log(df.accuracy.values).astype(float)
@@ -210,18 +210,18 @@ class parser(object):
   def init_data_cache(self, df, params):
     # ----- collect & save -----
     print("[init_data_cache] start @ %s" % conv.now('full'))
-    stat_loc        = None # self.location_estimation(df)
+    stat_loc        = None #self.location_estimation(df)
     stat_wdays      = self.agg_avail_wdays(df)
     stat_hours      = self.agg_avail_hours(df)
     stat_popular    = self.popularity(df, params)
-    grid_candidates = None # self.get_grid_candidates(df, stat_loc, params['max_cands'], params)
+    grid_candidates = None #self.get_grid_candidates(df, stat_loc, params['max_cands'], params)
     # info for post-processing
     pickle.dump([stat_loc, stat_wdays, stat_hours, stat_popular, grid_candidates], open(params['data_cache'], 'wb'))
     print("[init_data_cache] written in %s @ %s" % (params['data_cache'], conv.now('full')))
 
 
   # ----- location estimation -----
-  def location_estimation(self, df, th=2):
+  def location_estimation(self, df, th_x=3, th_y=2):
     stat_mean = df[['place_id', 'x', 'y']].groupby('place_id').mean()
     stat_mean = stat_mean.rename(columns = {'x':'x_mean', 'y': 'y_mean'})
     stat_mean.reset_index(inplace=True)
@@ -229,10 +229,10 @@ class parser(object):
     stat_std = stat_std.rename(columns = {'x':'x_std', 'y': 'y_std'})
     stat_std.reset_index(inplace=True)
     stat_loc = stat_mean.merge(stat_std, on='place_id')
-    stat_loc['x_min'] = stat_loc.x_mean - th*stat_loc.x_std
-    stat_loc['x_max'] = stat_loc.x_mean + th*stat_loc.x_std
-    stat_loc['y_min'] = stat_loc.y_mean - th*stat_loc.y_std
-    stat_loc['y_max'] = stat_loc.y_mean + th*stat_loc.y_std
+    stat_loc['x_min'] = stat_loc.x_mean - th_x*stat_loc.x_std
+    stat_loc['x_max'] = stat_loc.x_mean + th_y*stat_loc.x_std
+    stat_loc['y_min'] = stat_loc.y_mean - th_x*stat_loc.y_std
+    stat_loc['y_max'] = stat_loc.y_mean + th_y*stat_loc.y_std
     return stat_loc
 
   # ----- available time: hours -----

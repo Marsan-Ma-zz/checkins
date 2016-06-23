@@ -285,6 +285,16 @@ class main(object):
         self.init_team()
         self.train_alg(alg, submit=True)
     #------------------------------------------
+    elif 'submit_rf_family' in run_cmd:
+      self.params['train_test_split_time'] = 1e10   # use all samples for training
+      self.init_team()
+      self.train_alg('skrf', submit=True, upload=True)
+      self.train_alg('skrfp', submit=True, upload=True)
+    elif 'submit_et_family' in run_cmd:
+      self.params['train_test_split_time'] = 1e10   # use all samples for training
+      self.init_team()
+      self.train_alg('sket', submit=True, upload=True)
+      self.train_alg('sketp', submit=True, upload=True)
     elif 'submit_full' in run_cmd:
       self.params['train_test_split_time'] = 1e10   # use all samples for training
       self.init_team()

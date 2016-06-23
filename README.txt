@@ -674,7 +674,9 @@
           AVAIL_HOURS(0.004) + AVAIL_HOURS(0.003) => 0.5568 (+!)
           AVAIL_HOURS(0.004) + AVAIL_HOURS(0.003) + avail_place => 0.5419
           AVAIL_HOURS(0.004) + AVAIL_HOURS(0.003) + POPULAR(0.005) => 0.5559
-
+          ---
+          location_estimation(th_x=3, th_y=2) => 0.5558
+          location_estimation(th_x=2, th_y=2) => 0.5543
     21. [TODO]
           => tSNE group result as training feature?
           => by grid optimization?
