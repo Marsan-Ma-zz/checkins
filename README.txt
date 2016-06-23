@@ -672,7 +672,7 @@
           AVAIL_HOURS(0.004) => 0.5554 (+++!)  / use p/2: 0.5524 / use p/10: 0.5550 / use 0: 0.5544
           AVAIL_HOURS(0.002) => 0.5540
           AVAIL_HOURS(0.004) + AVAIL_HOURS(0.003) => 0.5568 (+!)
-          AVAIL_HOURS(0.004) + AVAIL_HOURS(0.003) + avail_place => (tab1)
+          AVAIL_HOURS(0.004) + AVAIL_HOURS(0.003) + avail_place => 0.5419
           AVAIL_HOURS(0.004) + AVAIL_HOURS(0.003) + POPULAR(0.005) => 0.5559
 
     21. [TODO]

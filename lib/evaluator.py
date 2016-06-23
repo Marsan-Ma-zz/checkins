@@ -180,8 +180,8 @@ def predict_clf(mdl_names, mdl_weights, X, y, row_id, xi, yi, popu_th, time_th_w
       psol = OrderedDict(sorted(psol, key=lambda v: v[1]))
       # -----[filter avail places]-----
       s = samples.iloc[i]
-      avail_place = LOCATION[(LOCATION.x_min <= s.x) & (LOCATION.x_max >= s.x) & (LOCATION.y_min <= s.y) & (LOCATION.y_max >= s.y)].place_id.values
-      psol = {p: (v if (p in avail_place) and 
+      # avail_place = LOCATION[(LOCATION.x_min <= s.x) & (LOCATION.x_max >= s.x) & (LOCATION.y_min <= s.y) & (LOCATION.y_max >= s.y)].place_id.values
+      psol = {p: (v if #(p in avail_place) and 
         (AVAIL_WDAYS.get((p, s.weekday.astype(int)), 0) > time_th_wd) and 
         (AVAIL_HOURS.get((p, s.hour.astype(int)), 0) > time_th_hr) #and
         # (POPULAR[(xi, yi)].get(p, 0) > popu_th)

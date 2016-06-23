@@ -38,7 +38,7 @@ class parser(object):
   #----------------------------------------
   #   Main
   #----------------------------------------
-  def get_data(self, overwrite=False, debug=True):
+  def get_data(self, overwrite=False, debug=False):
     start_time = time.time()
     cache_name = "%s/data/cache/cache_get_data_split_%i_rmol_%.2f_mci_%i.pkl" % (self.root, self.train_test_split_time, self.remove_distance_outlier, self.place_min_checkin)
     if (os.path.exists(cache_name) and not overwrite):

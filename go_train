@@ -64,4 +64,4 @@ python3 main.py skrf 0.8 skrf_$NOW #> "./logs/skrf_$NOW.log" &
 # 
 
 # [Kill such processes]
-# sudo kill -9 `ps aux | grep "skrf_20160623_110916" | awk '{print $2}'`
+# sudo kill -9 `ps aux | grep "skrf_20160623_182952" | awk '{print $2}'`
