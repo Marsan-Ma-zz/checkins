@@ -219,8 +219,8 @@ class blendor(object):
 #   Main Flow
 #===========================================
 if __name__ == '__main__':
-  # blendor(do_blend=True).run('debug')   # cal corr only
-  blendor(do_blend=True, do_upload=True).run('average')
+  blendor(do_blend=True).run('debug')   # cal corr only
+  # blendor(do_blend=True, do_upload=True).run('average')
   # bla.run()
   # bla.run('submit')
   # bla.run('gs_top_w')

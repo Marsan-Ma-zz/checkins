@@ -1,4 +1,4 @@
-import os, sys, time, pickle, gzip
+import os, sys, time, pickle, gzip, re, ast
 import pandas as pd
 import numpy as np
 import multiprocessing as mp
@@ -34,6 +34,9 @@ class trainer(object):
     self.loc_th_y = params['loc_th_y']
     self.en_preprocessing = params['en_preprocessing']
     self.submit_file = "%s/submit/treva_submit_%s.csv" % (self.root, self.stamp)
+    # ctrl
+    self.do_blending = params.get('do_blending', False)
+    self.use_blending = params.get('use_blending', False)
 
     # global variable for multi-thread
     global LOCATION, AVAIL_WDAYS, AVAIL_HOURS, POPULAR, GRID_CANDS
@@ -45,8 +48,11 @@ class trainer(object):
   #   Main
   #----------------------------------------
   def train(self, df_train, df_valid, df_test):
-    mdl_path = "%s/models/%s" % (self.root, self.stamp)
-    os.mkdir(mdl_path)
+    if self.size == 10.0:
+      mdl_path = "%s/submit/treva_full10" % (self.root)
+    else:
+      mdl_path = "%s/submit/treva_%s" % (self.root, self.stamp)
+    if not os.path.exists(mdl_path): os.mkdir(mdl_path)
     print("[Train] start @ %s" % (conv.now('full')))
     
     processes = []
@@ -64,11 +70,16 @@ class trainer(object):
         y_min, y_max = conv.trim_range(y_min, y_max, self.size)
         df_grid = {m: df_row[m][(df_row[m].y >= y_min) & (df_row[m].y < y_max)] for m in ['tr', 'va', 'te']}
 
-        p = mp_pool.apply_async(drill_grid, (df_grid, self.x_cols, "(%i,%i)" % (x_idx, y_idx)))
+        # check exists
+        grid_submit_path = "%s/treva_%i_%i.csv" % (mdl_path, x_idx, y_idx)
+        if os.path.exists(grid_submit_path):
+          print("%s exists, skip." % grid_submit_path)
+
+        p = mp_pool.apply_async(drill_grid, (df_grid, self.x_cols, x_idx, y_idx, grid_submit_path, self.do_blending, self.use_blending))
         processes.append(p)
 
         # prevent memory explode!
-        while (len(processes) > 10): 
+        while (len(processes) > 30): 
           score, y_test = processes.pop(0).get()
           score_stat.append((score, len(df_grid)))
           preds_total.append(y_test)
@@ -79,14 +90,12 @@ class trainer(object):
       preds_total.append(y_test)
     # write submit file
     preds_total = pd.concat(preds_total)
-    preds_total['place_id'] = preds_total[[0,1,2]].astype(str).apply(lambda x: ' '.join(x), axis=1)
-    preds_total[['row_id', 'place_id']].sort_values(by='row_id').to_csv(self.submit_file, index=False)
+    df2submit(preds_total, self.submit_file)
     # collect scores
     valid_score = sum([s*c for s,c in score_stat]) / sum([c for s,c in score_stat])
     print("[Treva] done, valid_score=%.4f, submit file written %s @ %s" % (valid_score, self.submit_file, conv.now('full')))
     
-      
-
+  
 #----------------------------------------
 #   Drill Grid
 #----------------------------------------
@@ -96,7 +105,7 @@ KNN_NORM = {
   'qday':1, 'month':2, 'year':10, 'day':1./22,
 }
 
-def drill_grid(df_grid, x_cols, title=None, do_blending=True):
+def drill_grid(df_grid, x_cols, xi, yi, grid_submit_path, do_blending=True, use_blending=False):
   best_score = 0
   best_model = None
   Xs, ys = {}, {}
@@ -119,7 +128,7 @@ def drill_grid(df_grid, x_cols, title=None, do_blending=True):
     clf.fit(Xs['tr'], ys['tr'])
     # valid
     score, bests = drill_eva(clf, Xs['va'], ys['va'])
-    print("drill%s va_score %.4f for model %s(%s) @ %s" % (title, score, mdl_config['alg'], mdl_config, conv.now('full')))
+    print("drill(%i,%i) va_score %.4f for model %s(%s) @ %s" % (xi, yi, score, mdl_config['alg'], mdl_config, conv.now('full')))
     if score > best_score:
       best_score = score
       best_model = clf
@@ -140,7 +149,7 @@ def drill_grid(df_grid, x_cols, title=None, do_blending=True):
   #   Xs['knn_'+m], ys['knn_'+m], row_id = conv.df2sample(df_grid_knn, x_cols)
   # clf.fit(Xs['knn_tr'], ys['knn_tr'])
   # score, bests = drill_eva(clf, Xs['knn_va'], ys['knn_va'])
-  # print("drill%s va_score %.4f for model 'knn' @ %s" % (title, score, conv.now('full')))
+  # print("drill(%i,%i) va_score %.4f for model 'knn' @ %s" % (xi, yi, score, conv.now('full')))
   # if score > best_score:
   #   best_score = score
   #   best_model = clf
@@ -157,22 +166,28 @@ def drill_grid(df_grid, x_cols, title=None, do_blending=True):
     blended_bests = blending(all_bests)
     blended_match = [apk([ans], vals) for ans, vals in zip(ys['tr'], blended_bests)]
     blended_score = sum(blended_match)/len(blended_match)
-    print("drill%s va_score %.4f for model 'blending' @ %s" % (title, score, conv.now('full')))
+    print("drill(%i,%i) va_score %.4f for model 'blending' @ %s" % (xi, yi, score, conv.now('full')))
   
   # collect results
   if do_blending and (blended_score > best_score):
     best_score = blended_score
     best_model = None
     test_preds = blending(all_test_bests)
-    print("[best] model is blending, for %s" % title)
+    print("[best] model is blending, for (%i,%i)" % (xi, yi))
   else:
     _, test_preds = drill_eva(best_model, Xs['te'], ys['te'])
-    print("[best] model is %s, for %s" % (best_config, title))
+    print("[best] model is %s, for (%i,%i)" % (best_config, xi, yi))
   
   test_preds = pd.DataFrame(test_preds)
   test_preds['row_id'] = row_id
-  print("[drill_grid %s] done with best_score=%.4f @ %s" % (title, best_score, datetime.now()))
+  df2submit(test_preds, grid_submit_path)
+  print("[drill_grid (%i,%i)] done with best_score=%.4f @ %s" % (xi, yi, best_score, datetime.now()))
   return best_score, test_preds
+
+
+def df2submit(df, filename):
+  df['place_id'] = df[[0,1,2]].astype(str).apply(lambda x: ' '.join(x), axis=1)
+  df[['row_id', 'place_id']].sort_values(by='row_id').to_csv(filename, index=False)
 
 
 def blending(all_bests, rank_w=[1, 0.6, 0.4]):
@@ -275,15 +290,27 @@ def get_alg(alg, mdl_config):
   return clf
 
 
-def save_model(alg, mdl_name, clf, X_train, y_train):
-  if alg == 'knn':
-    le = LabelEncoder()
-    y_train = le.fit_transform(y_train)
-    X_train = X_train.values.astype(int)
-    clf.fit(X_train, y_train)
-    pickle.dump([clf, le], gzip.open(mdl_name, 'wb'))
-  else:
-    clf.fit(X_train, y_train)
-    pickle.dump(clf, gzip.open(mdl_name, 'wb'))
+#===========================================
+#   Analyse model parameter from log
+#===========================================
+def analysis_params(log_path):
+  raw = open(log_path, 'rt')
+  cfg_stat = defaultdict(float)
+  for line in raw.readlines():
+    if 'va_score' in line:
+      if 'blending' in line:
+        cfg = 'blending'
+      else:
+        cfg = re.compile('{.*}').findall(line)[0]
+      score = float(re.compile('0\.\d+').findall(line)[0])
+      # print(score, cfg)
+      cfg_stat[cfg] += score
+  results = sorted(cfg_stat.items(), key=lambda v: v[1], reverse=True)
+  for line in results:
+    print(line)
 
+
+if __name__ == '__main__':
+   log_path = "/home/workspace/checkins/logs/nohup_treva_20160624_142027.log"
+   analysis_params(log_path)
 

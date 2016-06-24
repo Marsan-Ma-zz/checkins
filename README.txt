@@ -691,7 +691,11 @@
           (0.1)+0.1+0.4  : 0.5539
           (0.2)-0.4-0.4  : 0.5520
     21. [TODO]
-          => by grid optimization?
+          [treva] 
+          => submit 1)best, 2)all blending
+          => write out partial results, compose them later & freely combination!
+          => add knn/xgboost back
+          [others]
           => use latter sample (near test samples) only
           => xgboost early stop with validation samples
           
