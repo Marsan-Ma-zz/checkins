@@ -691,10 +691,8 @@
           (0.1)+0.1+0.4  : 0.5539
           (0.2)-0.4-0.4  : 0.5520
     21. [TODO]
-          => tSNE group result as training feature?
           => by grid optimization?
           => use latter sample (near test samples) only
-          => remove place_min_last_checkin
           => xgboost early stop with validation samples
           
     

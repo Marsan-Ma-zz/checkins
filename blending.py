@@ -120,6 +120,7 @@ class blendor(object):
         # ('lb_marsan_blending_0613_0.57664.csv.gz'           , 2.0 ),
         # ('lb_anouymous_0.57842.csv.gz'                        , 1.5 ),
         # ('lb_hamed_0.57946.csv.gz'                            , 1.2 ),
+        ('skrf_submit_20160623_224407_0.57349.csv.gz'         , 1.5 ),
         # ('lb_sub_knn_daten-kieker_0.57189.csv.gz'             , 1.2 ),
         ('skrf_submit_full_20160620_000902_0.57114.csv.gz'    , 1.2 ),
         # ('lb_sub_knn_danielspringt_0.57068.csv.gz'          , 1.2 ),

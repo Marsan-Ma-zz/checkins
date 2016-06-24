@@ -10,6 +10,7 @@ from collections import Counter
 
 from lib import conventions as conv
 from lib import evaluator, parser, trainer, submiter
+from lib import treva
 
 #===========================================
 #   Main Flow
@@ -73,7 +74,7 @@ class main(object):
   def init_team(self):
     # parser & preprocessing
     self.params['stamp'] = self.params.get('stamp') or "%s_%s" % (self.params['alg'], self.timestamp)
-    self.params['data_cache'] = "%s/data/cache/data_cache_size_10.0_itv_x%iy%i_mcnt_%i.pkl" % (self.params['root'], self.params['x_inter'], self.params['y_inter'], self.params['max_cands'])
+    self.params['data_cache'] = "%s/data/cache/data_cache_size_%.2f_itv_x%iy%i_mcnt_%i.pkl" % (self.params['root'], self.params['size'], self.params['x_inter'], self.params['y_inter'], self.params['max_cands'])
     self.pas = parser.parser(self.params)
     if not os.path.exists(self.params['data_cache']):
       df_train, df_valid, _ = self.pas.get_data()
@@ -315,6 +316,13 @@ class main(object):
       self.init_team()
       self.train_alg(alg, mdl_config={'n_estimators': 5})
     #------------------------------------------
+    elif 'treva' in run_cmd:
+      start_time = time.time()
+      self.init_team()
+      df_train, df_valid, df_test = self.pas.get_data()
+      tva = treva.trainer(self.params)
+      tva.train(df_train, df_valid, df_test)
+      print("[Finished!] Elapsed time overall for %.2f secs" % (time.time() - start_time))
     else: # single model
       self.init_team()
       self.train_alg(alg)
