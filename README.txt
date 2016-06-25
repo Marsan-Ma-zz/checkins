@@ -692,8 +692,7 @@
           (0.2)-0.4-0.4  : 0.5520
     21. [TODO]
           [treva] 
-          => submit 1)best, 2)all blending
-          => write out partial results, compose them later & freely combination!
+          => submit 1)best, 2)top5 blending 3)use time < 100000 as valid
           => add knn/xgboost back
           [others]
           => use latter sample (near test samples) only

@@ -78,7 +78,7 @@ class submiter(object):
 if __name__ == '__main__':
   sub = submiter()
   sub.submit(
-    entry="/home/workspace/checkins/submit/submit_sket_submit_full_20160622_130909_0.0000.csv",
-    message="",
+    entry="/home/workspace/checkins/submit/treva_overwrite_20160625_112251.csv",
+    message="treva merge current best, should improve a little.",
   )
 

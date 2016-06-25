@@ -6,6 +6,7 @@ pool_size = mp.cpu_count()
 
 import xgboost as xgb
 
+from os import listdir
 from datetime import datetime
 from collections import OrderedDict, defaultdict
 
@@ -15,6 +16,7 @@ from sklearn.neighbors import KNeighborsClassifier
 from sklearn import linear_model, ensemble
 
 from lib import conventions as conv
+from lib import submiter
 
 #===========================================
 #   Trainer
@@ -34,9 +36,6 @@ class trainer(object):
     self.loc_th_y = params['loc_th_y']
     self.en_preprocessing = params['en_preprocessing']
     self.submit_file = "%s/submit/treva_submit_%s.csv" % (self.root, self.stamp)
-    # ctrl
-    self.do_blending = params.get('do_blending', False)
-    self.use_blending = params.get('use_blending', False)
 
     # global variable for multi-thread
     global LOCATION, AVAIL_WDAYS, AVAIL_HOURS, POPULAR, GRID_CANDS
@@ -67,15 +66,16 @@ class trainer(object):
       }
       mp_pool = mp.Pool(pool_size)
       for y_idx, (y_min, y_max) in enumerate(self.y_ranges): 
-        y_min, y_max = conv.trim_range(y_min, y_max, self.size)
-        df_grid = {m: df_row[m][(df_row[m].y >= y_min) & (df_row[m].y < y_max)] for m in ['tr', 'va', 'te']}
-
         # check exists
         grid_submit_path = "%s/treva_%i_%i.csv" % (mdl_path, x_idx, y_idx)
         if os.path.exists(grid_submit_path):
           print("%s exists, skip." % grid_submit_path)
+          continue
 
-        p = mp_pool.apply_async(drill_grid, (df_grid, self.x_cols, x_idx, y_idx, grid_submit_path, self.do_blending, self.use_blending))
+        # get grid
+        y_min, y_max = conv.trim_range(y_min, y_max, self.size)
+        df_grid = {m: df_row[m][(df_row[m].y >= y_min) & (df_row[m].y < y_max)] for m in ['tr', 'va', 'te']}
+        p = mp_pool.apply_async(drill_grid, (df_grid, self.x_cols, x_idx, y_idx, grid_submit_path))
         processes.append(p)
 
         # prevent memory explode!
@@ -105,22 +105,72 @@ KNN_NORM = {
   'qday':1, 'month':2, 'year':10, 'day':1./22,
 }
 
-def drill_grid(df_grid, x_cols, xi, yi, grid_submit_path, do_blending=True, use_blending=False):
+def drill_grid(df_grid, x_cols, xi, yi, grid_submit_path, do_blending=True):
   best_score = 0
-  best_model = None
+  all_score = []
   Xs, ys = {}, {}
   for m in ['tr', 'va', 'te']:
     Xs[m], ys[m], row_id = conv.df2sample(df_grid[m], x_cols)
   
-  # grid search best models
+  # [grid search best models]
+  # for alg in ['skrf', 'skrfp', 'sket', 'sketp']:
+  #   for n_estimators in [500, 1000, 1500]:
+  #     for max_features in [0.3, 0.4, 0.5]:
+  #       for max_depth in [11, 13, 15]:
+  #         mdl_configs.append({'alg': alg, 'n_estimators': n_estimators, 'max_features': max_features, 'max_depth': max_depth}) 
   all_bests = []
-  all_test_bests = []
-  mdl_configs = []
-  for alg in ['skrf', 'skrfp', 'sket', 'sketp']:
-    for n_estimators in [500, 1000, 1500]:
-      for max_features in [0.3, 0.4, 0.5]:
-        for max_depth in [11, 13, 15]:
-          mdl_configs.append({'alg': alg, 'n_estimators': n_estimators, 'max_features': max_features, 'max_depth': max_depth}) 
+  mdl_configs = [
+    {'alg': 'sket', 'max_depth': 11, 'max_features': 0.4, 'n_estimators': 500},
+    {'alg': 'sket', 'max_depth': 11, 'max_features': 0.5, 'n_estimators': 1000},
+    {'alg': 'sket', 'max_depth': 11, 'max_features': 0.5, 'n_estimators': 1500},
+    {'alg': 'sket', 'max_depth': 11, 'max_features': 0.5, 'n_estimators': 500},
+    {'alg': 'sket', 'max_depth': 13, 'max_features': 0.5, 'n_estimators': 500},
+    {'alg': 'sket', 'max_depth': 15, 'max_features': 0.4, 'n_estimators': 500},
+    {'alg': 'sketp','max_depth': 11, 'max_features': 0.5, 'n_estimators': 1000},
+    {'alg': 'sketp','max_depth': 11, 'max_features': 0.5, 'n_estimators': 500},
+    {'alg': 'sketp','max_depth': 15, 'max_features': 0.5, 'n_estimators': 500},
+    {'alg': 'skrf', 'max_depth': 11, 'max_features': 0.3, 'n_estimators': 1000},
+    {'alg': 'skrf', 'max_depth': 11, 'max_features': 0.3, 'n_estimators': 1500},
+    {'alg': 'skrf', 'max_depth': 11, 'max_features': 0.3, 'n_estimators': 500},
+    {'alg': 'skrf', 'max_depth': 11, 'max_features': 0.4, 'n_estimators': 1000},
+    {'alg': 'skrf', 'max_depth': 11, 'max_features': 0.4, 'n_estimators': 500},
+    {'alg': 'skrf', 'max_depth': 11, 'max_features': 0.5, 'n_estimators': 1000},
+    {'alg': 'skrf', 'max_depth': 11, 'max_features': 0.5, 'n_estimators': 1500},
+    {'alg': 'skrf', 'max_depth': 11, 'max_features': 0.5, 'n_estimators': 500},
+    {'alg': 'skrf', 'max_depth': 13, 'max_features': 0.3, 'n_estimators': 1000},
+    {'alg': 'skrf', 'max_depth': 13, 'max_features': 0.3, 'n_estimators': 1500},
+    {'alg': 'skrf', 'max_depth': 13, 'max_features': 0.3, 'n_estimators': 500},
+    {'alg': 'skrf', 'max_depth': 13, 'max_features': 0.4, 'n_estimators': 1500},
+    {'alg': 'skrf', 'max_depth': 13, 'max_features': 0.4, 'n_estimators': 500},
+    {'alg': 'skrf', 'max_depth': 13, 'max_features': 0.5, 'n_estimators': 500},
+    {'alg': 'skrf', 'max_depth': 15, 'max_features': 0.3, 'n_estimators': 1000},
+    {'alg': 'skrf', 'max_depth': 15, 'max_features': 0.3, 'n_estimators': 1500},
+    {'alg': 'skrf', 'max_depth': 15, 'max_features': 0.3, 'n_estimators': 500},
+    {'alg': 'skrf', 'max_depth': 15, 'max_features': 0.4, 'n_estimators': 500},
+    {'alg': 'skrfp','max_depth': 11, 'max_features': 0.3, 'n_estimators': 1000},
+    {'alg': 'skrfp','max_depth': 11, 'max_features': 0.3, 'n_estimators': 1500},
+    {'alg': 'skrfp','max_depth': 11, 'max_features': 0.3, 'n_estimators': 500},
+    {'alg': 'skrfp','max_depth': 11, 'max_features': 0.4, 'n_estimators': 1000},
+    {'alg': 'skrfp','max_depth': 11, 'max_features': 0.4, 'n_estimators': 1500},
+    {'alg': 'skrfp','max_depth': 11, 'max_features': 0.4, 'n_estimators': 500},
+    {'alg': 'skrfp','max_depth': 11, 'max_features': 0.5, 'n_estimators': 1000},
+    {'alg': 'skrfp','max_depth': 11, 'max_features': 0.5, 'n_estimators': 500},
+    {'alg': 'skrfp','max_depth': 13, 'max_features': 0.3, 'n_estimators': 1000},
+    {'alg': 'skrfp','max_depth': 13, 'max_features': 0.3, 'n_estimators': 500},
+    {'alg': 'skrfp','max_depth': 13, 'max_features': 0.4, 'n_estimators': 1000},
+    {'alg': 'skrfp','max_depth': 13, 'max_features': 0.4, 'n_estimators': 1500},
+    {'alg': 'skrfp','max_depth': 13, 'max_features': 0.4, 'n_estimators': 500},
+    {'alg': 'skrfp','max_depth': 13, 'max_features': 0.5, 'n_estimators': 500},
+    {'alg': 'skrfp','max_depth': 15, 'max_features': 0.3, 'n_estimators': 1000},
+    {'alg': 'skrfp','max_depth': 15, 'max_features': 0.3, 'n_estimators': 1500},
+    {'alg': 'skrfp','max_depth': 15, 'max_features': 0.3, 'n_estimators': 500},
+    {'alg': 'skrfp','max_depth': 15, 'max_features': 0.4, 'n_estimators': 1000},
+    {'alg': 'skrfp','max_depth': 15, 'max_features': 0.4, 'n_estimators': 1500},
+    {'alg': 'skrfp','max_depth': 15, 'max_features': 0.4, 'n_estimators': 500},
+    {'alg': 'skrfp','max_depth': 15, 'max_features': 0.5, 'n_estimators': 1000},
+    {'alg': 'skrfp','max_depth': 15, 'max_features': 0.5, 'n_estimators': 1500},
+    {'alg': 'skrfp','max_depth': 15, 'max_features': 0.5, 'n_estimators': 500},
+  ]
 
   for mdl_config in mdl_configs:
     # train
@@ -131,52 +181,46 @@ def drill_grid(df_grid, x_cols, xi, yi, grid_submit_path, do_blending=True, use_
     print("drill(%i,%i) va_score %.4f for model %s(%s) @ %s" % (xi, yi, score, mdl_config['alg'], mdl_config, conv.now('full')))
     if score > best_score:
       best_score = score
-      best_model = clf
       best_config = mdl_config
     # for blending
     if do_blending:
+      all_score.append(score)
       all_bests.append(bests)
-      _, test_bests = drill_eva(clf, Xs['te'], ys['te'])
-      all_test_bests.append(test_bests)
   
-
-  # # knn (can't apply to too small grid!)
-  # clf = get_alg('knn', {})
-  # knn_norm = {k:v for k,v in KNN_NORM.items() if k in x_cols}
-  # for m in ['tr', 'va', 'te']:
-  #   df_grid_knn = df_grid[m]
-  #   for k, v in knn_norm.items(): df_grid_knn[k] = df_grid_knn[k]*v
-  #   Xs['knn_'+m], ys['knn_'+m], row_id = conv.df2sample(df_grid_knn, x_cols)
-  # clf.fit(Xs['knn_tr'], ys['knn_tr'])
-  # score, bests = drill_eva(clf, Xs['knn_va'], ys['knn_va'])
-  # print("drill(%i,%i) va_score %.4f for model 'knn' @ %s" % (xi, yi, score, conv.now('full')))
-  # if score > best_score:
-  #   best_score = score
-  #   best_model = clf
-  #   best_config = {}
-  # # for blending
-  # if do_blending:
-  #   all_bests.append(bests)
-  #   _, test_bests = drill_eva(clf, Xs['knn_te'], ys['knn_te'])
-  #   all_test_bests.append(test_bests)
-
-
   # blending
   if do_blending:
-    blended_bests = blending(all_bests)
-    blended_match = [apk([ans], vals) for ans, vals in zip(ys['tr'], blended_bests)]
-    blended_score = sum(blended_match)/len(blended_match)
-    print("drill(%i,%i) va_score %.4f for model 'blending' @ %s" % (xi, yi, score, conv.now('full')))
+    best_bcnt = None
+    best_blend_score = 0
+    best_good_idxs = []
+    for bcnt in [5, 10, 15]:
+      good_idxs = [k for k,v in sorted(enumerate(all_score), key=lambda v: v[1], reverse=True)][:bcnt]
+      blended_bests = blending([m for idx, m in enumerate(all_bests) if idx in good_idxs])
+      blended_match = [apk([ans], vals) for ans, vals in zip(ys['va'], blended_bests)]
+      blended_score = sum(blended_match)/len(blended_match)
+      if blended_score > best_blend_score:
+        best_blend_score = blended_score
+        best_good_idxs = good_idxs
+        best_bcnt = bcnt
+      print("drill(%i,%i) va_score %.4f for model 'blending_%i' @ %s" % (xi, yi, blended_score, bcnt, conv.now('full')))
   
   # collect results
-  if do_blending and (blended_score > best_score):
-    best_score = blended_score
-    best_model = None
-    test_preds = blending(all_test_bests)
-    print("[best] model is blending, for (%i,%i)" % (xi, yi))
+  Xs['tr_va'] = pd.concat([Xs['tr'], Xs['va']])
+  ys['tr_va'] = np.append(ys['tr'], ys['va'])
+  if do_blending and (best_blend_score > best_score):
+    best_score = best_blend_score
+    all_bt_preds = []
+    for bcfg in [m for idx,m in enumerate(mdl_configs) if idx in good_idxs]:
+      bmdl = get_alg(bcfg['alg'], bcfg)
+      bmdl.fit(Xs['tr_va'], ys['tr_va'])
+      _, bt_preds = drill_eva(bmdl, Xs['te'], ys['te'])
+      all_bt_preds.append(bt_preds)
+    test_preds = blending(all_bt_preds)
+    print("[best] model is blending_%i, score %.4f for (%i,%i)" % (best_bcnt, best_score, xi, yi))
   else:
+    best_model = get_alg(best_config['alg'], best_config)
+    best_model.fit(Xs['tr_va'], ys['tr_va'])
     _, test_preds = drill_eva(best_model, Xs['te'], ys['te'])
-    print("[best] model is %s, for (%i,%i)" % (best_config, xi, yi))
+    print("[best] model is %s, score %.4f for (%i,%i)" % (best_config, best_score, xi, yi))
   
   test_preds = pd.DataFrame(test_preds)
   test_preds['row_id'] = row_id
@@ -293,6 +337,24 @@ def get_alg(alg, mdl_config):
 #===========================================
 #   Analyse model parameter from log
 #===========================================
+# submit_partial_merge(base="blending_20160621_214954_0.58657.csv.gz", folder="treva_full10")
+def submit_partial_merge(base, folder):
+  root_path = '/home/workspace/checkins'
+  folder = root_path + "/submit/%s" % folder
+  stamp = str(datetime.now().strftime("%Y%m%d_%H%M%S"))
+  output = "%s/submit/treva_overwrite_%s" % (root_path, stamp)
+
+  df_treva = pd.concat([pd.read_csv("%s/%s" % (folder, f)) for f in listdir(folder)]).sort_values(by='row_id')
+  df_base = pd.read_csv("%s/data/submits/%s" % (root_path, base))
+
+  df_base = df_base[~df_base.row_id.isin(df_treva.row_id.values)]
+  df_overwrite = pd.concat([df_base, df_treva]).sort_values(by='row_id')
+  df_overwrite[['row_id', 'place_id']].sort_values(by='row_id').to_csv(output, index=False)
+  print("ensure dim:", len(df_treva), len(set(df_treva.row_id.values)), len(set(df_overwrite.row_id.values)))
+  print("overwrite output written in %s @ %s" % (output, datetime.now()))
+  submiter.submiter().submit(entry=output, message="treva submit_partial_merge with %s" % base)
+
+
 def analysis_params(log_path):
   raw = open(log_path, 'rt')
   cfg_stat = defaultdict(float)
@@ -309,8 +371,24 @@ def analysis_params(log_path):
   for line in results:
     print(line)
 
+def analysis_best(log_path):
+  raw = open(log_path, 'rt')
+  cfg_stat = defaultdict(float)
+  for line in raw.readlines():
+    if 'model is' in line:
+      if 'blending' in line:
+        cfg = 'blending'
+      else:
+        cfg = re.compile('{.*}').findall(line)[0]
+      cfg_stat[cfg] += 1
+  results = sorted(cfg_stat.items(), key=lambda v: v[1], reverse=True)
+  for line in results:
+    print(line)
+
+
 
 if __name__ == '__main__':
-   log_path = "/home/workspace/checkins/logs/nohup_treva_20160624_142027.log"
-   analysis_params(log_path)
-
+    log_path = "/home/workspace/checkins/logs/nohup_treva_all_20160624_161636.log"
+    # analysis_params(log_path)
+    analysis_best(log_path)   
+    

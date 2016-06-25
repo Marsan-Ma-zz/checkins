@@ -146,6 +146,7 @@ class blendor(object):
         
         #-----[Ash]-----
         ('submit_skrf_submit_20160530_155226_0.53946.csv.gz', 0.2 ),
+        ('skrfp_submit_treva_20160624_163552_0.53893.csv.gz', 0.2 ),
         ('submit_skrf_submit_20160530_143859_0.52721.csv.gz', 0.2 ),
         ('submit_skrf_submit_20160611_233627_0.52375.csv.gz', 0.2 ),
         # ('submit_skrf_submit_20160613_213413_0.51390.csv.gz', 0.2 ),

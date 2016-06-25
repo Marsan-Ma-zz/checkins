@@ -320,8 +320,6 @@ class main(object):
       start_time = time.time()
       self.init_team()
       df_train, df_valid, df_test = self.pas.get_data()
-      self.params['do_blending'] = False
-      self.params['use_blending'] = False
       tva = treva.trainer(self.params)
       tva.train(df_train, df_valid, df_test)
       print("[Finished!] Elapsed time overall for %.2f secs" % (time.time() - start_time))
