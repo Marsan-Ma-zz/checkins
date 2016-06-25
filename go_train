@@ -17,6 +17,7 @@ PY3='stdbuf -o0 nohup python3 -u'
 # $PY3 main.py xgb_gs_params 0.4 xgb_gs_params_$NOW > "./logs/nohup_xgb_gs_params_$NOW.log" &
 
 # python3 main.py treva 0.08
+# $PY3 main.py treva_all 0.16 > "./logs/nohup_treva_all_$NOW.log" &
 $PY3 main.py treva_all 10.0 > "./logs/nohup_treva_all_$NOW.log" &
 # python3 main.py skrf 0.4
 

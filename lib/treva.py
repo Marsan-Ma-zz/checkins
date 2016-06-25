@@ -68,6 +68,7 @@ class trainer(object):
       for y_idx, (y_min, y_max) in enumerate(self.y_ranges): 
         # check exists
         grid_submit_path = "%s/treva_%i_%i.csv" % (mdl_path, x_idx, y_idx)
+        # if x_idx < 90: continue
         if os.path.exists(grid_submit_path):
           print("%s exists, skip." % grid_submit_path)
           continue
@@ -203,27 +204,38 @@ def drill_grid(df_grid, x_cols, xi, yi, grid_submit_path, do_blending=True):
         best_bcnt = bcnt
       print("drill(%i,%i) va_score %.4f for model 'blending_%i' @ %s" % (xi, yi, blended_score, bcnt, conv.now('full')))
   
-  # collect results
+
+  # train again with full training samples
   Xs['tr_va'] = pd.concat([Xs['tr'], Xs['va']])
   ys['tr_va'] = np.append(ys['tr'], ys['va'])
+  
+
+  # always write best blending (in case best single model overfitting)
+  all_bt_preds = []
+  for bcfg in [m for idx,m in enumerate(mdl_configs) if idx in best_good_idxs]:
+    bmdl = get_alg(bcfg['alg'], bcfg)
+    bmdl.fit(Xs['tr_va'], ys['tr_va'])
+    _, bt_preds = drill_eva(bmdl, Xs['te'], ys['te'])
+    all_bt_preds.append(bt_preds)
+  blending_test_preds = blending(all_bt_preds)
+  blending_test_preds = pd.DataFrame(blending_test_preds)
+  blending_test_preds['row_id'] = row_id
+  df2submit(blending_test_preds, (grid_submit_path[:-4] + '_blend.csv'))
+
+
+  # collect results
   if do_blending and (best_blend_score > best_score):
     best_score = best_blend_score
-    all_bt_preds = []
-    for bcfg in [m for idx,m in enumerate(mdl_configs) if idx in good_idxs]:
-      bmdl = get_alg(bcfg['alg'], bcfg)
-      bmdl.fit(Xs['tr_va'], ys['tr_va'])
-      _, bt_preds = drill_eva(bmdl, Xs['te'], ys['te'])
-      all_bt_preds.append(bt_preds)
-    test_preds = blending(all_bt_preds)
+    test_preds = blending_test_preds
     best_config = "blending_%i" % best_bcnt
   else:
     best_model = get_alg(best_config['alg'], best_config)
     best_model.fit(Xs['tr_va'], ys['tr_va'])
     _, test_preds = drill_eva(best_model, Xs['te'], ys['te'])
-  
+    test_preds = pd.DataFrame(test_preds)
+    test_preds['row_id'] = row_id
+
   # write partial submit  
-  test_preds = pd.DataFrame(test_preds)
-  test_preds['row_id'] = row_id
   df2submit(test_preds, grid_submit_path)
   print("[drill_grid (%i,%i)] choose best_model %s, best_score=%.4f @ %s" % (xi, yi, best_config, best_score, datetime.now()))
   return best_score, test_preds
