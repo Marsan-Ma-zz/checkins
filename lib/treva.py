@@ -215,17 +215,17 @@ def drill_grid(df_grid, x_cols, xi, yi, grid_submit_path, do_blending=True):
       _, bt_preds = drill_eva(bmdl, Xs['te'], ys['te'])
       all_bt_preds.append(bt_preds)
     test_preds = blending(all_bt_preds)
-    print("[best] model is blending_%i, score %.4f for (%i,%i)" % (best_bcnt, best_score, xi, yi))
+    best_config = "blending_%i" % best_bcnt
   else:
     best_model = get_alg(best_config['alg'], best_config)
     best_model.fit(Xs['tr_va'], ys['tr_va'])
     _, test_preds = drill_eva(best_model, Xs['te'], ys['te'])
-    print("[best] model is %s, score %.4f for (%i,%i)" % (best_config, best_score, xi, yi))
   
+  # write partial submit  
   test_preds = pd.DataFrame(test_preds)
   test_preds['row_id'] = row_id
   df2submit(test_preds, grid_submit_path)
-  print("[drill_grid (%i,%i)] done with best_score=%.4f @ %s" % (xi, yi, best_score, datetime.now()))
+  print("[drill_grid (%i,%i)] choose best_model %s, best_score=%.4f @ %s" % (xi, yi, best_config, best_score, datetime.now()))
   return best_score, test_preds
 
 
