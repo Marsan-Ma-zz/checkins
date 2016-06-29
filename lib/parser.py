@@ -137,21 +137,21 @@ class parser(object):
 
 
   def feature_engineering(self, df):
-    # initial_date = np.datetime64('2014-01-01T01:01', dtype='datetime64[m]') 
-    # d_times = pd.DatetimeIndex(initial_date + np.timedelta64(int(t), 'm') for t in df.time.values)
+    initial_date = np.datetime64('2014-01-01T01:01', dtype='datetime64[m]') 
+    d_times = pd.DatetimeIndex(initial_date + np.timedelta64(int(t), 'm') for t in df.time.values)
     
-    # # hour < day < week < month < year
-    # df['hour']      = (d_times.hour + d_times.minute/60).astype(float)
-    # df['weekday']   = d_times.weekday.astype(int)
-    # df['yearday']   = (d_times.dayofyear).astype(int)
-    # df['month']     = d_times.month.astype(int)
-    # df['year']      = (d_times.year - 2013).astype(int)
+    # hour < day < week < month < year
+    df['hour']      = (d_times.hour + d_times.minute/60).astype(float)
+    df['weekday']   = d_times.weekday.astype(int)
+    df['yearday']   = d_times.dayofyear.astype(int)
+    df['month']     = d_times.month.astype(int)
+    df['year']      = (d_times.year - 2013).astype(int)
 
-    # df['qday']        = ((df.hour)//6).astype(int)
-    # df['dayofmonth']  = [int(d.strftime("%d")) for d in d_times]
-    # df['weekofyear']  = (d_times.dayofyear//7).astype(int)
-    # df['season']      = d_times.quarter.astype(int)
-    # df['logacc']      = np.log(df.accuracy.values).astype(float)
+    df['qday']        = ((df.hour)//6).astype(int)
+    df['dayofmonth']  = [int(d.strftime("%d")) for d in d_times]
+    df['weekofyear']  = (d_times.dayofyear//7).astype(int)
+    df['season']      = d_times.quarter.astype(int)
+    df['logacc']      = np.log(df.accuracy.values).astype(float)
 
     # df['hour']      = (df['time']//60) % 24
     # df['qday']      = (df['hour']//6)
@@ -181,23 +181,24 @@ class parser(object):
     # df['season']  = (df['time']/43200/3)%4+1
     # df['logacc']  = np.log(df.accuracy.values).astype(float)
 
-    df['hour']    = (df['time']/60)%24+1 # 1 to 24
-    # df['hour2']   = (df['time']/60)%24%2+1 # 1 to 12
-    # df['hour3']   = (df['time']/60)%24%3+1 # 1 to 8
-    # df['hour4']   = (df['time']/60)%24%4+1 # 1 to 6
-    df['qday']    = (df['time']/60)%24%6+1 # 1 to 4
-    # df['p720']    = (df['time'])%720
-    # df['p1260']   = (df['time'])%1260
-    # df['p1440']   = (df['time'])%1440   # equal to df['hour']
-    # df['p1680']   = (df['time'])%1680
-    df['weekday'] = (df['time']/1440)%7+1
-    df['month']   = (df['time']/43200)%12+1 # rough estimate, month = 30 days
-    df['year']    = (df['time']//525600)+1
+    #-----
+    # df['hour']    = (df['time']/60)%24+1 # 1 to 24
+    # # df['hour2']   = (df['time']/60)%24%2+1 # 1 to 12
+    # # df['hour3']   = (df['time']/60)%24%3+1 # 1 to 8
+    # # df['hour4']   = (df['time']/60)%24%4+1 # 1 to 6
+    # df['qday']    = (df['time']/60)%24%6+1 # 1 to 4
+    # # df['p720']    = (df['time'])%720
+    # # df['p1260']   = (df['time'])%1260
+    # # df['p1440']   = (df['time'])%1440   # equal to df['hour']
+    # # df['p1680']   = (df['time'])%1680
+    # df['weekday'] = (df['time']/1440)%7+1
+    # df['month']   = (df['time']/43200)%12+1 # rough estimate, month = 30 days
+    # df['year']    = (df['time']//525600)+1
     
-    # df['day']     = (df['time']//60//24)
-    # df['monthday']= (df['day'] % 30)
-    # df['season']  = (df['time']//43200//3)%4+1
-    df['logacc']  = np.log(df.accuracy.values).astype(float)
+    # # df['day']     = (df['time']//60//24)
+    # # df['monthday']= (df['day'] % 30)
+    # # df['season']  = (df['time']//43200//3)%4+1
+    # df['logacc']  = np.log(df.accuracy.values).astype(float)
     return df
 
 

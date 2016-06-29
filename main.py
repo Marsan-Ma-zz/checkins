@@ -9,8 +9,9 @@ from datetime import datetime
 from collections import Counter
 
 from lib import conventions as conv
-from lib import evaluator, parser, trainer, submiter
-from lib import treva
+from lib import evaluator, parser, trainer, submiter, tuner
+from lib import treva_elite as treva
+# from lib import treva as treva
 
 #===========================================
 #   Main Flow
@@ -31,6 +32,7 @@ class main(object):
       'y_inter'         : 1,
       #-----[data engineering in parser]-----
       'train_test_split_time'   : 700000,   # confirmed!
+      # 'train_test_split_time'   : 700000,   # confirmed!
       'place_min_checkin'       : 3, #3,
       # 'place_min_last_checkin'  : 0, #600000,   # for submit  20160605_071204_0.6454
       # 'train_min_time'          : 300000,   # for submit (not good, no use!)
@@ -317,12 +319,26 @@ class main(object):
       self.train_alg(alg, mdl_config={'n_estimators': 5})
     #------------------------------------------
     elif 'treva' in run_cmd:
+      if 'elite' in run_cmd:
+        self.params['train_test_split_time'] = 1e10
+      else:
+        self.params['train_test_split_time'] = 700000
       start_time = time.time()
       self.init_team()
       df_train, df_valid, df_test = self.pas.get_data()
       tva = treva.trainer(self.params)
       tva.train(df_train, df_valid, df_test)
       print("[Finished!] Elapsed time overall for %.2f secs" % (time.time() - start_time))
+    elif run_cmd == 'tuner':
+      self.init_team()
+      df_train, df_valid, _ = self.pas.get_data()
+      grids = []
+      for i in range(10):
+        xb, yb = int(125*random())*0.08, int(125*random())*0.08
+        grids += [(xb, xb+0.08, yb, yb+0.08)]
+      print(grids)
+      df_all = pd.concat([df_train, df_valid])
+      all_scores = tuner.tuner(df_all, grids)
     else: # single model
       self.init_team()
       self.train_alg(alg)

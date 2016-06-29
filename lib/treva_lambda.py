@@ -1,12 +1,14 @@
-import os, sys, time, pickle, gzip, re, ast
+import os, sys, time, pickle, gzip, re, ast, boto3, json
 import pandas as pd
 import numpy as np
 import multiprocessing as mp
 pool_size = mp.cpu_count()
 
+import boto3.session
 import xgboost as xgb
 
 from os import listdir
+from time import sleep
 from datetime import datetime
 from collections import OrderedDict, defaultdict
 
@@ -48,7 +50,8 @@ class trainer(object):
   #----------------------------------------
   def train(self, df_train, df_valid, df_test):
     if self.size == 10.0:
-      mdl_path = "%s/submit/treva_full10" % (self.root)
+      # mdl_path = "%s/submit/treva_full10" % (self.root)
+      mdl_path = "%s/submit/treva_fast10" % (self.root)
     else:
       mdl_path = "%s/submit/treva_%s" % (self.root, self.stamp)
     if not os.path.exists(mdl_path): os.mkdir(mdl_path)
@@ -57,6 +60,7 @@ class trainer(object):
     processes = []
     preds_total = []
     score_stat = []
+    mp_pool = mp.Pool(500)
     for x_idx, (x_min, x_max) in enumerate(self.x_ranges):
       x_min, x_max = conv.trim_range(x_min, x_max, self.size)
       df_row = {
@@ -64,7 +68,6 @@ class trainer(object):
         'va': df_valid[(df_valid.x >= x_min) & (df_valid.x < x_max)],
         'te': df_test[(df_test.x >= x_min) & (df_test.x < x_max)],
       }
-      mp_pool = mp.Pool(pool_size)
       for y_idx, (y_min, y_max) in enumerate(self.y_ranges): 
         # check exists
         grid_submit_path = "%s/treva_%i_%i.csv" % (mdl_path, x_idx, y_idx)
@@ -76,118 +79,161 @@ class trainer(object):
         # get grid
         y_min, y_max = conv.trim_range(y_min, y_max, self.size)
         df_grid = {m: df_row[m][(df_row[m].y >= y_min) & (df_row[m].y < y_max)] for m in ['tr', 'va', 'te']}
-        p = mp_pool.apply_async(drill_grid, (df_grid, self.x_cols, x_idx, y_idx, grid_submit_path))
+        p = mp_pool.apply_async(drill_grid, (df_grid, self.x_cols, x_idx, y_idx, self.stamp, grid_submit_path))
         processes.append(p)
 
         # prevent memory explode!
-        while (len(processes) > 30): 
-          score, y_test = processes.pop(0).get()
-          score_stat.append((score, len(df_grid)))
-          preds_total.append(y_test)
-      mp_pool.close()
+        while (len(processes) > 500):
+          _, y_test = processes.pop(0).get()
+          if y_test is not None: preds_total.append(y_test)
+
     while processes: 
-      score, y_test = processes.pop(0).get()
-      score_stat.append((score, len(df_grid)))
-      preds_total.append(y_test)
+      _, y_test = processes.pop(0).get()
+      if y_test is not None: preds_total.append(y_test)
+    mp_pool.close()
     # write submit file
     preds_total = pd.concat(preds_total)
     df2submit(preds_total, self.submit_file)
     # collect scores
-    valid_score = sum([s*c for s,c in score_stat]) / sum([c for s,c in score_stat])
-    print("[Treva] done, valid_score=%.4f, submit file written %s @ %s" % (valid_score, self.submit_file, conv.now('full')))
+    print("[Treva] done, submit file written %s @ %s" % (self.submit_file, conv.now('full')))
     
   
 #----------------------------------------
 #   Drill Grid
 #----------------------------------------
-KNN_NORM = {
-  'x': 500, 'y':1000, 
-  'hour':4, 'logacc':1, 'weekday':3, 
-  'qday':1, 'month':2, 'year':10, 'day':1./22,
-}
+raw_mdl_configs = [
+  # {'alg': 'skrf', 'n_estimators': 500, 'max_features': 0.35, 'max_depth': 15},
+  # {'alg': 'skrfp', 'n_estimators': 500, 'max_features': 0.35, 'max_depth': 15},
+  # {'alg': 'sket', 'n_estimators': 800, 'max_features': 0.5, 'max_depth': 15},
+  # {'alg': 'sketp', 'n_estimators': 1000, 'max_features': 0.5, 'max_depth': 11},
+  {'alg': 'skrf', 'n_estimators': 50, 'max_features': 0.35, 'max_depth': 15},
+  {'alg': 'skrfp', 'n_estimators': 50, 'max_features': 0.35, 'max_depth': 15},
+  {'alg': 'sket', 'n_estimators': 80, 'max_features': 0.5, 'max_depth': 15},
+  {'alg': 'sketp', 'n_estimators': 100, 'max_features': 0.5, 'max_depth': 11},
+]
 
-def drill_grid(df_grid, x_cols, xi, yi, grid_submit_path, do_blending=True):
+# for alg in ['skrf', 'skrfp', 'sket', 'sketp']:
+#   for n_estimators in [500]:
+#     for max_features in [0.35]:   # 0.4
+#       for max_depth in [11, 15]:    # 11
+#         mdl_configs.append({'alg': alg, 'n_estimators': n_estimators, 'max_features': max_features, 'max_depth': max_depth}) 
+
+# bucket256 = boto3.resource('s3', region_name='us-west-2').Bucket('recom.lambda.m256')
+# bucket512 = boto3.resource('s3', region_name='us-west-2').Bucket('recom.lambda.m512')
+# bucket1024 = boto3.resource('s3', region_name='us-west-2').Bucket('recom.lambda.m1024')
+
+def drill_grid(df_grid, x_cols, xi, yi, stamp, grid_submit_path, do_blending=True):
+  # params init
   best_score = 0
   all_score = []
   Xs, ys = {}, {}
-  for m in ['tr', 'va', 'te']:
+  for m in ['tr', 'te']:
     Xs[m], ys[m], row_id = conv.df2sample(df_grid[m], x_cols)
+  scnt = len(ys['tr'])
   
-  # [grid search best models]
-  mdl_configs = []
-  for alg in ['skrf', 'skrfp', 'sket', 'sketp']:
-    for n_estimators in [500, 1000, 1500]:
-      for max_features in [0.3, 0.5]:
-        for max_depth in [11, 15]:
-          mdl_configs.append({'alg': alg, 'n_estimators': n_estimators, 'max_features': max_features, 'max_depth': max_depth}) 
-  all_bests = []
+  mdl_path = '/'.join(grid_submit_path.split('/')[:-1])
+  dat_file = 'dat_%i_%i.pkl' % (xi, yi)
+  sol_file = 'dat_%i_%i.sol.%s' % (xi, yi, stamp)
 
-  for mdl_config in mdl_configs:
-    # train
-    clf = get_alg(mdl_config['alg'], mdl_config)
-    clf.fit(Xs['tr'], ys['tr'])
-    # valid
-    score, bests = drill_eva(clf, Xs['va'], ys['va'])
-    print("drill(%i,%i) va_score %.4f for model %s(%s) @ %s" % (xi, yi, score, mdl_config['alg'], mdl_config, conv.now('full')))
-    if score > best_score:
-      best_score = score
-      best_config = mdl_config
-    # for blending
-    if do_blending:
-      all_score.append(score)
-      all_bests.append(bests)
-  
-  # blending
-  if do_blending:
-    best_bcnt = None
-    best_blend_score = 0
-    best_good_idxs = []
-    for bcnt in [5, 10]:
-      good_idxs = [k for k,v in sorted(enumerate(all_score), key=lambda v: v[1], reverse=True)][:bcnt]
-      blended_bests = blending([m for idx, m in enumerate(all_bests) if idx in good_idxs])
-      blended_match = [apk([ans], vals) for ans, vals in zip(ys['va'], blended_bests)]
-      blended_score = sum(blended_match)/len(blended_match)
-      if blended_score > best_blend_score:
-        best_blend_score = blended_score
-        best_good_idxs = good_idxs
-        best_bcnt = bcnt
-      print("drill(%i,%i) va_score %.4f for model 'blending_%i' @ %s" % (xi, yi, blended_score, bcnt, conv.now('full')))
-  
+  # if scnt > 1500:
+  #   mdl_configs = [
+  #     {'alg': 'skrf', 'n_estimators': 500, 'max_features': 0.35, 'max_depth': 15},
+  #     {'alg': 'skrfp', 'n_estimators': 500, 'max_features': 0.35, 'max_depth': 15},
+  #     {'alg': 'sket', 'n_estimators': 500, 'max_features': 0.4, 'max_depth': 15},
+  #     {'alg': 'sketp', 'n_estimators': 500, 'max_features': 0.4, 'max_depth': 11},
+  #   ]
+  # else:
+  mdl_configs = raw_mdl_configs
 
-  # train again with full training samples
-  Xs['tr_va'] = pd.concat([Xs['tr'], Xs['va']])
-  ys['tr_va'] = np.append(ys['tr'], ys['va'])
-  
+  # prepare data
+  cmds = {
+    'mdl_configs': mdl_configs,
+    'Xs': {k:v.values for k,v in Xs.items()},
+    'ys': ys,
+    'row_id': row_id.values,
+    'sol_file': sol_file,
+  }
+  dat_path = "%s/%s" % (mdl_path, dat_file)
+  try:
+    pickle.dump(cmds, open(dat_path, 'wb'), protocol=2) # lambda only has python2, which support latest pickle protocol=2 
+  except Exception as e:
+    print(e)
+    print("ERROR for (%i/%i), cmds: %s" % (xi, yi, cmds))
 
-  # always write best blending (in case best single model overfitting)
-  all_bt_preds = []
-  for bcfg in [m for idx,m in enumerate(mdl_configs) if idx in best_good_idxs]:
-    bmdl = get_alg(bcfg['alg'], bcfg)
-    bmdl.fit(Xs['tr_va'], ys['tr_va'])
-    _, bt_preds = drill_eva(bmdl, Xs['te'], ys['te'])
-    all_bt_preds.append(bt_preds)
-  blending_test_preds = blending(all_bt_preds)
-  blending_test_preds = pd.DataFrame(blending_test_preds)
-  blending_test_preds['row_id'] = row_id
-  df2submit(blending_test_preds, (grid_submit_path[:-4] + '_blend.csv'))
+  # upload to s3 for lambda
+  job_done = False
 
+  # bucket = boto3.resource('s3', region_name='us-west-2').Bucket('recom.lambda.m1536')
+  session = boto3.session.Session()
+  bucket = session.resource('s3', region_name='us-west-2').Bucket('recom.lambda.m1536')
 
-  # collect results
-  if do_blending and (best_blend_score > best_score):
-    best_score = best_blend_score
-    test_preds = blending_test_preds
-    best_config = "blending_%i" % best_bcnt
+  #-----[use aws lambda]-------------------------------------------
+  if True: #scnt < 2500:
+    # if scnt > 1000:
+    #   bucket = bucket1536
+    # elif scnt > 500:
+    #   bucket = bucket1024
+    # elif scnt > 300:  
+    #   bucket = bucket512
+    # else:
+    #   bucket = bucket256
+    try:
+      bucket.upload_file(dat_path, dat_file)
+    except Exception as e:
+      print(e)
+      print("when bucket.upload_file", dat_path)
+    print("upload dat_file %s of %i tr samples @ %s" % (dat_file, len(ys['tr']), datetime.now()))
+    df_grid, Xs, ys, row_id, cmds = [None]*5  # release memory
+    
+    
+    # print("try download %s to %s" % (sol_file, grid_submit_path))
+    try_cnt, max_try = 0, 6
+    while try_cnt <= max_try:
+      try:
+        bucket.download_file(sol_file, grid_submit_path)
+        job_done = True
+        break
+      except Exception as e:
+        if try_cnt > 4: print("(%i/%i) scnt=%i, waiting %i ... @ %s" % (xi, yi, scnt, try_cnt, datetime.now()))
+        try_cnt += 1
+        sleep(30)
+
+    # remove tmp files
+    bucket.delete_objects(Delete={'Objects': [{'Key': sol_file}], 'Quiet': True,})
+
+    # collect sols
+    if job_done:
+      try:
+        sols = json.load(open(grid_submit_path, 'rt'))
+      except Exception as e:
+        print(e)
+        print("when json try load %s" % grid_submit_path)
+      # print(sols[:5])
+      sols = pd.DataFrame(sols)
+      sols['row_id'] = row_id
+      df2submit(sols, grid_submit_path)
+      # print("get sols:\n %s \n@ %s" % (sols.head(), datetime.now()))
+      print("[drill_grid (%i,%i)] blended @ %s" % (xi, yi, datetime.now()))
+    else:
+      sols = None
+      print("[TIMEOUT] job timeout: (%i/%i)" % (xi, yi))
+
+  #-----[use local machine]-------------------------------------------
   else:
-    best_model = get_alg(best_config['alg'], best_config)
-    best_model.fit(Xs['tr_va'], ys['tr_va'])
-    _, test_preds = drill_eva(best_model, Xs['te'], ys['te'])
-    test_preds = pd.DataFrame(test_preds)
-    test_preds['row_id'] = row_id
+    all_bt_preds = []
+    for bcfg in mdl_configs:
+      bmdl = get_alg(bcfg['alg'], bcfg)
+      bmdl.fit(Xs['tr'], ys['tr'])
+      _, bt_preds = drill_eva(bmdl, Xs['te'], ys['te'])
+      all_bt_preds.append(bt_preds)
+    sols = blending(all_bt_preds)
+    sols = pd.DataFrame(sols)
+    sols['row_id'] = row_id
+    df2submit(sols, grid_submit_path)
+    print("[LOCAL] done (%i/%i) locally @ %s" % (xi, yi, datetime.now()))
 
-  # write partial submit  
-  df2submit(test_preds, grid_submit_path)
-  print("[drill_grid (%i,%i)] choose best_model %s, best_score=%.4f @ %s" % (xi, yi, best_config, best_score, datetime.now()))
-  return best_score, test_preds
+  return 1.0, sols
+
 
 
 def df2submit(df, filename):
@@ -326,7 +372,7 @@ def submit_partial_merge(base, folder, all_blended=False):
   df_overwrite[['row_id', 'place_id']].sort_values(by='row_id').to_csv(output, index=False)
   print("ensure dim:", len(df_treva), len(set(df_treva.row_id.values)), len(set(df_overwrite.row_id.values)))
   print("overwrite output written in %s @ %s" % (output, datetime.now()))
-  submiter.submiter().submit(entry=output, message="treva submit_partial_merge with %s and all_blended=%s" % (base, all_blended))
+  # submiter.submiter().submit(entry=output, message="treva submit_partial_merge with %s and all_blended=%s" % (base, all_blended))
 
 
 def analysis_params(log_path):
@@ -362,11 +408,11 @@ def analysis_best(log_path):
 
 
 if __name__ == '__main__':
-  # -----[analyses treva params]-----
-  # log_path = "/home/workspace/checkins/logs/nohup_treva_all_20160626_090148.log"
-  # analysis_params(log_path)
-  # analysis_best(log_path)
+    # -----[analyses treva params]-----
+    log_path = "/home/workspace/checkins/logs/nohup_treva_all_20160626_090148.log"
+    analysis_params(log_path)
+    # analysis_best(log_path)
 
-  # # -----[submit treva partial merge]-----
-  submit_partial_merge(base='blending_20160626_094932_0.58702.csv.gz', folder="treva_full10", all_blended=True)
-  # submit_partial_merge(base='blending_20160621_214954_0.58657.csv.gz', folder="treva_merge2", all_blended=True)
+    # # -----[submit treva partial merge]-----
+    # submit_partial_merge(base='blending_20160621_214954_0.58657.csv.gz', folder="treva_merge2", all_blended=False)
+    # submit_partial_merge(base='blending_20160621_214954_0.58657.csv.gz', folder="treva_merge2", all_blended=True)

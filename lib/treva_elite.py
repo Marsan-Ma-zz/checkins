@@ -48,7 +48,8 @@ class trainer(object):
   #----------------------------------------
   def train(self, df_train, df_valid, df_test):
     if self.size == 10.0:
-      mdl_path = "%s/submit/treva_full10" % (self.root)
+      # mdl_path = "%s/submit/treva_full10" % (self.root)
+      mdl_path = "%s/submit/treva_fast10" % (self.root)
     else:
       mdl_path = "%s/submit/treva_%s" % (self.root, self.stamp)
     if not os.path.exists(mdl_path): os.mkdir(mdl_path)
@@ -100,70 +101,81 @@ class trainer(object):
 #----------------------------------------
 #   Drill Grid
 #----------------------------------------
-KNN_NORM = {
-  'x': 500, 'y':1000, 
-  'hour':4, 'logacc':1, 'weekday':3, 
-  'qday':1, 'month':2, 'year':10, 'day':1./22,
-}
+# KNN_NORM = {
+#   'x': 500, 'y':1000, 
+#   'hour':4, 'logacc':1, 'weekday':3, 
+#   'qday':1, 'month':2, 'year':10, 'day':1./22,
+# }
 
 def drill_grid(df_grid, x_cols, xi, yi, grid_submit_path, do_blending=True):
   best_score = 0
   all_score = []
   Xs, ys = {}, {}
-  for m in ['tr', 'va', 'te']:
+  for m in ['tr', 'te']:
     Xs[m], ys[m], row_id = conv.df2sample(df_grid[m], x_cols)
   
   # [grid search best models]
-  mdl_configs = []
-  for alg in ['skrf', 'skrfp', 'sket', 'sketp']:
-    for n_estimators in [500, 1000, 1500]:
-      for max_features in [0.3, 0.5]:
-        for max_depth in [11, 15]:
-          mdl_configs.append({'alg': alg, 'n_estimators': n_estimators, 'max_features': max_features, 'max_depth': max_depth}) 
+  mdl_configs = [
+    {'alg': 'skrf', 'n_estimators': 500, 'max_features': 0.35, 'max_depth': 15},
+    {'alg': 'skrfp', 'n_estimators': 500, 'max_features': 0.35, 'max_depth': 15},
+    {'alg': 'sket', 'n_estimators': 800, 'max_features': 0.5, 'max_depth': 15},
+    {'alg': 'sketp', 'n_estimators': 1000, 'max_features': 0.5, 'max_depth': 11},
+
+    {'alg': 'skrf', 'n_estimators': 1000, 'max_features': 0.4, 'max_depth': 9},
+    {'alg': 'skrfp', 'n_estimators': 1000, 'max_features': 0.4, 'max_depth': 9},
+  ]
+
+  # mdl_configs = []
+  # for alg in ['skrf', 'skrfp', 'sket', 'sketp']:
+  #   for n_estimators in [500]:
+  #     for max_features in [0.5]:   # 0.4
+  #       for max_depth in [15]:    # 11
+  #         mdl_configs.append({'alg': alg, 'n_estimators': n_estimators, 'max_features': max_features, 'max_depth': max_depth}) 
   all_bests = []
 
-  for mdl_config in mdl_configs:
-    # train
-    clf = get_alg(mdl_config['alg'], mdl_config)
-    clf.fit(Xs['tr'], ys['tr'])
-    # valid
-    score, bests = drill_eva(clf, Xs['va'], ys['va'])
-    print("drill(%i,%i) va_score %.4f for model %s(%s) @ %s" % (xi, yi, score, mdl_config['alg'], mdl_config, conv.now('full')))
-    if score > best_score:
-      best_score = score
-      best_config = mdl_config
-    # for blending
-    if do_blending:
-      all_score.append(score)
-      all_bests.append(bests)
+  # for mdl_config in mdl_configs:
+  #   # train
+  #   clf = get_alg(mdl_config['alg'], mdl_config)
+  #   clf.fit(Xs['tr'], ys['tr'])
+  #   # valid
+  #   score, bests = drill_eva(clf, Xs['va'], ys['va'])
+  #   print("drill(%i,%i) va_score %.4f for model %s(%s) @ %s" % (xi, yi, score, mdl_config['alg'], mdl_config, conv.now('full')))
+  #   if score > best_score:
+  #     best_score = score
+  #     best_config = mdl_config
+  #   # for blending
+  #   if do_blending:
+  #     all_score.append(score)
+  #     all_bests.append(bests)
   
-  # blending
-  if do_blending:
-    best_bcnt = None
-    best_blend_score = 0
-    best_good_idxs = []
-    for bcnt in [5, 10]:
-      good_idxs = [k for k,v in sorted(enumerate(all_score), key=lambda v: v[1], reverse=True)][:bcnt]
-      blended_bests = blending([m for idx, m in enumerate(all_bests) if idx in good_idxs])
-      blended_match = [apk([ans], vals) for ans, vals in zip(ys['va'], blended_bests)]
-      blended_score = sum(blended_match)/len(blended_match)
-      if blended_score > best_blend_score:
-        best_blend_score = blended_score
-        best_good_idxs = good_idxs
-        best_bcnt = bcnt
-      print("drill(%i,%i) va_score %.4f for model 'blending_%i' @ %s" % (xi, yi, blended_score, bcnt, conv.now('full')))
+  # # blending
+  # if do_blending:
+  #   best_bcnt = None
+  #   best_blend_score = 0
+  #   best_good_idxs = []
+  #   for bcnt in [5, 10]:
+  #     good_idxs = [k for k,v in sorted(enumerate(all_score), key=lambda v: v[1], reverse=True)][:bcnt]
+  #     blended_bests = blending([m for idx, m in enumerate(all_bests) if idx in good_idxs])
+  #     blended_match = [apk([ans], vals) for ans, vals in zip(ys['va'], blended_bests)]
+  #     blended_score = sum(blended_match)/len(blended_match)
+  #     if blended_score > best_blend_score:
+  #       best_blend_score = blended_score
+  #       best_good_idxs = good_idxs
+  #       best_bcnt = bcnt
+  #     print("drill(%i,%i) va_score %.4f for model 'blending_%i' @ %s" % (xi, yi, blended_score, bcnt, conv.now('full')))
   
 
   # train again with full training samples
-  Xs['tr_va'] = pd.concat([Xs['tr'], Xs['va']])
-  ys['tr_va'] = np.append(ys['tr'], ys['va'])
+  # Xs['tr_va'] = pd.concat([Xs['tr'], Xs['va']])
+  # ys['tr_va'] = np.append(ys['tr'], ys['va'])
   
 
   # always write best blending (in case best single model overfitting)
   all_bt_preds = []
-  for bcfg in [m for idx,m in enumerate(mdl_configs) if idx in best_good_idxs]:
+  # for bcfg in [m for idx,m in enumerate(mdl_configs) if idx in best_good_idxs]:
+  for bcfg in mdl_configs:
     bmdl = get_alg(bcfg['alg'], bcfg)
-    bmdl.fit(Xs['tr_va'], ys['tr_va'])
+    bmdl.fit(Xs['tr'], ys['tr'])
     _, bt_preds = drill_eva(bmdl, Xs['te'], ys['te'])
     all_bt_preds.append(bt_preds)
   blending_test_preds = blending(all_bt_preds)
@@ -172,21 +184,22 @@ def drill_grid(df_grid, x_cols, xi, yi, grid_submit_path, do_blending=True):
   df2submit(blending_test_preds, (grid_submit_path[:-4] + '_blend.csv'))
 
 
-  # collect results
-  if do_blending and (best_blend_score > best_score):
-    best_score = best_blend_score
-    test_preds = blending_test_preds
-    best_config = "blending_%i" % best_bcnt
-  else:
-    best_model = get_alg(best_config['alg'], best_config)
-    best_model.fit(Xs['tr_va'], ys['tr_va'])
-    _, test_preds = drill_eva(best_model, Xs['te'], ys['te'])
-    test_preds = pd.DataFrame(test_preds)
-    test_preds['row_id'] = row_id
+  # # collect results
+  # if do_blending and (best_blend_score > best_score):
+  best_score = 1.0 #best_blend_score
+  test_preds = blending_test_preds
+  #   best_config = "blending_%i" % best_bcnt
+  # else:
+  #   best_model = get_alg(best_config['alg'], best_config)
+  #   best_model.fit(Xs['tr_va'], ys['tr_va'])
+  #   _, test_preds = drill_eva(best_model, Xs['te'], ys['te'])
+  #   test_preds = pd.DataFrame(test_preds)
+  #   test_preds['row_id'] = row_id
 
   # write partial submit  
-  df2submit(test_preds, grid_submit_path)
-  print("[drill_grid (%i,%i)] choose best_model %s, best_score=%.4f @ %s" % (xi, yi, best_config, best_score, datetime.now()))
+  # df2submit(test_preds, grid_submit_path)
+  # print("[drill_grid (%i,%i)] choose best_model %s, best_score=%.4f @ %s" % (xi, yi, best_config, best_score, datetime.now()))
+  print("[drill_grid (%i,%i)] blended @ %s" % (xi, yi, datetime.now()))
   return best_score, test_preds
 
 
@@ -326,7 +339,7 @@ def submit_partial_merge(base, folder, all_blended=False):
   df_overwrite[['row_id', 'place_id']].sort_values(by='row_id').to_csv(output, index=False)
   print("ensure dim:", len(df_treva), len(set(df_treva.row_id.values)), len(set(df_overwrite.row_id.values)))
   print("overwrite output written in %s @ %s" % (output, datetime.now()))
-  submiter.submiter().submit(entry=output, message="treva submit_partial_merge with %s and all_blended=%s" % (base, all_blended))
+  # submiter.submiter().submit(entry=output, message="treva submit_partial_merge with %s and all_blended=%s" % (base, all_blended))
 
 
 def analysis_params(log_path):
@@ -362,11 +375,11 @@ def analysis_best(log_path):
 
 
 if __name__ == '__main__':
-  # -----[analyses treva params]-----
-  # log_path = "/home/workspace/checkins/logs/nohup_treva_all_20160626_090148.log"
-  # analysis_params(log_path)
-  # analysis_best(log_path)
+    # -----[analyses treva params]-----
+    log_path = "/home/workspace/checkins/logs/nohup_treva_all_20160626_090148.log"
+    analysis_params(log_path)
+    # analysis_best(log_path)
 
-  # # -----[submit treva partial merge]-----
-  submit_partial_merge(base='blending_20160626_094932_0.58702.csv.gz', folder="treva_full10", all_blended=True)
-  # submit_partial_merge(base='blending_20160621_214954_0.58657.csv.gz', folder="treva_merge2", all_blended=True)
+    # # -----[submit treva partial merge]-----
+    # submit_partial_merge(base='blending_20160621_214954_0.58657.csv.gz', folder="treva_merge2", all_blended=False)
+    # submit_partial_merge(base='blending_20160621_214954_0.58657.csv.gz', folder="treva_merge2", all_blended=True)

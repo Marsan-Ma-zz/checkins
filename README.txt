@@ -691,11 +691,13 @@
           (0.1)+0.1+0.4  : 0.5539
           (0.2)-0.4-0.4  : 0.5520
     21. [TODO]
+          => time-series CV to select true model params, more tree parameters
+          => mod lambda with http as api
+          => use aws spot instance
           [treva] 
           => submit 1)best, 2)top5 blending 3)use time < 100000 as valid
           => add knn/xgboost back
           [others]
-          => use latter sample (near test samples) only
           => xgboost early stop with validation samples
           
     

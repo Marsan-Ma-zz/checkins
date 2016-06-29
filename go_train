@@ -16,9 +16,11 @@ PY3='stdbuf -o0 nohup python3 -u'
 # $PY3 main.py sket_gs_params 0.4 sket_gs_params_$NOW > "./logs/nohup_sket_gs_params_$NOW.log" &
 # $PY3 main.py xgb_gs_params 0.4 xgb_gs_params_$NOW > "./logs/nohup_xgb_gs_params_$NOW.log" &
 
-# python3 main.py treva 0.08
-# $PY3 main.py treva_all 0.16 > "./logs/nohup_treva_all_$NOW.log" &
-$PY3 main.py treva_all 10.0 > "./logs/nohup_treva_all_$NOW.log" &
+# $PY3 main.py tuner 10.0 > "./logs/tuner_$NOW.log" &
+# python3 main.py treva 0.8
+# $PY3 main.py treva 2.0 > "./logs/nohup_treva_lambda_$NOW.log" &
+# $PY3 main.py treva_all 10.0 > "./logs/nohup_treva_all_$NOW.log" &
+# $PY3 main.py treva_all_elite 10.0 > "./logs/nohup_treva_all_elite_$NOW.log" &
 # python3 main.py skrf 0.4
 
 # $PY3 main.py all 0.4 all_$NOW > "./logs/all_$NOW.log"  # Fastest for debug use
@@ -60,7 +62,7 @@ $PY3 main.py treva_all 10.0 > "./logs/nohup_treva_all_$NOW.log" &
 # $PY3 main.py skrf_submit_rf_family 10.0 skrf_submit_rf_family_$NOW > "./logs/nohup_skrf_submit_rf_family_$NOW.log" &
 # $PY3 main.py skrf_submit_et_family 10.0 skrf_submit_et_family_$NOW > "./logs/nohup_skrf_submit_et_family_$NOW.log" &
 
-# $PY3 blending.py blending_$NOW > "./logs/blending_$NOW.log" &
+$PY3 blending.py blending_$NOW > "./logs/blending_$NOW.log" &
 
 # [Submits Existing Model]
 # python3 main.py skrf_eva_exist 0.4 LB_skrf_submit_20160611_233627
@@ -70,4 +72,4 @@ $PY3 main.py treva_all 10.0 > "./logs/nohup_treva_all_$NOW.log" &
 # 
 
 # [Kill such processes]
-# sudo kill -9 `ps aux | grep "treva_all" | awk '{print $2}'`
+# sudo kill -9 `ps aux | grep "tuner" | awk '{print $2}'`
