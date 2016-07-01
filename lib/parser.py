@@ -4,7 +4,7 @@ import numpy as np
 import multiprocessing as mp
 pool_size = mp.cpu_count()
 
-from datetime import datetime
+from datetime import datetime, timedelta
 from collections import Counter
 
 from lib import conventions as conv
@@ -139,9 +139,11 @@ class parser(object):
   def feature_engineering(self, df):
     initial_date = np.datetime64('2014-01-01T01:01', dtype='datetime64[m]') 
     d_times = pd.DatetimeIndex(initial_date + np.timedelta64(int(t), 'm') for t in df.time.values)
-    
+    d_times_h = pd.DatetimeIndex(initial_date + np.timedelta64(int(t) + 720, 'm') for t in df.time.values)
+
     # hour < day < week < month < year
     df['hour']      = (d_times.hour + d_times.minute/60).astype(float)
+    df['hour_h']    = (d_times_h.hour + d_times_h.minute/60).astype(float)
     df['weekday']   = d_times.weekday.astype(int)
     df['yearday']   = d_times.dayofyear.astype(int)
     df['month']     = d_times.month.astype(int)

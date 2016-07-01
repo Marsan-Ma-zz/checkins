@@ -691,10 +691,14 @@
           (0.1)+0.1+0.4  : 0.5539
           (0.2)-0.4-0.4  : 0.5520
     21. [TODO]
+          Diego: (0.6, 1.0, 0.6)
+          Seattle: (minimal trees, 500 tree, 'x_step' : 0.16) => 0.57802
+          => use larger grid for blending diversity
+          => use min_training_time ...
           => time-series CV to select true model params, more tree parameters
           => mod lambda with http as api
           => use aws spot instance
-          [treva] 
+          [treva]
           => submit 1)best, 2)top5 blending 3)use time < 100000 as valid
           => add knn/xgboost back
           [others]

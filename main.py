@@ -10,7 +10,8 @@ from collections import Counter
 
 from lib import conventions as conv
 from lib import evaluator, parser, trainer, submiter, tuner
-from lib import treva_elite as treva
+from lib import treva_cv as treva
+# from lib import treva_elite as treva
 # from lib import treva as treva
 
 #===========================================
@@ -26,12 +27,12 @@ class main(object):
       'root'            : root,
       'x_cols'          : self.all_feats,
       #-----[best parameters]-----
-      'x_step'          : 0.08,
+      'x_step'          : 0.16,
       'y_step'          : 0.08,
       'x_inter'         : 1,
       'y_inter'         : 1,
       #-----[data engineering in parser]-----
-      'train_test_split_time'   : 700000,   # confirmed!
+      'train_test_split_time'   : 655200,   # confirmed!
       # 'train_test_split_time'   : 700000,   # confirmed!
       'place_min_checkin'       : 3, #3,
       # 'place_min_last_checkin'  : 0, #600000,   # for submit  20160605_071204_0.6454
@@ -93,6 +94,7 @@ class main(object):
     run_cmd = self.params['alg']
     alg = run_cmd.split('_')[0]
     print("[RUN_CMD] %s" % run_cmd)
+    start_time = time.time()
     #==========================================
     #   Shared config
     #==========================================
@@ -318,17 +320,22 @@ class main(object):
       self.init_team()
       self.train_alg(alg, mdl_config={'n_estimators': 5})
     #------------------------------------------
+    elif run_cmd == 'treva_cv':
+      self.init_team()
+      df_train, df_valid, df_test = self.pas.get_data()
+      tva = treva.trainer(self.params)
+      tva.train(df_train, df_valid, df_test)
+    #------------------------------------------
     elif 'treva' in run_cmd:
       if 'elite' in run_cmd:
         self.params['train_test_split_time'] = 1e10
       else:
         self.params['train_test_split_time'] = 700000
-      start_time = time.time()
       self.init_team()
       df_train, df_valid, df_test = self.pas.get_data()
       tva = treva.trainer(self.params)
-      tva.train(df_train, df_valid, df_test)
-      print("[Finished!] Elapsed time overall for %.2f secs" % (time.time() - start_time))
+      sfile = tva.train(df_train, df_valid, df_test)
+      submiter.submiter().submit(entry=sfile, message=self.params)
     elif run_cmd == 'tuner':
       self.init_team()
       df_train, df_valid, _ = self.pas.get_data()
@@ -342,7 +349,8 @@ class main(object):
     else: # single model
       self.init_team()
       self.train_alg(alg)
-
+    #------------------------------------------
+    print("[Finished!] Elapsed time overall for %.2f secs" % (time.time() - start_time))
 
 
   #----------------------------------------

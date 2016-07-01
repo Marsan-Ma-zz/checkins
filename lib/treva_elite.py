@@ -70,8 +70,8 @@ class trainer(object):
         # check exists
         grid_submit_path = "%s/treva_%i_%i.csv" % (mdl_path, x_idx, y_idx)
         # if x_idx < 90: continue
-        if os.path.exists(grid_submit_path):
-          print("%s exists, skip." % grid_submit_path)
+        if os.path.exists(grid_submit_path[:-4] + '_blend.csv'):
+          print("%s exists, skip." % grid_submit_path[:-4] + '_blend.csv')
           continue
 
         # get grid
@@ -96,7 +96,7 @@ class trainer(object):
     # collect scores
     valid_score = sum([s*c for s,c in score_stat]) / sum([c for s,c in score_stat])
     print("[Treva] done, valid_score=%.4f, submit file written %s @ %s" % (valid_score, self.submit_file, conv.now('full')))
-    
+    return self.submit_file
   
 #----------------------------------------
 #   Drill Grid
@@ -116,13 +116,18 @@ def drill_grid(df_grid, x_cols, xi, yi, grid_submit_path, do_blending=True):
   
   # [grid search best models]
   mdl_configs = [
-    {'alg': 'skrf', 'n_estimators': 500, 'max_features': 0.35, 'max_depth': 15},
-    {'alg': 'skrfp', 'n_estimators': 500, 'max_features': 0.35, 'max_depth': 15},
-    {'alg': 'sket', 'n_estimators': 800, 'max_features': 0.5, 'max_depth': 15},
-    {'alg': 'sketp', 'n_estimators': 1000, 'max_features': 0.5, 'max_depth': 11},
+    {'alg': 'skrf', 'n_estimators': 500, 'max_depth': 11},
+    {'alg': 'skrfp', 'n_estimators': 500, 'max_depth': 11},
+    {'alg': 'sket', 'n_estimators': 500, 'max_depth': 11},
+    {'alg': 'sketp', 'n_estimators': 500, 'max_depth': 11},
 
-    {'alg': 'skrf', 'n_estimators': 1000, 'max_features': 0.4, 'max_depth': 9},
-    {'alg': 'skrfp', 'n_estimators': 1000, 'max_features': 0.4, 'max_depth': 9},
+    # {'alg': 'skrf', 'n_estimators': 500, 'max_features': 0.35, 'max_depth': 15},
+    # {'alg': 'skrfp', 'n_estimators': 500, 'max_features': 0.35, 'max_depth': 15},
+    # {'alg': 'sket', 'n_estimators': 800, 'max_features': 0.5, 'max_depth': 15},
+    # {'alg': 'sketp', 'n_estimators': 1000, 'max_features': 0.5, 'max_depth': 11},
+
+    # {'alg': 'skrf', 'n_estimators': 1000, 'max_features': 0.4, 'max_depth': 9},
+    # {'alg': 'skrfp', 'n_estimators': 1000, 'max_features': 0.4, 'max_depth': 9},
   ]
 
   # mdl_configs = []
@@ -240,11 +245,11 @@ def drill_eva(clf, X, y, time_th_wd=0.003, time_th_hr=0.004):
   for i in range(len(X)):
     psol = OrderedDict(sorted(sols[i], key=lambda v: v[1]))
     # -----[filter avail places]-----
-    s = X.iloc[i]
-    psol = {p: v * (
-        0.1 * (AVAIL_WDAYS.get((p, s.weekday.astype(int)), 0) > time_th_wd) + 
-        0.4 * (AVAIL_HOURS.get((p, s.hour.astype(int)), 0) > time_th_hr)
-    ) for p,v in psol.items()}
+    # s = X.iloc[i]
+    # psol = {p: v * (
+    #     0.1 * (AVAIL_WDAYS.get((p, s.weekday.astype(int)), 0) > time_th_wd) + 
+    #     0.4 * (AVAIL_HOURS.get((p, s.hour.astype(int)), 0) > time_th_hr)
+    # ) for p,v in psol.items()}
     psol = sorted(list(psol.items()), key=lambda v: v[1], reverse=True)
     psol = [p for p,v in psol]
     final_bests.append(psol[:3])
@@ -340,6 +345,29 @@ def submit_partial_merge(base, folder, all_blended=False):
   print("ensure dim:", len(df_treva), len(set(df_treva.row_id.values)), len(set(df_overwrite.row_id.values)))
   print("overwrite output written in %s @ %s" % (output, datetime.now()))
   # submiter.submiter().submit(entry=output, message="treva submit_partial_merge with %s and all_blended=%s" % (base, all_blended))
+
+
+def submit_cumulation(folder, all_blended=False):
+  root_path = '/home/workspace/checkins'
+  folder = "%s/submit/%s" % (root_path, folder)
+  stamp = str(datetime.now().strftime("%Y%m%d_%H%M%S"))
+  output = "%s/submit/treva_cumulate_%s_all_blended_%s.csv" % (root_path, stamp, all_blended)
+
+  if all_blended:
+    tfiles = [f for f in listdir(folder) if 'blend' in f]
+  else:
+    tfiles = [f for f in listdir(folder) if 'blend' not in f]
+
+  # concat and merge
+  df_treva = [pd.read_csv("%s/%s" % (folder, f)) for f in tfiles]
+  df_treva = pd.concat(df_treva).sort_values(by='row_id')
+  # df_base = pd.read_csv("%s/data/submits/%s" % (root_path, base))
+
+  # df_base = df_base[~df_base.row_id.isin(df_treva.row_id.values)]
+  # df_overwrite =  pd.concat([df_base, df_treva]).sort_values(by='row_id')
+  df_treva[['row_id', 'place_id']].sort_values(by='row_id').to_csv(output, index=False)
+  # print("ensure dim:", len(df_treva), len(set(df_treva.row_id.values)), len(set(df_overwrite.row_id.values)))
+  print("overwrite output written in %s @ %s" % (output, datetime.now()))
 
 
 def analysis_params(log_path):

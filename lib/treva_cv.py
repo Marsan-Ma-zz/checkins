@@ -82,30 +82,29 @@ class trainer(object):
         # prevent memory explode!
         while (len(processes) > 30): 
           score, y_test = processes.pop(0).get()
-          score_stat.append((score, len(df_grid)))
-          preds_total.append(y_test)
+          if y_test:
+            score_stat.append((score, len(df_grid)))
+            preds_total.append(y_test)
       mp_pool.close()
     while processes: 
       score, y_test = processes.pop(0).get()
-      score_stat.append((score, len(df_grid)))
-      preds_total.append(y_test)
+      if y_test:
+        score_stat.append((score, len(df_grid)))
+        preds_total.append(y_test)
     # write submit file
-    preds_total = pd.concat(preds_total)
-    df2submit(preds_total, self.submit_file)
+    if preds_total:
+      preds_total = pd.concat(preds_total)
+      df2submit(preds_total, self.submit_file)
     # collect scores
-    valid_score = sum([s*c for s,c in score_stat]) / sum([c for s,c in score_stat])
-    print("[Treva] done, valid_score=%.4f, submit file written %s @ %s" % (valid_score, self.submit_file, conv.now('full')))
-    
+    if score_stat:
+      valid_score = sum([s*c for s,c in score_stat]) / sum([c for s,c in score_stat])
+      print("[Treva] done, valid_score=%.4f, submit file written %s @ %s" % (valid_score, self.submit_file, conv.now('full')))
+    else:
+      print("[Treva] finished without valid_score @ %s" % (conv.now('full')))
   
 #----------------------------------------
 #   Drill Grid
 #----------------------------------------
-KNN_NORM = {
-  'x': 500, 'y':1000, 
-  'hour':4, 'logacc':1, 'weekday':3, 
-  'qday':1, 'month':2, 'year':10, 'day':1./22,
-}
-
 def drill_grid(df_grid, x_cols, xi, yi, grid_submit_path, do_blending=True):
   best_score = 0
   all_score = []
@@ -114,80 +113,48 @@ def drill_grid(df_grid, x_cols, xi, yi, grid_submit_path, do_blending=True):
     Xs[m], ys[m], row_id = conv.df2sample(df_grid[m], x_cols)
   
   # [grid search best models]
-  mdl_configs = []
-  for alg in ['skrf', 'skrfp', 'sket', 'sketp']:
-    for n_estimators in [500, 1000, 1500]:
-      for max_features in [0.3, 0.5]:
-        for max_depth in [11, 15]:
-          mdl_configs.append({'alg': alg, 'n_estimators': n_estimators, 'max_features': max_features, 'max_depth': max_depth}) 
+  mdl_configs = [
+    {'alg': 'skrf', 'n_estimators': 500, 'max_depth': 11},
+    {'alg': 'skrfp', 'n_estimators': 500, 'max_depth': 11},
+    {'alg': 'sket', 'n_estimators': 500, 'max_depth': 11},
+    {'alg': 'sketp', 'n_estimators': 500, 'max_depth': 11},
+  ]
   all_bests = []
 
+  # train & collect valid preds for weight selection
   for mdl_config in mdl_configs:
     # train
     clf = get_alg(mdl_config['alg'], mdl_config)
     clf.fit(Xs['tr'], ys['tr'])
     # valid
     score, bests = drill_eva(clf, Xs['va'], ys['va'])
+    all_score.append(score)
+    all_bests.append(bests)
     print("drill(%i,%i) va_score %.4f for model %s(%s) @ %s" % (xi, yi, score, mdl_config['alg'], mdl_config, conv.now('full')))
-    if score > best_score:
-      best_score = score
-      best_config = mdl_config
-    # for blending
-    if do_blending:
-      all_score.append(score)
-      all_bests.append(bests)
-  
-  # blending
-  if do_blending:
-    best_bcnt = None
-    best_blend_score = 0
-    best_good_idxs = []
-    for bcnt in [5, 10]:
-      good_idxs = [k for k,v in sorted(enumerate(all_score), key=lambda v: v[1], reverse=True)][:bcnt]
-      blended_bests = blending([m for idx, m in enumerate(all_bests) if idx in good_idxs])
-      blended_match = [apk([ans], vals) for ans, vals in zip(ys['va'], blended_bests)]
-      blended_score = sum(blended_match)/len(blended_match)
-      if blended_score > best_blend_score:
-        best_blend_score = blended_score
-        best_good_idxs = good_idxs
-        best_bcnt = bcnt
-      print("drill(%i,%i) va_score %.4f for model 'blending_%i' @ %s" % (xi, yi, blended_score, bcnt, conv.now('full')))
-  
-
+    
   # train again with full training samples
   Xs['tr_va'] = pd.concat([Xs['tr'], Xs['va']])
   ys['tr_va'] = np.append(ys['tr'], ys['va'])
   
-
-  # always write best blending (in case best single model overfitting)
+  # collect test preds
   all_bt_preds = []
-  for bcfg in [m for idx,m in enumerate(mdl_configs) if idx in best_good_idxs]:
+  for bcfg in mdl_configs:
     bmdl = get_alg(bcfg['alg'], bcfg)
     bmdl.fit(Xs['tr_va'], ys['tr_va'])
     _, bt_preds = drill_eva(bmdl, Xs['te'], ys['te'])
     all_bt_preds.append(bt_preds)
-  blending_test_preds = blending(all_bt_preds)
-  blending_test_preds = pd.DataFrame(blending_test_preds)
-  blending_test_preds['row_id'] = row_id
-  df2submit(blending_test_preds, (grid_submit_path[:-4] + '_blend.csv'))
 
-
-  # collect results
-  if do_blending and (best_blend_score > best_score):
-    best_score = best_blend_score
-    test_preds = blending_test_preds
-    best_config = "blending_%i" % best_bcnt
-  else:
-    best_model = get_alg(best_config['alg'], best_config)
-    best_model.fit(Xs['tr_va'], ys['tr_va'])
-    _, test_preds = drill_eva(best_model, Xs['te'], ys['te'])
-    test_preds = pd.DataFrame(test_preds)
-    test_preds['row_id'] = row_id
-
-  # write partial submit  
-  df2submit(test_preds, grid_submit_path)
-  print("[drill_grid (%i,%i)] choose best_model %s, best_score=%.4f @ %s" % (xi, yi, best_config, best_score, datetime.now()))
-  return best_score, test_preds
+  info = {
+    'mdl_configs'   : mdl_configs,
+    'all_va_score'  : all_score,
+    'all_va_preds'  : all_bests,
+    'all_bt_preds'  : all_bt_preds,
+    'y_va'          : ys['va'],
+  }
+  cv_path = grid_submit_path[:-4] + '_cv.pkl'
+  pickle.dump(info, open(cv_path, 'wb'))
+  print("cv raw collect for (%i,%i) in %s @ %s" % (xi, yi, cv_path, datetime.now()))
+  return None, None
 
 
 def df2submit(df, filename):
@@ -226,17 +193,17 @@ def drill_eva(clf, X, y, time_th_wd=0.003, time_th_hr=0.004):
   sols = [[(clf.classes_[i], v) for i, v in enumerate(line)] for line in sols]
   for i in range(len(X)):
     psol = OrderedDict(sorted(sols[i], key=lambda v: v[1]))
-    # -----[filter avail places]-----
-    s = X.iloc[i]
-    psol = {p: v * (
-        0.1 * (AVAIL_WDAYS.get((p, s.weekday.astype(int)), 0) > time_th_wd) + 
-        0.4 * (AVAIL_HOURS.get((p, s.hour.astype(int)), 0) > time_th_hr)
-    ) for p,v in psol.items()}
+    # # -----[filter avail places]-----
+    # s = X.iloc[i]
+    # psol = {p: v * (
+    #     0.1 * (AVAIL_WDAYS.get((p, s.weekday.astype(int)), 0) > time_th_wd) + 
+    #     0.4 * (AVAIL_HOURS.get((p, s.hour.astype(int)), 0) > time_th_hr)
+    # ) for p,v in psol.items()}
     psol = sorted(list(psol.items()), key=lambda v: v[1], reverse=True)
-    psol = [p for p,v in psol]
+    # psol = [p for p,v in psol]
     final_bests.append(psol[:3])
   if y is not None:
-    match = [apk([ans], vals) for ans, vals in zip(y, final_bests)]
+    match = [apk([ans], [p for p,v in vals]) for ans, vals in zip(y, final_bests)]
     score = sum(match)/len(match)
   else: 
     score = None
