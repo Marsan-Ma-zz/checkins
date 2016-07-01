@@ -692,7 +692,7 @@
           (0.2)-0.4-0.4  : 0.5520
     21. [TODO]
           Diego: (0.6, 1.0, 0.6)
-          Seattle: (minimal trees, 500 tree, 'x_step' : 0.16) => 0.57802
+          => (minimal trees, 500 tree, 'x_step' : 0.16) => 0.57802
           => use larger grid for blending diversity
           => use min_training_time ...
           => time-series CV to select true model params, more tree parameters
@@ -704,6 +704,10 @@
           [others]
           => xgboost early stop with validation samples
           
+
+          [Markus]: 40 minutes is from earlier in the competition. At that point, I was not using any precomputed information. Everything was learned and predicted based on a single pass through train and test data. My current solution is more complex and takes longer.
+
+          I think for this competition thinking of ways to efficiently approximate something like KDE is a good approach. You could speed up KDE by e.g. applying it to a histogram instead of the actual data points. You could also use something like GMM with not too many components.
     
 
 [COMBINE]

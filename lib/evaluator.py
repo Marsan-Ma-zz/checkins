@@ -48,7 +48,7 @@ class evaluator(object):
 
     # check model exists
     if not os.path.exists("%s/models/%s" % (self.root, self.stamp)):
-      print("[ERROR] evaluate: model %s does not exists!!" % mdl_path)
+      print("[ERROR] evaluate: model %s does not exists!!" % self.stamp)
       return
 
     # launch mp jobs

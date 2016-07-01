@@ -148,8 +148,8 @@ def drill_grid(df_grid, x_cols, xi, yi, grid_submit_path, do_blending=True):
     'mdl_configs'   : mdl_configs,
     'all_va_score'  : all_score,
     'all_va_preds'  : all_bests,
-    'all_bt_preds'  : all_bt_preds,
     'y_va'          : ys['va'],
+    'all_te_preds'  : all_bt_preds,
   }
   cv_path = grid_submit_path[:-4] + '_cv.pkl'
   pickle.dump(info, open(cv_path, 'wb'))

@@ -77,11 +77,12 @@ class main(object):
   def init_team(self):
     # parser & preprocessing
     self.params['stamp'] = self.params.get('stamp') or "%s_%s" % (self.params['alg'], self.timestamp)
-    self.params['data_cache'] = "%s/data/cache/data_cache_size_%.2f_itv_x%iy%i_mcnt_%i.pkl" % (self.params['root'], self.params['size'], self.params['x_inter'], self.params['y_inter'], self.params['max_cands'])
+    self.params['data_cache'] = "%s/data/cache/data_cache_size%.2f_split%i_x%.2fy%.2f.pkl" % (self.params['root'], self.params['size'], self.params['train_test_split_time'], self.params['x_step'], self.params['y_step'])
     self.pas = parser.parser(self.params)
     if not os.path.exists(self.params['data_cache']):
       df_train, df_valid, _ = self.pas.get_data()
-      self.pas.init_data_cache(pd.concat([df_train, df_valid]), self.params)
+      # self.pas.init_data_cache(pd.concat([df_train, df_valid]), self.params)
+      self.pas.init_data_cache(df_train, self.params)
     # workers
     self.tra = trainer.trainer(self.params)
     self.eva = evaluator.evaluator(self.params)
