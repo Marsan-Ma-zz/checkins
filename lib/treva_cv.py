@@ -68,7 +68,7 @@ class trainer(object):
       for y_idx, (y_min, y_max) in enumerate(self.y_ranges): 
         # check exists
         grid_submit_path = "%s/treva_%i_%i_cv.pkl" % (mdl_path, x_idx, y_idx)
-        # if x_idx < 90: continue
+        if x_idx < 50: continue
         if os.path.exists(grid_submit_path):
           print("%s exists, skip." % grid_submit_path)
           continue
@@ -205,12 +205,12 @@ def drill_eva(clf, X, y, time_th_wd=0.003, time_th_hr=0.004):
   sols = [[(clf.classes_[i], v) for i, v in enumerate(line)] for line in sols]
   for i in range(len(X)):
     psol = OrderedDict(sorted(sols[i], key=lambda v: v[1]))
-    # # -----[filter avail places]-----
-    # s = X.iloc[i]
-    # psol = {p: v * (
-    #     0.1 * (AVAIL_WDAYS.get((p, s.weekday.astype(int)), 0) > time_th_wd) + 
-    #     0.4 * (AVAIL_HOURS.get((p, s.hour.astype(int)), 0) > time_th_hr)
-    # ) for p,v in psol.items()}
+    # -----[filter avail places]-----
+    s = X.iloc[i]
+    psol = {p: v * (
+        0.1 * (AVAIL_WDAYS.get((p, s.weekday.astype(int)), 0) > time_th_wd) + 
+        0.4 * (AVAIL_HOURS.get((p, s.hour.astype(int)), 0) > time_th_hr)
+    ) for p,v in psol.items()}
     psol = sorted(list(psol.items()), key=lambda v: v[1], reverse=True)
     # psol = [p for p,v in psol]
     final_bests.append(psol[:3])

@@ -10,6 +10,10 @@ from collections import OrderedDict, defaultdict
 from lib import conventions as conv
 from lib import submiter
 
+# global variable for multi-thread
+global LOCATION, AVAIL_WDAYS, AVAIL_HOURS, POPULAR, GRID_CANDS
+data_cache = './data/cache/data_cache_size10.00_split655200_x0.16y0.08.pkl'
+LOCATION, AVAIL_WDAYS, AVAIL_HOURS, POPULAR, GRID_CANDS = pickle.load(open(data_cache, 'rb'))
 
 def apk(actual, predicted, k=3):
   if len(predicted) > k: 

@@ -27,14 +27,14 @@ class main(object):
       'root'            : root,
       'x_cols'          : self.all_feats,
       #-----[best parameters]-----
-      'x_step'          : 0.16,
-      'y_step'          : 0.08,
+      'x_step'          : 0.2,
+      'y_step'          : 0.1,
       'x_inter'         : 1,
       'y_inter'         : 1,
       #-----[data engineering in parser]-----
       'train_test_split_time'   : 655200,   # confirmed!
       # 'train_test_split_time'   : 700000,   # confirmed!
-      'place_min_checkin'       : 3, #3,
+      'place_min_checkin'       : 5, #3,
       # 'place_min_last_checkin'  : 0, #600000,   # for submit  20160605_071204_0.6454
       # 'train_min_time'          : 300000,   # for submit (not good, no use!)
       # 'place_max_first_checkin' : 300000,   # for valid only, not for submit!

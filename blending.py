@@ -1,9 +1,10 @@
-import os, sys, time, pickle, gzip, shutil
+import os, sys, time, pickle, gzip, shutil, gc
 import pandas as pd
 import numpy as np
 import multiprocessing as mp
 pool_size = mp.cpu_count()
 
+from itertools import islice
 from datetime import datetime
 from collections import defaultdict, OrderedDict
 
@@ -12,17 +13,17 @@ from lib import submiter
 #----------------------------------------
 #   Blending Models
 #----------------------------------------
-def csv2df(mname, out='df', nrows=None):
+def csv2df(mname, out='df', skiprows=0, nrows=None):
   fname = "/home/workspace/checkins/data/submits/%s" % mname
-  df = pd.read_csv(fname, skiprows=1, names=['row_id', 0, 1, 2], sep=' |,', engine='python', nrows=nrows)
+  df = pd.read_csv(fname, names=['row_id', 0, 1, 2], sep=' |,', engine='python', skiprows=1+skiprows, nrows=nrows)
   # detect null rows
   null_rows = df[df.isnull().any(axis=1)]
   if len(null_rows):
-    print("[null_rows from %s]\n" % mname, null_rows)
+    # print("[null_rows from %s]\n" % mname, null_rows)
     df.fillna(0, inplace=True)
   if out == 'dic':
     df = dict(zip(df.row_id.values, df[[0,1,2]].astype(int).to_dict('records')))
-  print("%s loaded @ %s" % (mname, datetime.now()))
+  if skiprows == 0: print("%s loaded @ %s" % (mname, datetime.now()))
   return df
 
 
@@ -57,6 +58,61 @@ def submit_blendings(models, mdl_weights, rank_w, output_fname, rows=None):
   print("[All done]", datetime.now())    
 
 
+# def fetch_slice(gen):
+#   return list(islice(gen, 10000))
+
+
+# def raw_slice2all_stat(raw_slices, mdl_weights, ridx, rank_w):
+#   all_stat = []
+#   raw_slices = [[(raw_slices[j][ridx+i], mdl_weights[j]) for j in range(len(raw_slices))] for i in range(len(raw_slices[0]))]
+#   for raw in raw_slices:
+#     stat = defaultdict(float)
+#     for v,w in raw:
+#       for rank, pid in v.items():
+#         stat[pid] += rank_w[rank]*w
+#       stat[0] = 0 # prevent empty submit
+#     stat = sorted(stat.items(), key=lambda v: v[1], reverse=True)
+#     stat = [pid for pid,val in stat][:3]
+#     all_stat.append(stat)
+#   raw_slices = None
+#   # gc.collect()
+#   return all_stat
+
+
+# def submit_blendings(mdl_names, mdl_weights, rank_w, output_fname, rows=None, batch=100000):
+#   print("[Start]", datetime.now())    
+#   mdl_cnt = len(mdl_names)
+#   ridx = 0
+#   processes = []
+#   mp_pool = mp.Pool(pool_size)
+#   while True:
+#     # collect voting
+#     # try:
+#     raw_slices = load_models(mdl_names, out='dic', skiprows=ridx, rows=batch)
+#     if len(raw_slices[0]) == 0: break
+#     p = mp_pool.apply_async(raw_slice2all_stat, (raw_slices, mdl_weights, ridx, rank_w))
+#     processes.append(p)
+#     print("loaded models from %i - %i @ %s" % (ridx, ridx+batch, datetime.now()))
+#     ridx += len(raw_slices[0])
+#     # except StopIteration:
+#     #   print("generator exhausted, ridx=%i @ %s" % (ridx, datetime.now()))
+#     #   break
+
+#   idx = 0
+#   with open(output_fname, 'wt') as f:
+#     f.write("row_id,place_id\n")
+#     while processes:
+#       all_stat = processes.pop(0).get()
+#       print("start writing %i samples" % len(all_stat))
+#       for stat in all_stat:
+#         f.write("%s,%s %s %s\n" % (idx, stat[0], stat[1], stat[2]))
+#         idx += 1
+#         # if (rows and (idx >= rows)): break
+#         if (idx % batch == 0): print('%i samples blended @ %s' % (idx, datetime.now()))
+#   mp_pool.close()
+#   print("[All done]", datetime.now())    
+
+
 def cal_correlation(ma, mb, rule=2):
   if rule == 1: # faster (15s/model)
     score = sum(sum(ma[[0,1,2]].values == mb[[0,1,2]].values))/len(ma)/3
@@ -66,14 +122,14 @@ def cal_correlation(ma, mb, rule=2):
   return round(score, 2)
 
 
-def load_models(mdl_names, out='dic', rows=None):
+def load_models(mdl_names, out='dic', skiprows=0, rows=None):
   processes = []
   mp_pool = mp.Pool(pool_size)
   models = {}
   for idx, (mname, w) in enumerate(mdl_names):
-    p = mp_pool.apply_async(csv2df, (mname, out, rows))
+    p = mp_pool.apply_async(csv2df, (mname, out, skiprows, rows))
     processes.append([p, idx])
-  mp_pool.close()
+  # mp_pool.close()
   models = {idx: p.get() for p, idx in processes}
   return models
 
@@ -144,23 +200,23 @@ class blendor(object):
       ('knn_grid_0.8_20160618_081945_0.56999.csv.gz'        , 1.0 ),
       ('skrf_submit_full_20160621_234034_0.56992.csv.gz'    , 1.0 ),
       
-      #-----[Knight]-----
-      ('treva_20160630_181344_blended_0.56942.csv.gz'       , 0.9 ),
-      ('treva_submit_20160625_105356_0.56680.csv.gz'        , 0.9 ),
-      ('submit_knn_0.4_grid_20160617_091633_0.56919.csv.gz' , 0.9 ),
-      ('submit_knn_submit_20160615_230955_0.56815.csv.gz'   , 0.8 ),
-      ('submit_skrf_submit_20160605_195424_0.56552.csv.gz'  , 0.7 ),
-      ('submit_skrf_submit_20160608_174129_0.56533.csv.gz'  , 0.7 ),
-      ('submit_sket_20160622_130909_0.56315.csv.gz'         , 0.7 ),
-      ('sketp_submit_full_20160622_180604_0.56173.csv.gz'   , 0.7 ),
-      ('submit_skrf_submit_20160604_171454_0.56130.csv.gz'  , 0.5 ),
-      ('submit_skrf_submit_20160602_104038_0.56093.csv.gz'  , 0.7 ),
-      ('submit_sketp_20160622_180604_0.56082.csv.gz'        , 0.7 ),
-      ('xgb_submit_full_20160620_180926_0.56032.csv.gz'     , 0.7 ),
-      ('submit_knn_inter_20160616_172918_0.55919.csv.gz'    , 0.6 ),
-      ('xgb_submit_full_20160616_0.55615.csv.gz'            , 0.6 ),
-      ('submit_skrf_submit_20160612_214750_0.55583.csv.gz'  , 0.5 ),
-      ('submit_xgb_submit_20160604_173333_0.55361.csv.gz'   , 0.5 ),
+      # #-----[Knight]-----
+      # ('treva_20160630_181344_blended_0.56942.csv.gz'       , 0.9 ),
+      # ('treva_submit_20160625_105356_0.56680.csv.gz'        , 0.9 ),
+      # ('submit_knn_0.4_grid_20160617_091633_0.56919.csv.gz' , 0.9 ),
+      # ('submit_knn_submit_20160615_230955_0.56815.csv.gz'   , 0.8 ),
+      # ('submit_skrf_submit_20160605_195424_0.56552.csv.gz'  , 0.7 ),
+      # ('submit_skrf_submit_20160608_174129_0.56533.csv.gz'  , 0.7 ),
+      # ('submit_sket_20160622_130909_0.56315.csv.gz'         , 0.7 ),
+      # ('sketp_submit_full_20160622_180604_0.56173.csv.gz'   , 0.7 ),
+      # ('submit_skrf_submit_20160604_171454_0.56130.csv.gz'  , 0.5 ),
+      # ('submit_skrf_submit_20160602_104038_0.56093.csv.gz'  , 0.7 ),
+      # ('submit_sketp_20160622_180604_0.56082.csv.gz'        , 0.7 ),
+      # ('xgb_submit_full_20160620_180926_0.56032.csv.gz'     , 0.7 ),
+      # ('submit_knn_inter_20160616_172918_0.55919.csv.gz'    , 0.6 ),
+      # ('xgb_submit_full_20160616_0.55615.csv.gz'            , 0.6 ),
+      # ('submit_skrf_submit_20160612_214750_0.55583.csv.gz'  , 0.5 ),
+      # ('submit_xgb_submit_20160604_173333_0.55361.csv.gz'   , 0.5 ),
       
       #-----[Ash]-----
       # ('submit_skrf_submit_20160530_155226_0.53946.csv.gz', 0.2 ),
@@ -253,9 +309,10 @@ class blendor(object):
 #===========================================
 if __name__ == '__main__':
   # blendor(do_blend=True, do_upload=True).run('gs_top_n')
-  blendor(do_blend=True).run('debug')   # cal corr only
+  # blendor(do_blend=True).run('debug')   # cal corr only
   # blendor(do_blend=True, do_upload=True).run('average')
   # blendor(do_blend=True, do_upload=True).run('average_but_top')
+  blendor(do_blend=True, do_upload=True).run()
   # bla.run()
   # bla.run('submit')
   # bla.run('gs_top_w')

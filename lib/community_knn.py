@@ -275,6 +275,19 @@ def feature_engineering(df):
     return df
     
 #------------------------------------------------------
+def blending(all_bests, rank_w=[1, 0.6, 0.4]):
+  blended_bests = []
+  for i in range(len(all_bests[0])):
+    stat = defaultdict(float)
+    for line in [m[i] for m in all_bests]:
+      for c, s in enumerate(line):
+        stat[s] += rank_w[c]
+    stat = sorted(stat.items(), key=lambda v: v[1], reverse=True)
+    stat = [pid for pid,val in stat][:3]
+    blended_bests.append(stat)
+  return blended_bests
+
+#------------------------------------------------------
 print('Starting...')
 start_time = time.time()
 # Global variables
@@ -301,6 +314,8 @@ gc.collect()
 elapsed = (time.time() - start_time)
 print('Data prepared in:', timedelta(seconds=elapsed))
     
+
+
 preds = process_grid(df_train, df_test, x_cuts, y_cuts, t_cuts,
                      x_border_aug, y_border_aug, time_aug, 
                      fw, th, n_neighbors)
