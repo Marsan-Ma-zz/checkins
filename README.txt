@@ -775,6 +775,7 @@ x_cols = ['hour2', 'hour3', 'hour4', 'y', 'accuracy', 'hour', 'qday', 'weekday',
 
 [Pre Processing]
   #-----[TODO]-------------------
+  1. try Baysian Optimization
   1. highter weights for samples closer to test samples.
   1. fix location X-Y of training data, by the estimated central of location (normal distribution)
   #-----[DONE]-------------------

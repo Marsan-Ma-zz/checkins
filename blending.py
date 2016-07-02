@@ -110,9 +110,9 @@ class blendor(object):
   def init_models(self):
     self.mdl_names = [
       #-----[God]-----
-      ('blending_20160630_0.58772.csv.gz'                   , 3.0 ),
-      ('blending_20160626_094932_0.58702.csv.gz'            , 3.0 ),
-      ('blending_20160621_214954_0.58657.csv.gz'            , 2.0 ),
+      ('blending_20160630_0.58772.csv.gz'                   , 5.0 ),
+      ('blending_20160626_094932_0.58702.csv.gz'            , 4.0 ),
+      ('blending_20160621_214954_0.58657.csv.gz'            , 3.0 ),
       ('lb_marsan_blending_0622_0.58569.csv.gz'             , 2.0 ),
       ('blending_gs_top_w2_20160619_180546_0.58529.csv.gz'  , 2.0 ),
       ('lb_blending_20160617_215629_0.58463.csv.gz'         , 2.0 ),
@@ -130,10 +130,12 @@ class blendor(object):
       ('treva_all_xstep0.6_elite_20160630_0.57802.csv.gz'   , 1.5 ),
       ('lb_hamed_0.57946.csv.gz'                            , 1.2 ),
       ('treva_6trees_20160629_0.57756.csv.gz'               , 1.8 ),
+      ('treva_full10_20160702_154515_0.57686.csv.gz'        , 1.8 ),
       ('treva_elite_20160626_f0.5d11_0.57475.csv.gz'        , 1.8 ),
       ('skrf_submit_20160623_224407_0.57349.csv.gz'         , 1.5 ),
       ('lb_sub_knn_daten-kieker_0.57189.csv.gz'             , 1.2 ),
       ('treva_elite_20160627_f0.5d15_0.57169.csv.gz'        , 1.2 ),
+      ('treva_full10_x8_20160702_141130_0.57157.csv.gz'     , 1.2 ),
       ('skrf_submit_full_20160620_000902_0.57114.csv.gz'    , 1.2 ),
       ('lb_sub_knn_danielspringt_0.57068.csv.gz'            , 1.2 ),
       ('skrfp_submit_full_20160621_0.57054.csv.gz'          , 1.2 ),
@@ -251,8 +253,8 @@ class blendor(object):
 #===========================================
 if __name__ == '__main__':
   # blendor(do_blend=True, do_upload=True).run('gs_top_n')
-  # blendor(do_blend=True).run('debug')   # cal corr only
-  blendor(do_blend=True, do_upload=True).run('average')
+  blendor(do_blend=True).run('debug')   # cal corr only
+  # blendor(do_blend=True, do_upload=True).run('average')
   # blendor(do_blend=True, do_upload=True).run('average_but_top')
   # bla.run()
   # bla.run('submit')

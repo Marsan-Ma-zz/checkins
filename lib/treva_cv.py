@@ -1,4 +1,4 @@
-import os, sys, time, pickle, gzip, re, ast
+import os, sys, time, pickle, gzip, re, ast, gc
 import pandas as pd
 import numpy as np
 import multiprocessing as mp
@@ -67,7 +67,7 @@ class trainer(object):
       mp_pool = mp.Pool(pool_size)
       for y_idx, (y_min, y_max) in enumerate(self.y_ranges): 
         # check exists
-        grid_submit_path = "%s/treva_%i_%i.csv" % (mdl_path, x_idx, y_idx)
+        grid_submit_path = "%s/treva_%i_%i_cv.pkl" % (mdl_path, x_idx, y_idx)
         # if x_idx < 90: continue
         if os.path.exists(grid_submit_path):
           print("%s exists, skip." % grid_submit_path)
@@ -80,17 +80,19 @@ class trainer(object):
         processes.append(p)
 
         # prevent memory explode!
-        while (len(processes) > 30): 
+        while (len(processes) > 15): 
           score, y_test = processes.pop(0).get()
           if y_test:
             score_stat.append((score, len(df_grid)))
             preds_total.append(y_test)
+          gc.collect()
       mp_pool.close()
     while processes: 
       score, y_test = processes.pop(0).get()
       if y_test:
         score_stat.append((score, len(df_grid)))
         preds_total.append(y_test)
+      gc.collect()
     # write submit file
     if preds_total:
       preds_total = pd.concat(preds_total)
@@ -114,10 +116,14 @@ def drill_grid(df_grid, x_cols, xi, yi, grid_submit_path, do_blending=True):
   
   # [grid search best models]
   mdl_configs = [
-    {'alg': 'skrf', 'n_estimators': 500, 'max_depth': 11},
-    {'alg': 'skrfp', 'n_estimators': 500, 'max_depth': 11},
-    {'alg': 'sket', 'n_estimators': 500, 'max_depth': 11},
-    {'alg': 'sketp', 'n_estimators': 500, 'max_depth': 11},
+    # {'alg': 'skrf', 'n_estimators': 500, 'max_features': 0.35, 'max_depth': 15},
+    # {'alg': 'skrfp', 'n_estimators': 500, 'max_features': 0.35, 'max_depth': 15},
+    # {'alg': 'sket', 'n_estimators': 500, 'max_features': 0.35, 'max_depth': 15},
+    # {'alg': 'sketp', 'n_estimators': 500, 'max_features': 0.35, 'max_depth': 11},
+    {'alg': 'skrf', 'n_estimators': 800, 'max_features': 0.35, 'max_depth': 15},
+    {'alg': 'skrfp', 'n_estimators': 800, 'max_features': 0.35, 'max_depth': 15},
+    {'alg': 'sket', 'n_estimators': 1500, 'max_features': 0.35, 'max_depth': 15},
+    {'alg': 'sketp', 'n_estimators': 1500, 'max_features': 0.35, 'max_depth': 11},
   ]
   all_bests = []
 
@@ -130,6 +136,8 @@ def drill_grid(df_grid, x_cols, xi, yi, grid_submit_path, do_blending=True):
     score, bests = drill_eva(clf, Xs['va'], ys['va'])
     all_score.append(score)
     all_bests.append(bests)
+    clf = None
+    gc.collect()
     print("drill(%i,%i) va_score %.4f for model %s(%s) @ %s" % (xi, yi, score, mdl_config['alg'], mdl_config, conv.now('full')))
     
   # train again with full training samples
@@ -143,6 +151,8 @@ def drill_grid(df_grid, x_cols, xi, yi, grid_submit_path, do_blending=True):
     bmdl.fit(Xs['tr_va'], ys['tr_va'])
     _, bt_preds = drill_eva(bmdl, Xs['te'], ys['te'])
     all_bt_preds.append(bt_preds)
+    bmdl = None
+    gc.collect()
 
   info = {
     'mdl_configs'   : mdl_configs,
@@ -150,10 +160,12 @@ def drill_grid(df_grid, x_cols, xi, yi, grid_submit_path, do_blending=True):
     'all_va_preds'  : all_bests,
     'y_va'          : ys['va'],
     'all_te_preds'  : all_bt_preds,
+    'row_id'        : row_id,
   }
-  cv_path = grid_submit_path[:-4] + '_cv.pkl'
-  pickle.dump(info, open(cv_path, 'wb'))
-  print("cv raw collect for (%i,%i) in %s @ %s" % (xi, yi, cv_path, datetime.now()))
+  pickle.dump(info, open(grid_submit_path, 'wb'))
+  Xs, ys, all_score, all_bests, all_bt_preds = [None]*5
+  print("cv raw collect for (%i,%i) in %s @ %s" % (xi, yi, grid_submit_path, datetime.now()))
+  gc.collect()
   return None, None
 
 

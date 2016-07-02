@@ -76,4 +76,4 @@ $PY3 main.py treva_cv 10.0 > "./logs/nohup_treva_cv_$NOW.log" &
 # 
 
 # [Kill such processes]
-# sudo kill -9 `ps aux | grep "treva_cv" | awk '{print $2}'`
+# sudo kill -9 `ps aux | grep "treva_all_elite" | awk '{print $2}'`

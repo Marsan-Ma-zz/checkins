@@ -175,7 +175,7 @@ def process_grid(df_train, df_test, x_cuts, y_cuts, t_cuts,
                     xi, yj, tt, p = processes.pop(0)
                     cell_pred = p.get()
                     preds_list.append(cell_pred)
-                    print("(x%i, y%i, t%i) processed @ %s" % (xi, yj, tt, datetime.now()))
+                    # print("(x%i, y%i, t%i) processed @ %s" % (xi, yj, tt, datetime.now()))
         elapsed = (time.time() - row_start_time)
         print('Row', i, 'completed in:', timedelta(seconds=elapsed))
 
@@ -183,7 +183,7 @@ def process_grid(df_train, df_test, x_cuts, y_cuts, t_cuts,
         xi, yj, tt, p = processes.pop(0)
         cell_pred = p.get()
         preds_list.append(cell_pred)
-        print("(x%i, y%i, t%i) processed @ %s" % (xi, yj, tt, datetime.now()))
+        # print("(x%i, y%i, t%i) processed @ %s" % (xi, yj, tt, datetime.now()))
     preds = np.vstack(preds_list)
     return preds
 
