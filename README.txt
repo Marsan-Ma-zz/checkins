@@ -774,6 +774,7 @@ x_cols = ['hour2', 'hour3', 'hour4', 'y', 'accuracy', 'hour', 'qday', 'weekday',
 #------------------------------
 
 [Pre Processing]
+  0. tab0: treva_cv, x0.2 y0.1, with HOUR/WEEKDAY filter
   #-----[TODO]-------------------
   1. try Baysian Optimization
   1. highter weights for samples closer to test samples.

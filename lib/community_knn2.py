@@ -21,11 +21,14 @@ import pandas as pd
 from sklearn.preprocessing import LabelEncoder
 from sklearn.neighbors import KNeighborsClassifier
 import time
-
+from datetime import datetime
+import multiprocessing as mp
+pool_size = mp.cpu_count()
+from lib import submiter
 
 ## Parameters
 cross_validation = 1 # 1 = cross validation, 0 = test data submission
-onecell=1 # 0 = all grid cells, 1 = one grid cell specified by grid_onecell
+onecell=0 # 0 = all grid cells, 1 = one grid cell specified by grid_onecell
 grid_onecell = 200
 
 
@@ -33,7 +36,7 @@ n_cell_x=20
 n_cell_y=40
 th = 8 ## threshold events below which placeids are excluded from train data
 
-
+print("[Start] @ %s" % datetime.now())
 ########### set weights for knn
 
 ## I have used a weight matrix below. Weights for each grid can be customized (not included in this script)
@@ -85,9 +88,6 @@ def extendgrid(extension_x, extension_y, size_x, size_y, n_cell_x, n_cell_y):
     grid = np.vstack((grid1,grid2,grid3,grid4)).T
     return grid
 
-
-def calculate_distance(distances):
-    return distances ** -2
 
 
     
@@ -162,6 +162,7 @@ test['grid_cell'] = pos_y * n_cell_x + pos_x
 extension_x = 0.03
 extension_y = 0.015
     
+
 grid = extendgrid(extension_x, extension_y, size_x, size_y, n_cell_x, n_cell_y)
 
 
@@ -177,16 +178,37 @@ t=time.time()
 
 
 if onecell==0:
-    repeats = range(n_cell_x*n_cell_y)
+    repeats = list(range(n_cell_x*n_cell_y))
 else:
     repeats = [grid_onecell]
 
 
 
+def calculate_distance(distances):
+        return distances ** -2
+
+def play_grid(g_id, grid_train, grid_test):
+    le = LabelEncoder()
+    y = le.fit_transform(grid_train.place_id.values)
+    X = grid_train[['x', 'y', 'hour', 'weekday', 'month', 'year', 'acc']].values * weights[g_id][:7]
+    X_test = grid_test[['x', 'y', 'hour', 'weekday', 'month', 'year', 'acc']].values * weights[g_id][:7]
+    
+    ###Applying the knn classifier
+    #nearest = (weights[g_id][7]).copy().astype(int)
+    nearest = np.floor(np.sqrt(y.size)/5.1282).astype(int)
+    clf = KNeighborsClassifier(n_neighbors=nearest, weights=calculate_distance, metric='cityblock')
+    clf.fit(X, y)
+    y_pred = clf.predict_proba(X_test)
+    indices = le.inverse_transform(  np.argsort(y_pred, axis=1)[:,::-1][:,:10]  )  
+    knn_prob = np.sort(y_pred, axis=1)[:,::-1][:,:10]
+    return indices, knn_prob
+
+
+processes = []
+mp_pool = mp.Pool(pool_size)
 for g_id in repeats:
     if g_id % 100 == 0:
-        print('iter: %s' %(g_id))
-        print (time.time()-t)/60
+        print("g_id=%i @ %s" % (g_id, datetime.now()))
     
     #Applying classifier to one grid cell
     xmin, xmax, ymin, ymax =grid[g_id]   
@@ -198,26 +220,35 @@ for g_id in repeats:
 
     grid_test = test.loc[test.grid_cell == g_id]
     row_ids = grid_test.index
-       
-    #Preparing data
-    le = LabelEncoder()
-    y = le.fit_transform(grid_train.place_id.values)
-    X = grid_train[['x', 'y', 'hour', 'weekday', 'month', 'year', 'acc']].values * weights[g_id][:7]
-    X_test = grid_test[['x', 'y', 'hour', 'weekday', 'month', 'year', 'acc']].values * weights[g_id][:7]
     
-    ###Applying the knn classifier
-    #nearest = (weights[g_id][7]).copy().astype(int)
-    nearest = np.floor(np.sqrt(y.size)/5.1282).astype(int)
-    clf = KNeighborsClassifier(n_neighbors=nearest, weights=calculate_distance,
-                               metric='cityblock')
-
-    clf.fit(X, y)
-    y_pred = clf.predict_proba(X_test)
+    #---------------------------------------
+    # #Preparing data
+    # le = LabelEncoder()
+    # y = le.fit_transform(grid_train.place_id.values)
+    # X = grid_train[['x', 'y', 'hour', 'weekday', 'month', 'year', 'acc']].values * weights[g_id][:7]
+    # X_test = grid_test[['x', 'y', 'hour', 'weekday', 'month', 'year', 'acc']].values * weights[g_id][:7]
     
-    indices[row_ids] = le.inverse_transform(  np.argsort(y_pred, axis=1)[:,::-1][:,:10]  )  
-    knn_prob[row_ids] = np.sort(y_pred, axis=1)[:,::-1][:,:10]
+    # ###Applying the knn classifier
+    # #nearest = (weights[g_id][7]).copy().astype(int)
+    # nearest = np.floor(np.sqrt(y.size)/5.1282).astype(int)
+    # clf = KNeighborsClassifier(n_neighbors=nearest, weights=calculate_distance,
+    #                            metric='cityblock')
 
-print ('knn calculations complete')
+    # clf.fit(X, y)
+    # y_pred = clf.predict_proba(X_test)
+    p = mp_pool.apply_async(play_grid, (g_id, grid_train, grid_test))
+    processes.append([p, row_ids])
+    #---------------------------------------
+
+mp_pool.close()
+while processes:
+    p, row_ids = processes.pop(0)
+    ind, kprob = p.get()
+    indices[row_ids] = ind
+    knn_prob[row_ids] = kprob
+
+
+print('knn calculations complete @ %s' % datetime.now())
 
 ### create indices for probability lookup tables. For example:
 ### for placeid = 999999999 and weekday = 5, then the index is wkday_ind = 99999999905
@@ -256,16 +287,23 @@ max3placeids = indices[a,max3index]
    
 if cross_validation==1: 
     ## calculation assumes unique values  
-    print ('indices:',([1/1.0, 1/2.0, 1/3.0]*(ytest[:,None] == indices[:,0:3]) ).sum()/indices[np.nonzero(indices[:,0])].shape[0])
-    print ('map3', ([1/1.0, 1/2.0, 1/3.0]*(ytest[:,None] == max3placeids[:,0:3]) ).sum()/max3placeids[np.nonzero(max3placeids[:,0])].shape[0])
+    print('indices:',([1/1.0, 1/2.0, 1/3.0]*(ytest[:,None] == indices[:,0:3]) ).sum()/indices[np.nonzero(indices[:,0])].shape[0])
+    print('map3', ([1/1.0, 1/2.0, 1/3.0]*(ytest[:,None] == max3placeids[:,0:3]) ).sum()/max3placeids[np.nonzero(max3placeids[:,0])].shape[0])
  
     ## calculate map3 for each grid 
     max3placeids1 = pd.DataFrame({'row_id':test.index.values, 'grid_cell': test['grid_cell'], 'ytest': ytest.values, 'id1':max3placeids[:,0],'id2':max3placeids[:,1],'id3':max3placeids[:,2]} )                  
     gridwisemap3 = max3placeids1.groupby('grid_cell').apply(calcgridwisemap3)
- 
+    print("[Finish!] @ %s" % datetime.now())
 else:    
-    print ('writing submission file...')
+    print('writing submission file...')
     max3placeids = pd.DataFrame({'row_id':test.index.values,'id1':max3placeids[:,0],'id2':max3placeids[:,1],'id3':max3placeids[:,2]} )
     max3placeids['place_id']=max3placeids.id1.astype(str).str.cat([max3placeids.id2.astype(str),max3placeids.id3.astype(str)], sep = ' ')       
-    max3placeids[['row_id','place_id']].to_csv('submission.csv', header=True, index=False )
-    print ('End of program')
+    
+    stamp = str(datetime.now().strftime("%Y%m%d_%H%M%S"))
+    sfile = './submit/KNN2_%s.csv' % stamp
+    max3placeids[['row_id','place_id']].to_csv(sfile, header=True, index=False)
+    print("[Finish!] @ %s" % datetime.now())
+    if False:
+        submiter.submiter().submit(entry=sfile, message="knn2")
+
+

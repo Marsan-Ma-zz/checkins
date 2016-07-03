@@ -68,7 +68,7 @@ class trainer(object):
       for y_idx, (y_min, y_max) in enumerate(self.y_ranges): 
         # check exists
         grid_submit_path = "%s/treva_%i_%i_cv.pkl" % (mdl_path, x_idx, y_idx)
-        if x_idx < 50: continue
+        if x_idx < 30: continue
         if os.path.exists(grid_submit_path):
           print("%s exists, skip." % grid_submit_path)
           continue
@@ -80,7 +80,7 @@ class trainer(object):
         processes.append(p)
 
         # prevent memory explode!
-        while (len(processes) > 15): 
+        while (len(processes) > 5): 
           score, y_test = processes.pop(0).get()
           if y_test:
             score_stat.append((score, len(df_grid)))
