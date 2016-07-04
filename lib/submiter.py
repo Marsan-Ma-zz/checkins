@@ -78,7 +78,7 @@ class submiter(object):
 if __name__ == '__main__':
   sub = submiter()
   sub.submit(
-    entry="/home/workspace/checkins/submit/blending_20160626_191119.csv",
-    message="top6 only blending",
+    entry="/home/workspace/checkins/submit/treva_full10_20160704_105341_cv0.5401.csv",
+    message="treva_cv partial with base0.57802",
   )
 

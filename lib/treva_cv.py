@@ -68,7 +68,7 @@ class trainer(object):
       for y_idx, (y_min, y_max) in enumerate(self.y_ranges): 
         # check exists
         grid_submit_path = "%s/treva_%i_%i_cv.pkl" % (mdl_path, x_idx, y_idx)
-        if x_idx < 30: continue
+        # if x_idx < 30: continue
         if os.path.exists(grid_submit_path):
           print("%s exists, skip." % grid_submit_path)
           continue
@@ -80,7 +80,7 @@ class trainer(object):
         processes.append(p)
 
         # prevent memory explode!
-        while (len(processes) > 5): 
+        while (len(processes) > 15): 
           score, y_test = processes.pop(0).get()
           if y_test:
             score_stat.append((score, len(df_grid)))
@@ -116,14 +116,16 @@ def drill_grid(df_grid, x_cols, xi, yi, grid_submit_path, do_blending=True):
   
   # [grid search best models]
   mdl_configs = [
-    # {'alg': 'skrf', 'n_estimators': 500, 'max_features': 0.35, 'max_depth': 15},
-    # {'alg': 'skrfp', 'n_estimators': 500, 'max_features': 0.35, 'max_depth': 15},
+    {'alg': 'skrf', 'n_estimators': 500, 'max_features': 0.35, 'max_depth': 15},
+    {'alg': 'skrfp', 'n_estimators': 500, 'max_features': 0.35, 'max_depth': 15},
+    # {'alg': 'skrf', 'n_estimators': 500, 'max_features': 0.4, 'max_depth': 15},
+    # {'alg': 'skrfp', 'n_estimators': 500, 'max_features': 0.4, 'max_depth': 15},
     # {'alg': 'sket', 'n_estimators': 500, 'max_features': 0.35, 'max_depth': 15},
     # {'alg': 'sketp', 'n_estimators': 500, 'max_features': 0.35, 'max_depth': 11},
-    {'alg': 'skrf', 'n_estimators': 800, 'max_features': 0.35, 'max_depth': 15},
-    {'alg': 'skrfp', 'n_estimators': 800, 'max_features': 0.35, 'max_depth': 15},
-    {'alg': 'sket', 'n_estimators': 1500, 'max_features': 0.35, 'max_depth': 15},
-    {'alg': 'sketp', 'n_estimators': 1500, 'max_features': 0.35, 'max_depth': 11},
+    # {'alg': 'skrf', 'n_estimators': 800, 'max_features': 0.35, 'max_depth': 15},
+    # {'alg': 'skrfp', 'n_estimators': 800, 'max_features': 0.35, 'max_depth': 15},
+    # {'alg': 'sket', 'n_estimators': 1500, 'max_features': 0.35, 'max_depth': 15},
+    # {'alg': 'sketp', 'n_estimators': 1500, 'max_features': 0.35, 'max_depth': 11},
   ]
   all_bests = []
 
