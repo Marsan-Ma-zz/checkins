@@ -13,6 +13,7 @@ from lib import evaluator, parser, trainer, submiter, tuner
 from lib import treva_cv as treva
 # from lib import treva_elite as treva
 # from lib import treva as treva
+from lib import community_feats as cfeats
 
 #===========================================
 #   Main Flow
@@ -89,7 +90,15 @@ class main(object):
     print("=====[Start] @ %s=====" % (datetime.now()))
     for k, v in self.params.items(): print("%s = %s" % (k,v))
     print("="*50)
+
     
+  def run_cfeats(self):
+    cfeats.main(params={
+      'alg': self.params['alg'],
+      'stamp': self.params['stamp'],
+      'cv': ("cv" in self.params['stamp']),
+    })
+
 
   def run(self):
     run_cmd = self.params['alg']
@@ -421,5 +430,6 @@ class main(object):
 if __name__ == '__main__':
   m = main()
   m.cmd_parse(sys.argv)
-  m.run()
+  # m.run()
+  m.run_cfeats()
 

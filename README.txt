@@ -691,6 +691,10 @@
           (0.1)+0.1+0.4  : 0.5539
           (0.2)-0.4-0.4  : 0.5520
     21. [TODO]
+          [Final Blow!]
+          2. skrf_cfeats_1500tree!
+          3. blending try 
+          --------------------------
           Diego: (0.6, 1.0, 0.6)
           => (minimal trees, 500 tree, 'x_step' : 0.16) => 0.57802
           => use larger grid for blending diversity

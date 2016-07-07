@@ -23,12 +23,29 @@ PY3='stdbuf -o0 nohup python3 -u'
 # $PY3 main.py treva_all_elite 10.0 > "./logs/nohup_treva_all_elite_$NOW.log" &
 # python3 main.py treva_cv 0.08
 # $PY3 main.py treva_cv 10.0 > "./logs/nohup_treva_cv_$NOW.log" &
-# python3 main.py skrf 0.4
+# python3 main.py knn 10.0 knn_cfeats_cv_gs
+
+# python3 main.py skrf 10.0 skrf_cfeats_cv_gs
+# $PY3 main.py skrf 10.0 skrf_cfeats_cv_gs > "./logs/cfeats_skrf_gs_$NOW.log" &
+# $PY3 main.py skrfp 10.0 skrfp_cfeats_cv_gs > "./logs/cfeats_skrfp_gs_$NOW.log" &
+# $PY3 main.py sket 10.0 sket_cfeats_cv_gs > "./logs/cfeats_sket_gs_$NOW.log" &
+# $PY3 main.py sketp 10.0 sketp_cfeats_cv_gs > "./logs/cfeats_sketp_gs_$NOW.log" &
+# $PY3 main.py knn 10.0 knn_blend > "./logs/knn_blend_$NOW.log" &
+# $PY3 main.py knnz 10.0 knnz_blend > "./logs/knnz_blend_$NOW.log" &
 
 # stdbuf -o0 nohup ipython lib/community_knn0614.py > "./logs/community_knn0614_$NOW.log" &
 # stdbuf -o0 nohup ipython lib/community_knn2.py > "./logs/community_knn2_$NOW.log" &
-stdbuf -o0 nohup ipython lib/community_skrf.py > "./logs/community_skrf_$NOW.log" &
-# ipython lib/community_knn2.py
+# stdbuf -o0 nohup ipython lib/community_feats.py skrf > "./logs/community_skrf_$NOW.log" &
+# stdbuf -o0 nohup ipython lib/community_xgb.py > "./logs/community_xgb_$NOW.log" &
+# $PY3 main.py skrf 10.0 skrf_cfeats > "./logs/cfeats_skrf_$NOW.log" &
+# $PY3 main.py skrfp 10.0 skrfp_cfeats > "./logs/cfeats_skrfp_$NOW.log" &
+# $PY3 main.py skrfp 10.0 cfeats_partial_blend > "./logs/cfeats_partial_blend_$NOW.log" &
+# $PY3 main.py knnz 10.0 knnz_cfeats > "./logs/cfeats_knnz_$NOW.log" &
+# $PY3 main.py sket 10.0 sket_cfeats > "./logs/cfeats_sket_$NOW.log" &
+# $PY3 main.py sketp 10.0 sketp_cfeats > "./logs/cfeats_sketp_$NOW.log" &
+# $PY3 main.py xgb 10.0 xgb_cfeats_cv > "./logs/cfeats_xgb_$NOW.log" &
+# python3 main.py knn 10.0 knn_cfeats_cv
+# ipython lib/community_skrf.py
 
 # $PY3 main.py all 0.4 all_$NOW > "./logs/all_$NOW.log"  # Fastest for debug use
 # python3 main.py skrf 0.8 skrf_$NOW #> "./logs/skrf_$NOW.log" &
@@ -69,7 +86,7 @@ stdbuf -o0 nohup ipython lib/community_skrf.py > "./logs/community_skrf_$NOW.log
 # $PY3 main.py skrf_submit_rf_family 10.0 skrf_submit_rf_family_$NOW > "./logs/nohup_skrf_submit_rf_family_$NOW.log" &
 # $PY3 main.py skrf_submit_et_family 10.0 skrf_submit_et_family_$NOW > "./logs/nohup_skrf_submit_et_family_$NOW.log" &
 
-# $PY3 blending.py blending_$NOW > "./logs/blending_$NOW.log" &
+$PY3 blending.py blending_$NOW > "./logs/blending_$NOW.log" &
 
 # [Submits Existing Model]
 # python3 main.py skrf_eva_exist 0.4 LB_skrf_submit_20160611_233627

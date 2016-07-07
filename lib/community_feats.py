@@ -15,7 +15,7 @@ The script does the following:
 - takes 30 min  to run and produces a score of 0.5865 lb
 '''
 
-import os, pickle
+import os, sys, pickle, gzip
 import numpy as np
 import pandas as pd
 from sklearn.preprocessing import LabelEncoder
@@ -23,7 +23,7 @@ from sklearn.neighbors import KNeighborsClassifier
 import time
 from datetime import datetime
 import multiprocessing as mp
-pool_size = mp.cpu_count()
+pool_size = 1 #mp.cpu_count()
 from lib import submiter
 from collections import OrderedDict, defaultdict
 import xgboost as xgb
@@ -148,6 +148,9 @@ def get_data(cross_validation, n_cell_x, n_cell_y):
 def calculate_distance(distances):
         return distances ** -2
 
+def calculate_distance2(distances):
+        return distances ** -2.2
+
 def process_grid(g_id, grid_train, grid_test, debug=False):
     le = LabelEncoder()
     y = le.fit_transform(grid_train.place_id.values)
@@ -156,22 +159,57 @@ def process_grid(g_id, grid_train, grid_test, debug=False):
     
     ###Applying the knn classifier
     #nearest = (weights[g_id][7]).copy().astype(int)
-    nearest = np.floor(np.sqrt(y.size)/5.1282).astype(int)
+    
 
-    # clf = KNeighborsClassifier(n_neighbors=nearest, weights=calculate_distance, metric='cityblock')
-    clf = ensemble.RandomForestClassifier(
-      n_estimators=500, 
-      # max_features=0.35,  
-      max_depth=15, 
-      n_jobs=-1,
-    )
-    # clf = xgb.XGBClassifier(
-    #   n_estimators=30,
-    #   max_depth=7, 
-    #   learning_rate=0.1, 
-    #   objective="multi:softprob", 
-    #   silent=True
-    # )
+    if alg == 'knn':
+        nearest = np.floor(np.sqrt(y.size)/5.1282).astype(int)
+        clf = KNeighborsClassifier(n_neighbors=nearest, weights=calculate_distance, metric='cityblock')
+    elif alg == 'knnz':
+        nearest = np.floor(np.sqrt(y.size)/5.83).astype(int)
+        clf = KNeighborsClassifier(n_neighbors=nearest, weights=calculate_distance2, p=1, n_jobs=2, leaf_size=20)
+    elif alg == 'skrf':
+        clf = ensemble.RandomForestClassifier(
+            n_estimators=mdl_config.get('n_estimators', 1500), 
+            max_features=mdl_config.get('max_features', 0.5),  
+            max_depth=mdl_config.get('max_depth', 15), 
+            min_samples_split=mdl_config.get('min_samples_split', 7),
+            bootstrap=mdl_config.get('bootstrap', True),
+            n_jobs=-1,
+        )
+    elif alg == 'skrfp':
+        clf = ensemble.RandomForestClassifier(
+            n_estimators=mdl_config.get('n_estimators', 800), 
+            max_features=mdl_config.get('max_features', 0.5),
+            max_depth=mdl_config.get('max_depth', 15),
+            criterion='entropy',
+            n_jobs=-1,
+        )
+    elif alg =='sket':
+        clf = ensemble.ExtraTreesClassifier(
+            n_estimators=mdl_config.get('n_estimators', 1500), 
+            max_features=mdl_config.get('max_features', 0.5),  
+            max_depth=mdl_config.get('max_depth', 15), 
+            n_jobs=-1,
+        )
+    elif alg =='sketp':
+        clf = ensemble.ExtraTreesClassifier(
+            n_estimators=mdl_config.get('n_estimators', 1500), 
+            max_features=mdl_config.get('max_features', 0.5),  
+            max_depth=mdl_config.get('max_depth', 11), 
+            criterion='entropy', 
+            n_jobs=-1,
+        )
+    elif alg == 'xgb':
+        clf = xgb.XGBClassifier(
+            n_estimators=mdl_config.get('n_estimators', 30), 
+            max_depth=mdl_config.get('max_depth', 7), 
+            learning_rate=mdl_config.get('learning_rate', 0.1), 
+            objective="multi:softprob", 
+            silent=True
+        )
+    
+
+    if (g_id == grid_onecell): print("clf=%s" % clf)
 
     if debug:
         y_pred = np.array([[0]*10 for i in range(len(X_test))])
@@ -180,6 +218,7 @@ def process_grid(g_id, grid_train, grid_test, debug=False):
         y_pred = clf.predict_proba(X_test)
     indices = le.inverse_transform(  np.argsort(y_pred, axis=1)[:,::-1][:,:10]  )  
     knn_prob = np.sort(y_pred, axis=1)[:,::-1][:,:10]
+    grid_train, grid_test, X, X_test, y_pred, clf = [None] * 6
     return indices, knn_prob
 
 
@@ -187,39 +226,74 @@ def process_all_grids(train, test, repeats, grid, th=8):
     processes = []
     mp_pool = mp.Pool(pool_size)
     tr = train[['x','y']]
-    for g_id in repeats:
-        if g_id % 100 == 0:
-            print("g_id=%i @ %s" % (g_id, datetime.now()))
-        
-        #Applying classifier to one grid cell
-        xmin, xmax, ymin, ymax =grid[g_id]   
-        grid_train = train[(tr.x > xmin) & (tr.x < xmax) & (tr.y > ymin) & (tr.y < ymax)]    
-
-        place_counts = grid_train.place_id.value_counts()
-        mask = (place_counts[grid_train.place_id.values] >= th).values
-        grid_train = grid_train.loc[mask]
-
-        grid_test = test.loc[test.grid_cell == g_id]
-        row_ids = grid_test.index
-        
-        p = mp_pool.apply_async(process_grid, (g_id, grid_train, grid_test))
-        processes.append([p, row_ids, g_id])
-    mp_pool.close()
 
     indices = np.zeros((test.shape[0], 10), dtype=np.int64)
     knn_prob = np.zeros((test.shape[0], 10), dtype=np.float64)
     grid_num = np.zeros((test.shape[0], 1), dtype=np.float64)
+    
+    mdl_path = "./submit/%s" % stamp
+    if not os.path.exists(mdl_path): os.mkdir(mdl_path)
+
+    no_cache = (stamp in ['knn_blend', 'knnz_blend'])
+
+    for g_id in repeats:
+        if g_id % 100 == 0:
+            print("g_id=%i @ %s" % (g_id, datetime.now()))
+        
+        # if g_id < 600: continue
+
+        cache_name = "%s/gid_%i.pkl" % (mdl_path, g_id)
+        if (not grid_onecell) and (not no_cache) and os.path.exists(cache_name):
+            print("skip g_id=%i since %s exists" % (g_id, cache_name))
+            mp_row_ids, mp_ind, mp_kprob, mp_g_id = pickle.load(open(cache_name, 'rb'))
+            indices[mp_row_ids] = mp_ind
+            knn_prob[mp_row_ids] = mp_kprob
+            grid_num[mp_row_ids] = mp_g_id
+        else:
+            print("start processing g_id=%i @ %s" % (g_id, datetime.now()))
+            #Applying classifier to one grid cell
+            xmin, xmax, ymin, ymax =grid[g_id]   
+            grid_train = train[(tr.x > xmin) & (tr.x < xmax) & (tr.y > ymin) & (tr.y < ymax)]    
+
+            place_counts = grid_train.place_id.value_counts()
+            mask = (place_counts[grid_train.place_id.values] >= th).values
+            grid_train = grid_train.loc[mask]
+
+            grid_test = test.loc[test.grid_cell == g_id]
+            row_ids = grid_test.index
+            
+            p = mp_pool.apply_async(process_grid, (g_id, grid_train, grid_test))
+            processes.append([p, row_ids, g_id])
+
+        while len(processes) > pool_size:
+            mp_p, mp_row_ids, mp_g_id = processes.pop(0)
+            mp_ind, mp_kprob = mp_p.get()
+            indices[mp_row_ids] = mp_ind
+            knn_prob[mp_row_ids] = mp_kprob
+            grid_num[mp_row_ids] = mp_g_id
+            if not no_cache:
+                mp_cache_name = "%s/gid_%i.pkl" % (mdl_path, mp_g_id)
+                pickle.dump([mp_row_ids, mp_ind, mp_kprob, mp_g_id], open(mp_cache_name, 'wb'))
+                print("dump g_id=%i results to %s @ %s" % (mp_g_id, mp_cache_name, datetime.now()))
+
+    mp_pool.close()
+
     while processes:
-        p, row_ids, g_id = processes.pop(0)
-        ind, kprob = p.get()
-        indices[row_ids] = ind
-        knn_prob[row_ids] = kprob
-        grid_num[row_ids] = g_id #[g_id]*len(row_ids)
+        mp_p, mp_row_ids, mp_g_id = processes.pop(0)
+        mp_ind, mp_kprob = mp_p.get()
+        indices[mp_row_ids] = mp_ind
+        knn_prob[mp_row_ids] = mp_kprob
+        grid_num[mp_row_ids] = mp_g_id
+        if not no_cache:
+            mp_cache_name = "%s/gid_%i.pkl" % (mdl_path, mp_g_id)
+            pickle.dump([mp_row_ids, mp_ind, mp_kprob, mp_g_id], open(mp_cache_name, 'wb'))
+            print("dump g_id=%i results to %s @ %s" % (mp_g_id, cache_name, datetime.now()))
+
     print('process_all_grids complete @ %s' % datetime.now())
     return indices, knn_prob, grid_num
 
 
-def treva(train, test, repeats, grid):
+def treva(train, test, repeats, grid, cross_validation):
     indices, knn_prob, grid_num = process_all_grids(train, test, repeats, grid)
     
     ### create indices for probability lookup tables. For example: (for placeid = 999999999 and weekday = 5, then the index is wkday_ind = 99999999905)
@@ -227,9 +301,14 @@ def treva(train, test, repeats, grid):
     train['hr_ind'] = 100*train['place_id']+np.floor(train['hour']).astype(np.int64)
     train['four_hour_ind'] = 100*train['place_id']+np.floor(train['four_hour']).astype(np.int64)
 
-    weekday = makeprobtable(train, 'wkday_ind', 0.001)
-    hour = makeprobtable(train, 'hr_ind', 0.001)
-    four_hour = makeprobtable(train, 'four_hour_ind', 0.001)
+    table_cache = "./data/cache/feats_table_cv%s.pkl" % cross_validation
+    if os.path.exists(table_cache):
+        weekday, hour, four_hour = pickle.load(open(table_cache, 'rb'))
+    else:
+        weekday = makeprobtable(train, 'wkday_ind', 0.001)
+        hour = makeprobtable(train, 'hr_ind', 0.001)
+        four_hour = makeprobtable(train, 'four_hour_ind', 0.001)
+        pickle.dump([weekday, hour, four_hour], open(table_cache, 'wb'))
 
     nn=10
     wkday_indices=10*indices+np.tile(np.floor(test.weekday[:,None]).astype(np.int64),nn )
@@ -269,7 +348,7 @@ def conclude(cross_validation, test, ytest, max3index, max3placeids, indices):
         max3placeids = pd.DataFrame({'row_id':test.index.values,'id1':max3placeids[:,0],'id2':max3placeids[:,1],'id3':max3placeids[:,2]} )
         max3placeids['place_id']=max3placeids.id1.astype(str).str.cat([max3placeids.id2.astype(str),max3placeids.id3.astype(str)], sep = ' ')       
         
-        sfile = './submit/KNN2_%s.csv' % stamp
+        sfile = './submit/%s_%s.csv' % (alg, stamp)
         max3placeids[['row_id','place_id']].to_csv(sfile, header=True, index=False)
         print("[Finish!] @ %s" % datetime.now())
         if False:
@@ -277,8 +356,10 @@ def conclude(cross_validation, test, ytest, max3index, max3placeids, indices):
         return None, None
 
 
-def wrapper(cross_validation, n_cell_x, n_cell_y, grid_onecell=None, no_cache=False):
-    cv_file = "./submit/knn2/knn2_cv%i_x%i_y%i.pkl" % (cross_validation, n_cell_x, n_cell_y)
+def wrapper(cross_validation, n_cell_x, n_cell_y, wx=490, wy=980, grid_onecell=None, no_cache=False):
+    meta_path = "./submit/c%s" % alg
+    if not os.path.exists(meta_path): os.mkdir(meta_path)
+    cv_file = "%s/c%s_cv%i_x%i_y%i_wx%i_wy%i.pkl" % (meta_path, alg, cross_validation, n_cell_x, n_cell_y, wx, wy)
     if (not no_cache) and os.path.exists(cv_file):
         print("%s exists, skip!" % cv_file)
         return 0, cv_file
@@ -288,7 +369,7 @@ def wrapper(cross_validation, n_cell_x, n_cell_y, grid_onecell=None, no_cache=Fa
         size_x, size_y = 10./n_cell_x, 10./n_cell_y
         grid = extendgrid(size_x, size_y, n_cell_x, n_cell_y)
         repeats = [grid_onecell] if grid_onecell else list(range(n_cell_x*n_cell_y))
-        max3index, max3placeids, total_prob, indices, knn_prob, grid_num = treva(train, test, repeats, grid)
+        max3index, max3placeids, total_prob, indices, knn_prob, grid_num = treva(train, test, repeats, grid, cross_validation)
         score = conclude(cross_validation, test, ytest, max3index, max3placeids, indices)
         # dump info
         results = {
@@ -357,44 +438,61 @@ def blending_flow(va_paths, te_paths, top_w=2, submit=False):
     df = pd.DataFrame(blended_submits)
     df['row_id'] = df.index
     df['place_id'] = df[[0,1,2]].astype(str).apply(lambda x: ' '.join(x), axis=1)
-    df.drop([0,1,2], axis=1).sort_values(by='row_id').to_csv(output, index=False)
+    df.drop([0,1,2], axis=1, inplace=True)
+    df[['row_id', 'place_id']].sort_values(by='row_id').to_csv(output, index=False)
+    print("submit file written in %s @ %s" % (output, datetime.now()))
     if submit:
         submiter.submiter().submit(entry=output, message="knn2")
 
 
-#=================================================
-#   Main
-#=================================================
-if __name__ == '__main__':
-    grid_onecell = 200
-    sizes = [
-        # (20, 20),
-        (20, 40),
-        # (20, 50),
-        # (40, 20),
-        # (40, 40),
+def main(params):
+    global alg, weights, stamp, mdl_config, grid_onecell, pool_size
+    alg = params['alg']
+    stamp = params['stamp']
+    cv = params['cv']
+    pool_size = (mp.cpu_count() if ('knn' in alg) else 2)
+    grid_onecell = (200 if cv else None)
+    nx = 20 #params['nx']
+    ny = 40 #params['ny']
+    weights = np.tile(np.array([490.0, 980.0, 4.0, 3.1, 2.1, 10.0, 10.0, 36])[:,None],nx*ny).T
+    print("alg=%s, stamp=%s, cv=%s, grid_onecell=%s" % (alg, stamp, cv, grid_onecell))
 
-        # (30, 30),
-        # (20, 30),
-        # (30, 20),
+    if 'gs' in stamp:
+        print("[Start] doing Grid Search for %s" % alg)
+        for grid_onecell in [777]:
+            for n_estimators in [800]:
+                for max_feats in [0.5]:
+                    for max_depth in [15]:
+                        for bootstrap in [True, False]: # 7 is best!
+                            mdl_config = {'n_estimators': n_estimators, 'max_depth': max_depth, 'max_features': max_feats, 'bootstrap': bootstrap}
+                            print("[GS]:", mdl_config)
+                            wrapper(cv, nx, ny, grid_onecell=grid_onecell, no_cache=True)
+    elif stamp in ['knn_blend', 'knnz_blend']:
+        print("[Start] doing %s for %s" % (stamp, alg))
+        params = [
+            (20, 20),
+            (20, 40),
+            (40, 20),
+            (40, 40),
 
-        # (30, 40),
-        # (40, 30),
-    ]
-    global weights, stamp
-    stamp = str(datetime.now().strftime("%Y%m%d_%H%M%S"))
-    if len(sizes) == 1:
-        nx, ny = sizes[0]
-        # ['x', 'y', 'hour', 'weekday', 'month', 'year', 'acc']
-        weights = np.tile(np.array([490.0, 980.0, 4.0, 3.1, 2.1, 10.0, 10.0, 36])[:,None],nx*ny).T #feature weights
-        wrapper(0, nx, ny, grid_onecell=grid_onecell, no_cache=True)
-    else:
+            (30, 30),
+            (20, 30),
+            (30, 20),
+
+            (30, 40),
+            (40, 30),
+        ]
         va_paths, te_paths = [], []
-        for nx, ny in sizes:
-            weights = np.tile(np.array([490.0, 980.0, 4.0, 3.1, 2.1, 10.0, 10.0, 36])[:,None],nx*ny).T #feature weights
+        for nx, ny in params:
+            print("[start] params=%i/%i @ %s" % (nx, ny, datetime.now()))
+            weights = np.tile(np.array([490.0, 980.0, 4.0, 3.1, 2.1, 10.0, 10.0, 36])[:,None],nx*ny).T
             score, cv_file_va = wrapper(1, nx, ny)
             _, cv_file_te = wrapper(0, nx, ny)
             va_paths.append(cv_file_va)
             te_paths.append(cv_file_te)
         blending_flow(va_paths, te_paths, top_w=1, submit=False)
+    else:
+        print("[Start] doing single %s with cv=%s" % (alg, cv))
+        mdl_config = {}
+        wrapper(cv, nx, ny, grid_onecell=grid_onecell, no_cache=True)
 

@@ -164,34 +164,62 @@ class blendor(object):
 
 
   def init_models(self):
+    # ---------- [corr_matrix] ----------------------------------------
+    # [None 0.86 0.85 0.84 0.84 0.82 0.78 0.79 0.82 0.78 0.82 0.79]
+    # [None None 0.74 0.75 0.75 0.89 0.78 0.83 0.81 0.69 0.79 0.78]
+    # [None None None 0.92 0.83 0.73 0.68 0.68 0.72 0.81 0.72 0.71]
+    # [None None None None 0.82 0.73 0.68 0.69 0.72 0.81 0.73 0.72]
+    # [None None None None None 0.73 0.68 0.69 0.73 0.75 0.74 0.72]
+    # [None None None None None None 0.76 0.79 0.74 0.68 0.72 0.72]
+    # [None None None None None None None 0.83 0.71 0.63 0.71 0.7]
+    # [None None None None None None None None 0.72 0.64 0.71 0.7]
+    # [None None None None None None None None None 0.66 0.8 0.86]
+    # [None None None None None None None None None None 0.67 0.66]
+    # [None None None None None None None None None None None 0.82]
+    # [None None None None None None None None None None None None]
+
+
     self.mdl_names = [
       #-----[God]-----
-      # ('blending_20160703_094554_0.59140.csv.gz'            , 8.0 ),
+      # ('blending_20160706_142342_0.59864.csv.gz'            , 1.5 ),
+      ('blending_20160703_094554_0.59140.csv.gz'            , 1.2 ),
+      ('skrf_cfeats_800tree_mf0.5_0.59121.csv.gz'           , 0.6 ),
+      ('skrf_cfeats_1500tree_m_split_7.csv.gz'              , 0.6 ),
+
+      ('skrfp_skrfp_cfeats_0.58921.csv.gz'                  , 1.0 ),
+      ('knn2_blended_20160705_144539_0.58692.csv.gz'        , 0.8 ),
+      # ('KNN_submission_sorted_0.58370.csv.gz'               , 1.0 ),
+      ('cKNN_20160630_214715_0.58273.csv.gz'                , 1.0 ),
+
+      ('treva_partial_20160629_all_blended_0.57968.csv.gz'  , 0.8 ),
+      ('skrf_cfeats_0705_0.57809.csv.gz'                    , 0.8 ),
+      ('treva_all_xstep0.6_elite_20160630_0.57802.csv.gz'   , 0.8 ),
+      # ('treva_6trees_20160629_0.57756.csv.gz'               , 0.5 ),
+      
+      #-----[King]-----
+      # ('blending_20160703_094554_0.59140.csv.gz'            , 1.0 ),
       # ('blending_20160630_0.58772.csv.gz'                   , 5.0 ),
+
       # ('blending_20160626_094932_0.58702.csv.gz'            , 4.0 ),
       # ('blending_20160621_214954_0.58657.csv.gz'            , 3.0 ),
-      ('KNN2_20160703_075345_0.58649.csv.gz'                , 3.0 ),  # <---
+      # ('KNN2_20160703_075345_0.58649.csv.gz'                , 3.0 ),  
       # ('lb_marsan_blending_0622_0.58569.csv.gz'             , 2.0 ),
       # ('blending_gs_top_w2_20160619_180546_0.58529.csv.gz'  , 2.0 ),
       # ('lb_blending_20160617_215629_0.58463.csv.gz'         , 2.0 ),
       # ('lb_marsan_blending_0614_0.58378.csv.gz'             , 2.0 ),
       # ('lb_marsan_blending_0613_0.58299.csv.gz'             , 2.0 ),
       
-      #-----[King]-----
-      ('cKNN_20160630_214715_0.58273.csv.gz'                , 2.0 ),  # <---
+      #-----[Lord]-----
       # ('lb_ldsc_0.58143.csv.gz'                             , 2.0 ),
       # ('lb_ravi_0.58081.csv.gz'                             , 1.8 ),
       # ('lb_jesting_0.58067.csv.gz'                          , 1.8 ),
       # ('lb_anouymous_0.58018.csv.gz'                        , 1.8 ),
-      ('treva_partial_20160629_all_blended_0.57968.csv.gz'  , 1.8 ),  # <---
       # ('lb_anouymous_0.57842.csv.gz'                        , 1.5 ),
-      # ('treva_all_xstep0.6_elite_20160630_0.57802.csv.gz'   , 1.5 ),  # <---
       # ('lb_hamed_0.57946.csv.gz'                            , 1.2 ),
-      # ('treva_6trees_20160629_0.57756.csv.gz'               , 1.5 ),
-      # ('treva_full10_20160702_154515_0.57686.csv.gz'        , 1.5 ),
+      # ('treva_full10_20160702_154515_0.57686.csv.gz'        , 0.5 ),
 
 
-      # #-----[RedGuard]-----
+      #-----[RedGuard]-----
       # ('treva_elite_20160626_f0.5d11_0.57475.csv.gz'        , 1.5 ),
       # ('skrf_submit_20160623_224407_0.57349.csv.gz'         , 1.5 ),
       # ('lb_sub_knn_daten-kieker_0.57189.csv.gz'             , 1.2 ),
@@ -314,7 +342,7 @@ class blendor(object):
 #===========================================
 if __name__ == '__main__':
   # blendor(do_blend=True, do_upload=True).run('gs_top_n')
-  # blendor(do_blend=True).run('debug')   # cal corr only
+  # blendor(do_blend=False).run('debug')   # cal corr only
   blendor(do_blend=True, do_upload=True).run('average_but_top')
   # blendor(do_blend=True, do_upload=True).run('average')
   # blendor(do_blend=True, do_upload=True).run()

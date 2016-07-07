@@ -278,9 +278,7 @@ def conclude(cross_validation, test, ytest, max3index, max3placeids, indices):
 
 
 def wrapper(cross_validation, n_cell_x, n_cell_y, grid_onecell=None, no_cache=False):
-    meta_path = "./submit/cskrf"
-    if not os.path.exists(meta_path): os.mkdir(meta_path)
-    cv_file = "%s/cskrf_cv%i_x%i_y%i.pkl" % (meta_path, cross_validation, n_cell_x, n_cell_y)
+    cv_file = "./submit/knn2/knn2_cv%i_x%i_y%i.pkl" % (cross_validation, n_cell_x, n_cell_y)
     if (not no_cache) and os.path.exists(cv_file):
         print("%s exists, skip!" % cv_file)
         return 0, cv_file
@@ -368,20 +366,19 @@ def blending_flow(va_paths, te_paths, top_w=2, submit=False):
 #   Main
 #=================================================
 if __name__ == '__main__':
-    grid_onecell = None
+    grid_onecell = 200
     sizes = [
-        # (20, 20),
+        (20, 20),
         (20, 40),
-        # (20, 50),
-        # (40, 20),
-        # (40, 40),
+        (40, 20),
+        (40, 40),
 
-        # (30, 30),
-        # (20, 30),
-        # (30, 20),
+        (30, 30),
+        (20, 30),
+        (30, 20),
 
-        # (30, 40),
-        # (40, 30),
+        (30, 40),
+        (40, 30),
     ]
     global weights, stamp
     stamp = str(datetime.now().strftime("%Y%m%d_%H%M%S"))
@@ -389,7 +386,7 @@ if __name__ == '__main__':
         nx, ny = sizes[0]
         # ['x', 'y', 'hour', 'weekday', 'month', 'year', 'acc']
         weights = np.tile(np.array([490.0, 980.0, 4.0, 3.1, 2.1, 10.0, 10.0, 36])[:,None],nx*ny).T #feature weights
-        wrapper(0, nx, ny, grid_onecell=grid_onecell, no_cache=False)
+        wrapper(0, nx, ny, grid_onecell=grid_onecell, no_cache=True)
     else:
         va_paths, te_paths = [], []
         for nx, ny in sizes:
@@ -398,5 +395,5 @@ if __name__ == '__main__':
             _, cv_file_te = wrapper(0, nx, ny)
             va_paths.append(cv_file_va)
             te_paths.append(cv_file_te)
-        blending_flow(va_paths, te_paths, top_w=1, submit=False)
+        blending_flow(va_paths, te_paths, top_w=3, submit=False)
 
